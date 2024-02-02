@@ -37,13 +37,15 @@ public:
 	void change_selected_pk(); 
 	void reset();
 
-	enum ingame_state 
+	enum ingame_state
 	{
 		OPEN_LINK,
 		WAIT,
 		SELECT_OPTIONS,
 		TRADECENTER,
 		TRADE_TABLE,
+		SEND_RANDOM_BYTE,
+
 		INIT_TRADE,
 		DO_TRADE,
 	};

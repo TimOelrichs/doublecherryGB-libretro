@@ -42,14 +42,14 @@ byte pokebuddy_gen1::seri_send(byte data) {
 	{
 		if (data == 0xD0) {
 			++current_state;
-			return 0xD0;
+			return 0xD4;
 		}
 		return 0x60;
 	}
 
 	case SELECT_OPTIONS:
 	{
-		if (data == 0x00) return 0x00;
+		if (data == 0x00) return 0xfe;
 		if (data == 0xd4) ++currentstate; 
 		return 0xD4;
 		break; 
@@ -67,7 +67,8 @@ byte pokebuddy_gen1::seri_send(byte data) {
 	}
 	case WAIT_ON_TABLE:
 	{
-
+		if (data == 0xfd) ++currentstate;
+		return 0xfd; 
 	}
 }
 
