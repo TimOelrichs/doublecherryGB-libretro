@@ -2,6 +2,7 @@
 #include "link_master_device.hpp"
 
 extern bool logging_allowed;
+extern int emulated_gbs;
 
 byte link_master_device::send_byte(byte which, byte dat)
 {
@@ -41,7 +42,7 @@ void link_master_device::log_traffic(byte id, byte b) {
 };
 
 bool link_master_device::is_ready_for_next_tik() {
-	return v_gb[0]->get_cpu()->get_clock() >= seri_occer; 
+	return (v_gb[0]->get_cpu()->get_clock() >= seri_occer) && (v_gb[0]->get_regs()->SC == 0x80); 
 }
 
 void link_master_device::update_seri_occer() {
@@ -57,17 +58,6 @@ size_t link_master_device::get_state_size(void)
 	return ret;
 }
 
-void link_master_device::save_state_mem(void* buf)
-{
-	serializer s(buf, serializer::SAVE_BUF);
-	serialize(s);
-}
-
-void link_master_device::restore_state_mem(void* buf)
-{
-	serializer s(buf, serializer::LOAD_BUF);
-	serialize(s);
-}
 
 
 //these are all cheating functions cause, that's nothing real link hardware could do,
@@ -76,7 +66,9 @@ void link_master_device::restore_state_mem(void* buf)
 
 bool link_master_device::all_IE_are_handled()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	int connected_gbs = use_v_gb_size ? v_gb.size() : emulated_gbs; 
+
+	for (int i = 0; i < connected_gbs; i++)
 	{
 		if ((v_gb[i]->get_regs()->IF & v_gb[i]->get_regs()->IE & INT_SERIAL)) return false;
 	}
@@ -86,7 +78,9 @@ bool link_master_device::all_IE_are_handled()
 
 void link_master_device::get_all_SC_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	int connected_gbs = use_v_gb_size ? v_gb.size() : emulated_gbs;
+
+	for (int i = 0; i < connected_gbs; i++)
 	{
 		byte data = v_gb[i]->get_regs()->SC;
 		in_data_buffer[i] = data;
@@ -95,7 +89,9 @@ void link_master_device::get_all_SC_reg_data()
 
 void link_master_device::get_all_SB_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	int connected_gbs = use_v_gb_size ? v_gb.size() : emulated_gbs;
+
+	for (int i = 0; i < connected_gbs; i++)
 	{
 		byte data = v_gb[i]->get_regs()->SB;
 		in_data_buffer[i] = data;
@@ -104,7 +100,9 @@ void link_master_device::get_all_SB_reg_data()
 
 bool link_master_device::is_expected_data(byte data)
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	int connected_gbs = use_v_gb_size ? v_gb.size() : emulated_gbs;
+
+	for (int i = 0; i < connected_gbs; i++)
 	{
 		if (in_data_buffer[i] != data) return false;
 	}

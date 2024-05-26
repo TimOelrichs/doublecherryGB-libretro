@@ -182,7 +182,7 @@ class link_target {
 	friend class gb; 
 
 public:
-	virtual byte seri_send(byte) = 0;
+	virtual byte seri_send(byte) = 0;	
 	virtual byte get_SB_value() = 0;
 	virtual byte get_SC_value() = 0;
 	virtual void reset() = 0;
@@ -239,7 +239,7 @@ public:
 	void run();
 	void reset();
 	void set_skip(int frame);
-	void set_use_gba(bool use) { use_gba=use; }
+	void set_use_gba(bool use);
 	bool load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent);
 
 	void serialize(serializer &s);

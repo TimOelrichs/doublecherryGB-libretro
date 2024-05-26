@@ -91,6 +91,8 @@ void gb::reset()
 	now_frame=0;
 	skip=skip_buf=0;
 	re_render=0;
+
+	if (use_gba) this->get_cpu()->get_regs()->BC.b.l = 0x01;
 }
 
 void gb::hook_extport(ext_hook *ext)
@@ -112,6 +114,11 @@ byte gb::seri_send(byte data)
 void gb::set_skip(int frame)
 {
 	skip_buf=frame;
+}
+
+void gb::set_use_gba(bool use) {
+	use_gba = use;
+	if (use) this->get_cpu()->get_regs()->BC.b.l = 0x01;
 }
 
 dword* gb::get_rp_que() {

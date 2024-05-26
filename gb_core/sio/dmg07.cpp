@@ -1,6 +1,6 @@
 /*--------------------------------------------------
 
-   DoubleCherryGB - Gameboy Emulator - 4Players (based on TGBDual)
+   DoubleCherryGB - Gameboy Emulator (based on TGBDual)
   Copyright (C) 2023  Tim Oelrichs
 
    This program is free software; you can redistribute it and/or
@@ -32,6 +32,13 @@
 dmg07::dmg07(std::vector<gb*> g_gb)  {
 
 	v_gb.insert(v_gb.begin(), std::begin(g_gb), std::end(g_gb));
+
+	for (size_t i = 0; i < 4; i++)
+	{
+		trans_buffer[i] = std::vector<byte>();
+		ans_buffer[i] = std::vector<byte>();
+	}
+	reset();
 }
 
 
@@ -153,13 +160,13 @@ void dmg07::handle_answer(int i, byte dat)
 		{
 			if (dat == 0x88)
 			{
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				//last_trans_nr[i] = transfer_count;
 			}
 
 			if (dat == 0xAA && i == 0) //&& ((transfer_count % 4) == 0) )
 			{
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
@@ -172,7 +179,7 @@ void dmg07::handle_answer(int i, byte dat)
 		{
 			if (dat == ans_buffer[i].at(0)) //&& //last_trans_nr[i] == (transfer_count - 1))
 			{
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				//last_trans_nr[i] = transfer_count;
 
 				if (dat == 0x88)
@@ -184,7 +191,7 @@ void dmg07::handle_answer(int i, byte dat)
 			else if (dat == 0xAA && i == 0)//&& ((transfer_count % 4) == 0))
 			{
 				ans_buffer[i].clear();
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
@@ -200,14 +207,14 @@ void dmg07::handle_answer(int i, byte dat)
 			if (dat == 0xAA && ans_buffer[i].at(0) == 0xAA && ans_buffer[i].at(1) == 0xAA && i == 0) //&& //last_trans_nr[i] == (transfer_count - 1))
 			{
 				current_state = SYNC_PHASE;
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				break;
 
 
 			}
 			else if (ans_buffer[i].at(0) == 0x88 && ans_buffer[i].at(1) == 0x88)
 			{
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				//last_trans_nr[i] = transfer_count;
 				
 				if (!transfer_rate)
@@ -245,7 +252,7 @@ void dmg07::handle_answer(int i, byte dat)
 			else if (dat == 0xAA && i == 0)//&& ((transfer_count % 4) == 0))
 			{
 				ans_buffer[i].clear();
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
@@ -275,7 +282,7 @@ void dmg07::handle_answer(int i, byte dat)
 			else if (dat == 0xAA && i == 0)
 			{
 				ans_buffer[i].clear();
-				ans_buffer[i].emplace_back(dat);
+				ans_buffer[i].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
@@ -315,7 +322,7 @@ void dmg07::handle_answer(int i, byte dat)
 			{
 				if (dat == 0xFF && transfer_count % 4 == 0)
 				{
-					ans_buffer[i].emplace_back(dat);
+					ans_buffer[i].push_back(dat);
 					//last_trans_nr[i] = transfer_count;
 				}
 				break;
@@ -331,7 +338,7 @@ void dmg07::handle_answer(int i, byte dat)
 
 					for (int i = 0; i < (packet_size * 4); i++)
 					{
-						bytes_to_send.emplace_back(0xFF);
+						bytes_to_send.push_back(0xFF);
 					}
 					restart_in += transfer_count;
 					break;
@@ -417,12 +424,12 @@ void dmg07::send_sync_bytes()
 		*/
 	
 		if (transfer_rate == 0xF0)  //Janshiro Games
-			transfer_speed = 5928 * 3;
+			transfer_speed = 6144 * 3;
 		else if (transfer_rate == 0xA0)	// Jinsei Game Densetsi
-			transfer_speed = 5928 * 4;
+			transfer_speed = 6144 * 4;
 		else {
 			byte speed_multiplier = ((transfer_rate & 0x80) >> 7) | ((transfer_rate & 0x40) >> 5);
-			transfer_speed = 5928 * ((int)speed_multiplier + 1);
+			transfer_speed = 6144 * ((int)speed_multiplier + 1);
 		}
 	
 		/*
@@ -467,7 +474,7 @@ void dmg07::fill_buffer_for_less_than_4p()
 		{
 			for (int i = 0; i < packet_size; i++)
 			{
-				bytes_to_send.emplace_back(0);
+				bytes_to_send.push_back(0);
 			}
 			
 		}
@@ -502,7 +509,7 @@ void dmg07::process()
 
 					if (trans_buffer[i].size() < packet_size)
 					{
-						trans_buffer[i].emplace_back(ret);
+						trans_buffer[i].push_back(ret);
 	
 					}
 
@@ -514,7 +521,7 @@ void dmg07::process()
 					for (byte i = 0; i < v_gb.size(); i++)
 					{
 						for (const auto& e : trans_buffer[i])
-							bytes_to_send.emplace_back(e);
+							bytes_to_send.push_back(e);
 
 						trans_buffer[i].clear();
 					}
@@ -544,7 +551,7 @@ void dmg07::process()
 
 						if (trans_buffer[i].size() < packet_size && delay > 0)
 						{
-							trans_buffer[i].emplace_back(ret);
+							trans_buffer[i].push_back(ret);
 						}
 					}
 					delay++;
@@ -562,7 +569,7 @@ void dmg07::process()
 						{
 							
 							for (const auto& e : trans_buffer[i])
-								bytes_to_send.emplace_back(e); // create bytes_to_send queue
+								bytes_to_send.push_back(e); // create bytes_to_send queue
 
 							trans_buffer[i].clear();
 							
@@ -622,14 +629,14 @@ void dmg07::save_state_mem(void* buf)
 	{
 		size = trans_buffer[i].size();
 		s_VAR(size);
-		s_ARRAY(trans_buffer[i].data());
+		if(size) s_ARRAY(trans_buffer[i].data());
 		size = ans_buffer[i].size();
 		s_VAR(size);
-		s_ARRAY(ans_buffer[i].data());
+		if (size) s_ARRAY(ans_buffer[i].data());
 	}
 	size = bytes_to_send.size();
 	s_VAR(size);
-	s_ARRAY(bytes_to_send.data());
+	if (size) s_ARRAY(bytes_to_send.data());
 
 	serialize(s);
 }
@@ -640,40 +647,50 @@ void dmg07::restore_state_mem(void* buf)
 
 	int size;
 	byte* tmp;
+	
 	for (int i = 0; i < 4; i++)
 	{
-		s_VAR(size);
-		tmp = new byte[size];
-		s_ARRAY(tmp);
 		trans_buffer[i] = std::vector<byte>();
-		for (int j = 0; j < size; j++)
-		{
-			trans_buffer[i].emplace_back(tmp[j]);
-		}
+		ans_buffer[i] = std::vector<byte>();
 
 		s_VAR(size);
-		tmp = new byte[size];
-		s_ARRAY(tmp);
+		if (size) {
+			tmp = new byte[size];
+			s_ARRAY(tmp);
 
-		ans_buffer[i] = std::vector<byte>();
-		for (int k = 0; k < size; k++)
-		{
-			ans_buffer[i].emplace_back(tmp[k]);
-		};
+			for (int j = 0; j < size; j++)
+			{
+				trans_buffer[i].push_back(tmp[j]);
+			}
+		}
+		
+		s_VAR(size);
+		if (size) {
+			tmp = new byte[size];
+			s_ARRAY(tmp);
 
+
+			for (int k = 0; k < size; k++)
+			{
+				ans_buffer[i].push_back(tmp[k]);
+			};
+		}
+	
 	}
 
-	s_VAR(size);
-	tmp = new byte[size];
-	s_ARRAY(tmp);
-
 	bytes_to_send = std::vector<byte>();
-	for (size_t i = 0; i < size; i++)
-	{
-		bytes_to_send.emplace_back(tmp[i]);
-	};
+	s_VAR(size);
+	if (size) {
+		tmp = new byte[size];
+		s_ARRAY(tmp);
 
-	delete tmp; 
+		for (size_t i = 0; i < size; i++)
+		{
+			bytes_to_send.push_back(tmp[i]);
+		};
+	}
+	
+	//delete tmp; 
 	serialize(s);
 }
 

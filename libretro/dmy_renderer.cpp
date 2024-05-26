@@ -30,6 +30,8 @@
 
 extern std::vector<gb* > v_gb;
 extern int emulated_gbs;
+extern int max_gbs; 
+extern int _number_of_local_screens;
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -49,7 +51,7 @@ extern bool _screen_vertical;
 extern bool _screen_4p_split; 
 extern bool _screen_switched; // set to draw player 2 on the left/top
 extern bool libretro_supports_bitmasks;
-extern int _show_player_screens; // 0 = p1 only, 1 = p2 only, 2 = both players
+extern int _show_player_screen; // 0 = p1 only, 1 = p2 only, 2 = both players
 
 dmy_renderer::dmy_renderer(int which)
 {
@@ -191,6 +193,9 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
     static byte joined_buf[160*144*2*2]; // two screens' worth of 16-bit data
     static byte joined_buf3[160 * 144 * 3 * 2]; // three screens' worth of 16-bit data
     static byte joined_buf4[160 * 144 * 4 * 2]; // four screens' worth of 16-bit data
+    static byte joined_buf8[160 * 144 * 8 * 2];
+    static byte joined_buf9[160 * 144 * 9 * 2]; // three screens' worth of 16-bit data
+    static byte joined_buf16[160 * 144 * 16 * 2];
 
     const int size_single_screen = sizeof(joined_buf) / 2;
 
@@ -199,109 +204,307 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
     if (_screen_switched)
         switched_gb = 1 - switched_gb;
 
-    // are we running two gb's?
-    switch (emulated_gbs)
+   
+    if (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)
     {
-    case 1: video_cb(buf, width, height, pitch); break;
-    case 2:
-    {
-        // are we drawing both gb's to the screen?
-        if (_show_player_screens == 2)
+        switch (emulated_gbs)
         {
-            if (_screen_vertical)
+        case 1: video_cb(buf, width, height, pitch); break;
+        case 2:
+        {
+            // are we drawing both gb's to the screen?
+            if (_show_player_screen == emulated_gbs)
             {
-                memcpy(joined_buf + switched_gb * size_single_screen, buf, size_single_screen);
-                if (which_gb == 1)
-                    video_cb(joined_buf, width, height * 2, pitch);
+                if (_screen_vertical)
+                {
+                    memcpy(joined_buf + switched_gb * size_single_screen, buf, size_single_screen);
+                    if (which_gb == 1)
+                        video_cb(joined_buf, width, height * 2, pitch);
+                }
+                else
+                {
+                    for (int row = 0; row < height; ++row)
+                        memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                    if (which_gb == 1)
+                        video_cb(joined_buf, width * 2, height, pitch * 2);
+                }
+
             }
             else
             {
-                for (int row = 0; row < height; ++row)
-                    memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
-                if (which_gb == 1)
-                    video_cb(joined_buf, width * 2, height, pitch * 2);
+                // are we currently on the gb that we want to draw?
+                // (this ignores the "switch player screens" setting)
+                if (_show_player_screen == which_gb)
+                    memcpy(joined_buf, buf, size_single_screen);
+                if (which_gb == (emulated_gbs - 1))
+                    video_cb(joined_buf, width, height, pitch);
             }
 
+            break;
         }
-        else
+        case 3:
         {
-            // are we currently on the gb that we want to draw?
-            // (this ignores the "switch player screens" setting)
-            if (_show_player_screens == which_gb)
-                memcpy(joined_buf, buf, size_single_screen);
-            if (which_gb == 1)
-                video_cb(joined_buf, width, height, pitch);
+            if (_show_player_screen == emulated_gbs) {
+                if (_screen_4p_split)
+                {
+                    if (which_gb < 2) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf4 + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                    }
+                    else if (which_gb < 4) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                    }
+                    if (which_gb == 2) {
+                        memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
+                        video_cb(joined_buf4, width * 2, height * 2, pitch * 2);
+                    }
+                }
+                else if (_screen_vertical)
+                {
+                    memcpy(joined_buf3 + switched_gb * size_single_screen, buf, size_single_screen);
+                    if (which_gb == 2)
+                        video_cb(joined_buf3, width, height * 3, pitch);
+                }
+                else
+                {
+                    for (int row = 0; row < height; ++row)
+                        memcpy(joined_buf3 + pitch * (3 * row + switched_gb), buf + pitch * row, pitch);
+                    if (which_gb == 2)
+                        video_cb(joined_buf3, width * 3, height, pitch * 3);
+                }
+            }
+            else
+            {
+                // are we currently on the gb that we want to draw?
+                // (this ignores the "switch player screens" setting)
+                if (_show_player_screen == which_gb)
+                    memcpy(joined_buf, buf, size_single_screen);
+                if (which_gb == emulated_gbs)
+                    video_cb(joined_buf, width, height, pitch);
+            }
+
+
+            break;
         }
-        
-        break;
+        case 4:
+        {
+            if (_show_player_screen == emulated_gbs) {
+
+                if (_screen_4p_split)
+                {
+                    if (which_gb < 2) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf4 + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                    }
+                    else if (which_gb < 4) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                    }
+                    if (which_gb == 3) {
+                        memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
+                        video_cb(joined_buf4, width * 2, height * 2, pitch * 2);
+                    }
+                }
+
+                else if (_screen_vertical)
+                {
+                    memcpy(joined_buf4 + switched_gb * size_single_screen, buf, size_single_screen);
+                    if (which_gb == emulated_gbs - 1)
+                        video_cb(joined_buf4, width, height * emulated_gbs, pitch);
+                }
+                else
+                {
+                    for (int row = 0; row < height; ++row)
+                        memcpy(joined_buf4 + pitch * (emulated_gbs * row + switched_gb), buf + pitch * row, pitch);
+                    if (which_gb == emulated_gbs - 1)
+                        video_cb(joined_buf4, width * emulated_gbs, height, pitch * emulated_gbs);
+                }
+            }
+            else
+            {
+                // are we currently on the gb that we want to draw?
+                // (this ignores the "switch player screens" setting)
+                if (_show_player_screen == which_gb)
+                    memcpy(joined_buf, buf, size_single_screen);
+                if (which_gb == (emulated_gbs - 1))
+                    video_cb(joined_buf, width, height, pitch);
+            }
+
+            break;
+        }
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+        {
+            if (_show_player_screen == emulated_gbs)
+            {
+                if (_screen_4p_split)
+                {
+                    if (which_gb < 3) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf9 + pitch * (3 * row + switched_gb), buf + pitch * row, pitch);
+                    }
+                    else if (which_gb < 6) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf3 + pitch * (3 * row + (switched_gb % 3)), buf + pitch * row, pitch);
+                        if (which_gb == 5 || which_gb == (emulated_gbs - 1)) {
+                            memcpy(joined_buf9 + (sizeof(joined_buf3)), joined_buf3, sizeof(joined_buf3));
+                            memset(joined_buf3, 0, sizeof(joined_buf3));
+                        }
+
+                    }
+                    else if (which_gb < 9) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf3 + pitch * (3 * row + (switched_gb % 3)), buf + pitch * row, pitch);
+                        if (which_gb == (emulated_gbs - 1)) {
+                            memcpy(joined_buf9 + (sizeof(joined_buf3) * 2), joined_buf3, sizeof(joined_buf3));
+
+                        }
+                    }
+
+                    if (which_gb == (emulated_gbs - 1)) {
+                        //memcpy(joined_buf16 + sizeof(joined_buf8), joined_buf8, sizeof(joined_buf8));
+                        video_cb(joined_buf9, width * 3, height * 3, pitch * 3);
+                    }
+                }
+
+                else if (_screen_vertical)
+                {
+                    memcpy(joined_buf16 + switched_gb * size_single_screen, buf, size_single_screen);
+                    if (which_gb == emulated_gbs - 1)
+                        video_cb(joined_buf16, width, height * emulated_gbs, pitch);
+                }
+                else
+                {
+                    for (int row = 0; row < height; ++row)
+                        memcpy(joined_buf16 + pitch * (emulated_gbs * row + switched_gb), buf + pitch * row, pitch);
+                    if (which_gb == emulated_gbs - 1)
+                        video_cb(joined_buf16, width * emulated_gbs, height, pitch * emulated_gbs);
+                }
+            }
+            else
+            {
+                // are we currently on the gb that we want to draw?
+                // (this ignores the "switch player screens" setting)
+                if (_show_player_screen == which_gb)
+                    memcpy(joined_buf, buf, size_single_screen);
+                if (which_gb == (emulated_gbs - 1))
+                    video_cb(joined_buf, width, height, pitch);
+            }
+
+            break;
+        }
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+        {
+            if (_show_player_screen == emulated_gbs) {
+
+
+                if (_screen_4p_split)
+                {
+                    if (which_gb < 4) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf16 + pitch * (4 * row + switched_gb), buf + pitch * row, pitch);
+                    }
+                    else if (which_gb < 8) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf4 + pitch * (4 * row + (switched_gb % 4)), buf + pitch * row, pitch);
+                        if (which_gb == 7) {
+                            memcpy(joined_buf16 + (sizeof(joined_buf4)), joined_buf4, sizeof(joined_buf4));
+                            memset(joined_buf4, 0, sizeof(joined_buf4));
+                        }
+
+                    }
+                    else if (which_gb < 12) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf4 + pitch * (4 * row + (switched_gb % 4)), buf + pitch * row, pitch);
+                        if (which_gb == 11 || which_gb == (emulated_gbs - 1)) {
+                            memcpy(joined_buf16 + (sizeof(joined_buf4) * 2), joined_buf4, sizeof(joined_buf4));
+                            memset(joined_buf4, 0, sizeof(joined_buf4));
+                        }
+                        /*
+                        if (which_gb == (emulated_gbs - 1)) {
+                            //memcpy(joined_buf16 + sizeof(joined_buf8), joined_buf8, sizeof(joined_buf8));
+                            video_cb(joined_buf16, width * 4, height * 4, pitch * 4);
+                        }*/
+
+                    }
+                    else if (which_gb < 16) {
+                        for (int row = 0; row < height; ++row)
+                            memcpy(joined_buf4 + pitch * (4 * row + (switched_gb % 4)), buf + pitch * row, pitch);
+                        if (which_gb == (emulated_gbs - 1))
+                            memcpy(joined_buf16 + (sizeof(joined_buf4) * 3), joined_buf4, sizeof(joined_buf4));
+                    }
+                    if (which_gb == (emulated_gbs - 1)) {
+                        //memcpy(joined_buf16 + sizeof(joined_buf8), joined_buf8, sizeof(joined_buf8));
+                        video_cb(joined_buf16, width * 4, height * 4, pitch * 4);
+                    }
+                }
+
+                else if (_screen_vertical)
+                {
+                    memcpy(joined_buf16 + switched_gb * size_single_screen, buf, size_single_screen);
+                    if (which_gb == emulated_gbs - 1)
+                        video_cb(joined_buf16, width, height * emulated_gbs, pitch);
+                }
+                else
+                {
+                    for (int row = 0; row < height; ++row)
+                        memcpy(joined_buf16 + pitch * (emulated_gbs * row + switched_gb), buf + pitch * row, pitch);
+                    if (which_gb == emulated_gbs - 1)
+                        video_cb(joined_buf16, width * emulated_gbs, height, pitch * emulated_gbs);
+                }
+            }
+            else
+            {
+                // are we currently on the gb that we want to draw?
+                // (this ignores the "switch player screens" setting)
+                if (_show_player_screen == which_gb)
+                    memcpy(joined_buf, buf, size_single_screen);
+                if (which_gb == (emulated_gbs - 1))
+                    video_cb(joined_buf, width, height, pitch);
+            }
+
+
+            break;
+        }
+        }
     }
-    case 3:
+    else 
     {
-        if (_screen_4p_split)
+        switch (_number_of_local_screens) {
+        case 2:
         {
-            if (which_gb < 2) {
-                for (int row = 0; row < height; ++row)
-                    memcpy(joined_buf4 + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
-            }
-            else if (which_gb < 4) {
-                for (int row = 0; row < height; ++row)
-                    memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
-            }
-            if (which_gb == 2) {
-                memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
-                video_cb(joined_buf4, width * 2, height * 2, pitch * 2);
-            }
-        }
-        else if (_screen_vertical)
-        {
-            memcpy(joined_buf3 + switched_gb * size_single_screen, buf, size_single_screen);
-            if (which_gb == 2)
-                video_cb(joined_buf3, width, height * 3, pitch);
-        }
-        else
-        {
-            for (int row = 0; row < height; ++row)
-                memcpy(joined_buf3 + pitch * (3 * row + switched_gb), buf + pitch * row, pitch);
-            if (which_gb == 2)
-                video_cb(joined_buf3, width * 3, height, pitch * 3);
-        }
+          
+            if (which_gb == _show_player_screen || which_gb == _show_player_screen+1)
+            {
+                if (_screen_vertical)
+                {
+                    memcpy(joined_buf + switched_gb * size_single_screen, buf, size_single_screen);
+                    if (which_gb == _show_player_screen + 1)
+                        video_cb(joined_buf, width, height * 2, pitch);
+                }
+                else
+                {
+                    for (int row = 0; row < height; ++row)
+                        memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                    if (which_gb == _show_player_screen + 1)
+                        video_cb(joined_buf, width * 2, height, pitch * 2);
+                }
 
-        break;
-    }
-    case 4:
-    {
-       
-        if (_screen_4p_split) 
-        {
-            if (which_gb < 2) {
-                for (int row = 0; row < height; ++row)
-                    memcpy(joined_buf4 + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
             }
-            else if (which_gb < 4) {
-                for (int row = 0; row < height; ++row)
-                    memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
-            }
-            if (which_gb == 3) {
-                memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
-                video_cb(joined_buf4, width * 2, height * 2, pitch * 2);
-            }
+          
+            break;
         }
-
-        else if (_screen_vertical)
-        {
-            memcpy(joined_buf4 + switched_gb * size_single_screen, buf, size_single_screen);
-            if (which_gb == 3)
-                video_cb(joined_buf4, width, height * 4, pitch);
         }
-        else
-        {
-            for (int row = 0; row < height; ++row)
-                memcpy(joined_buf4 + pitch * (4 * row + switched_gb), buf + pitch * row, pitch);
-            if (which_gb == 3)
-                video_cb(joined_buf4, width * 4, height, pitch * 4);
-        }
-        break; 
-    }
     }
 }
 

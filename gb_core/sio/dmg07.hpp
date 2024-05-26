@@ -148,11 +148,11 @@ private:
 	int transfer_speed = 512 * 8;
 	int seri_occer = 2048 * 2048 * 2048;
 	*/
-
+	/*
 	int transfer_count = 0;
 	int phase_byte_count = 0;
 
-	int last_trans_nr[4];
+	int last_trans_nr[4] = { 0,0,0,0 };
 	int restart_in = 0;
 	byte enter_status = 0x00;
 
@@ -165,6 +165,26 @@ private:
 	int delay = 0;
 	bool ready_to_sync_master = false;
 	bool master_is_synced = false;
+
+	*/
+
+	//converted to no initialize for compat with windows MCSV
+	int transfer_count;
+	int phase_byte_count;
+
+	int last_trans_nr[4];
+	int restart_in;
+	byte enter_status;
+
+	byte packet_size;
+	byte transfer_rate;
+
+	int first_aa_trans_nr;
+	int sync_trans_nr;
+
+	int delay;
+	bool ready_to_sync_master;
+	bool master_is_synced;
 
 	//byte in_data_buffer[4];
 

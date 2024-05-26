@@ -56,6 +56,7 @@ private:
 
 	byte get_max_level();
 	byte get_second_level();
+	bool has_draw_max_level();
 	byte send_current_levels();
 
 	byte get_winner_id(byte data);
@@ -66,7 +67,7 @@ private:
 	void log_traffic(byte id, byte b);
 
 	std::vector<gb*> v_gb;
-	byte in_data_buffer[4] = { 0,0,0,0 };;
+	byte in_data_buffer[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	int master_id; 
 	ingame_state current_state; 
 };

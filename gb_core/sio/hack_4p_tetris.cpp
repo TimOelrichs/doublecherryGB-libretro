@@ -21,6 +21,9 @@
 //-------------------------------------------------
 
 #include "hack_4p_tetris.hpp"
+#include "../../libretro/libretro.h"
+#include <string>
+#include <sstream>
 #include <vector>
 #include <queue>
 #include <ctime>
@@ -28,6 +31,9 @@
 #include <fstream>
 
 extern bool logging_allowed; 
+extern int emulated_gbs;
+extern retro_environment_t environ_cb;
+extern unsigned libretro_msg_interface_version;
 
 hack_4p_tetris::hack_4p_tetris(std::vector<gb*> g_gb) {
 
@@ -38,7 +44,7 @@ hack_4p_tetris::hack_4p_tetris(std::vector<gb*> g_gb) {
 	seri_occer = 4096 * 1024 * 4;
 	transfer_speed = 4096 * 1024 / 16;
 
-	for (size_t i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		players_state[i] = IS_ALIVE;
 		//cpu* cpu = v_gb[i]->get_cpu();
@@ -57,7 +63,7 @@ hack_4p_tetris::hack_4p_tetris(std::vector<gb*> g_gb) {
 
 void hack_4p_tetris::clear_data_for_next_round()
 {
-	for (size_t i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		players_state[i] = IS_ALIVE;
 		//cpu* cpu = v_gb[i]->get_cpu();
@@ -82,45 +88,92 @@ void hack_4p_tetris::reset()
 	clear_data_for_next_round();
 	send_data_vec = std::vector<byte>();
 	init_send_data_vec();
+
+	for (int i = 0; i < 16; i++)
+	{
+		players_state[i] = IS_ALIVE;
+	
+		lines_to_send[i] = 0;
+		next_bytes_to_send[i] = 0;
+		win_counter[i] = 0;
+	}
+}
+
+void hack_4p_tetris::hard_reset() {
+
+	for (size_t i = 0; i < emulated_gbs; i++)
+	{
+		v_gb[i]->reset();
+	}
+	tetris_state = TITLE_SCREEN;
+
+	seri_occer = 4096 * 1024 * 4;
+	transfer_speed = 4096 * 1024 / 16;
+
+	for (int i = 0; i < 16; i++)
+	{
+		players_state[i] = IS_ALIVE;
+
+		lines_to_send[i] = 0;
+		next_bytes_to_send[i] = 0;
+		win_counter[i] = 0;
+	}
+
+	for (size_t i = 0; i < emulated_gbs; i++)
+	{
+		players_state[i] = IS_ALIVE;
+		//cpu* cpu = v_gb[i]->get_cpu();
+	}
+
+	init_send_data_vec();
+
+	tetris_state = TITLE_SCREEN;
+
+	current_max_height = 0;
+	lines_from_player_id = 0;
+	process_counter = 0;
+
+
+
 }
 
 void hack_4p_tetris::init_send_data_vec() {
 
-	//send_data_vec.emplace_back(0x29);   //start connection
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x1c);   //music a is selected 
-	send_data_vec.emplace_back(0x50);   //confirm music selection
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x0);    //height 0 is selected
-	send_data_vec.emplace_back(0x60);   //confirm height selection
-	send_data_vec.emplace_back(0x29);   //start sending height blocks
+	//send_data_vec.push_back(0x29);   //start connection
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x1c);   //music a is selected 
+	send_data_vec.push_back(0x50);   //confirm music selection
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x0);    //height 0 is selected
+	send_data_vec.push_back(0x60);   //confirm height selection
+	send_data_vec.push_back(0x29);   //start sending height blocks
 }
 
 void hack_4p_tetris::log_traffic(byte id, byte b)
@@ -152,7 +205,7 @@ bool hack_4p_tetris::is_ready_to_process() {
 
 bool hack_4p_tetris::all_IE_are_handled() 
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		if ((v_gb[i]->get_regs()->IF & v_gb[i]->get_regs()->IE & INT_SERIAL)) return false;
 	}
@@ -277,13 +330,17 @@ void hack_4p_tetris::process() {
 		if (++process_counter < 154 * 60 * 5) return;
 		process_counter = 0;
 	
+		if (winner_winner_chicken_dinner()) {
+			hard_reset();
+			break; 
+		}
 		// would be better to handle actually answers
-		send_data_vec.emplace_back(0x60);   
-		send_data_vec.emplace_back(0x02);   
-		send_data_vec.emplace_back(0x02);   
-		send_data_vec.emplace_back(0x02);
-		send_data_vec.emplace_back(0x79);    
-		//send_data_vec.emplace_back(0x29);   //start sending height blocks
+		send_data_vec.push_back(0x60);   
+		send_data_vec.push_back(0x02);   
+		send_data_vec.push_back(0x02);   
+		send_data_vec.push_back(0x02);
+		send_data_vec.push_back(0x79);    
+		//send_data_vec.push_back(0x29);   //start sending height blocks
 
 		clear_data_for_next_round();
 		tetris_state = START_NEXT;
@@ -336,9 +393,9 @@ void hack_4p_tetris::generate_height_blocks()
 	//for now create just empty blocks
 	for (int i = 0; i < 100; i++)
 	{
-		out_height_blocks.emplace_back(0x2f); // 0x2f empty block
+		out_height_blocks.push_back(0x2f); // 0x2f empty block
 	}
-	out_height_blocks.emplace_back(0x29); // start sending fallingblocks
+	out_height_blocks.push_back(0x29); // start sending fallingblocks
 };
 
 void hack_4p_tetris::generate_falling_blocks()
@@ -349,17 +406,17 @@ void hack_4p_tetris::generate_falling_blocks()
 	for (int i = 0; i < 256; ++i) 
 	{
 		int randomIndex = std::rand() % size_of_choice;
-		out_falling_blocks.emplace_back(falling_block_choice[randomIndex]);
+		out_falling_blocks.push_back(falling_block_choice[randomIndex]);
 	}
-	out_falling_blocks.emplace_back(0x30);    //finished sending blocks
-	out_falling_blocks.emplace_back(0x00);
-	out_falling_blocks.emplace_back(0x02);
-	out_falling_blocks.emplace_back(0x02);
-	out_falling_blocks.emplace_back(0x20);   //start in_game
-	out_falling_blocks.emplace_back(0x0);
-	out_falling_blocks.emplace_back(0x0);
-	out_falling_blocks.emplace_back(0x0);
-	out_falling_blocks.emplace_back(0x0);
+	out_falling_blocks.push_back(0x30);    //finished sending blocks
+	out_falling_blocks.push_back(0x00);
+	out_falling_blocks.push_back(0x02);
+	out_falling_blocks.push_back(0x02);
+	out_falling_blocks.push_back(0x20);   //start in_game
+	out_falling_blocks.push_back(0x0);
+	out_falling_blocks.push_back(0x0);
+	out_falling_blocks.push_back(0x0);
+	out_falling_blocks.push_back(0x0);
 	
 };
 
@@ -367,7 +424,7 @@ void hack_4p_tetris::generate_falling_blocks()
 /*
 void hack_4p_tetris::get_all_SC_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		byte data = v_gb[i]->get_regs()->SC;
 		in_data_buffer[i] = data;
@@ -376,7 +433,7 @@ void hack_4p_tetris::get_all_SC_reg_data()
 
 void hack_4p_tetris::get_all_SB_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		byte data = v_gb[i]->get_regs()->SB;
 		in_data_buffer[i] = data;
@@ -385,7 +442,7 @@ void hack_4p_tetris::get_all_SB_reg_data()
 
 bool hack_4p_tetris::is_expected_data(byte data)
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		if (in_data_buffer[i] != data) return false; 
 	}
@@ -413,19 +470,32 @@ void hack_4p_tetris::send_byte(byte which, byte dat)
 
 void hack_4p_tetris::broadcast_byte(byte dat)
 {
-	for (byte i = 0x00; i < (byte)v_gb.size(); i++)
+	for (byte i = 0x00; i < (byte)emulated_gbs; i++)
 	{
 		send_byte(i, dat);
 	}
 }
 */
 
+int hack_4p_tetris::player_alive_count() {
+	int alive_count = 0;
+
+	for (int i = 0; i < emulated_gbs; i++)
+	{
+		if (players_state[i] == IS_ALIVE || players_state[i] == IS_SENDING_LINES)
+		{
+			alive_count++;
+		}
+	}
+	return alive_count; 
+}
+
 int hack_4p_tetris::check_winner_id()
 {
 	int alive_count = 0;
 	int last_alive_id = 0;
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		if (players_state[i] == IS_ALIVE)
 		{
@@ -439,11 +509,20 @@ int hack_4p_tetris::check_winner_id()
 	return 0;
 }
 
+bool hack_4p_tetris::winner_winner_chicken_dinner() {
+
+	for (int i = 0; i < emulated_gbs; i++)
+	{
+		if (win_counter[i] == 4) return true; 
+	}
+	return false; 
+}
+
 void hack_4p_tetris::update_ingame_states()
 {
 	current_max_height = 0;
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		switch (players_state[i])
 		{
@@ -453,7 +532,34 @@ void hack_4p_tetris::update_ingame_states()
 			if (in_data_buffer[i] == 0x34)
 			{
 				players_state[i] = IS_LOOSER; // ;D need new states
+				win_counter[i]++;
 				next_bytes_to_send[i] = 0x43;
+
+				std::ostringstream oss;
+				oss << (i + 1);
+				std::string msg_str = "congrats to player " + oss.str() + "!";
+
+				if (libretro_msg_interface_version >= 1)
+				{	
+					struct retro_message_ext msg = {
+					   msg_str.data(),
+					   1000,
+					   1,
+					   RETRO_LOG_INFO,
+					   RETRO_MESSAGE_TARGET_OSD,
+					   RETRO_MESSAGE_TYPE_NOTIFICATION,
+					   -1
+					};
+					environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &msg);
+				}
+				else
+				{
+					struct retro_message msg = {
+						msg_str.data(),
+					   120
+					};
+					environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+				}
 			}
 			else {
 				next_bytes_to_send[i] = 0x34;
@@ -492,6 +598,38 @@ void hack_4p_tetris::update_ingame_states()
 			{
 				players_state[i] = IS_KO;
 				next_bytes_to_send[i] = 0xaa; // send ko for draw, cause only winning counts
+
+				std::ostringstream oss;
+				oss << (i + 1);
+				std::string msg_str = "Player " + oss.str() + " KO! ";
+				oss.str("");
+				oss << player_alive_count();
+				msg_str = msg_str + oss.str() + " players left";
+
+
+				if (libretro_msg_interface_version >= 1)
+				{
+					
+					struct retro_message_ext msg = {
+					   msg_str.data(),
+					   1000,
+					   1,
+					   RETRO_LOG_INFO,
+					   RETRO_MESSAGE_TARGET_OSD,
+					   RETRO_MESSAGE_TYPE_NOTIFICATION,
+					   -1
+					};
+					environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &msg);
+				}
+				else
+				{
+					struct retro_message msg = {
+						msg_str.data(),
+					   120
+					};
+					environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+				}
+
 				break;
 			}
 
@@ -509,7 +647,7 @@ void hack_4p_tetris::update_ingame_states()
 					hack_4p_tetris_lines_packet lines;
 					lines.lines = in_data_buffer[i];
 					lines.from = i;
-					lines_vec.emplace_back(lines);
+					lines_vec.push_back(lines);
 				}
 				break; 
 			}
@@ -529,7 +667,7 @@ void hack_4p_tetris::update_ingame_states()
 
 bool hack_4p_tetris::all_are_in_winnerscreen() {
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		if (players_state[i] != IS_IN_WINNER_SCREEN) return false;
 	}
@@ -550,15 +688,42 @@ void hack_4p_tetris::send_ingame_bytes()
 		hack_4p_tetris_lines_packet next = lines_vec.front();
 		lines_vec.erase(lines_vec.begin());
 
-		for (int i = 0; i < v_gb.size(); i++)
+		//choose random players id to get lines
+		int players_alive = player_alive_count();
+		int quarter_player_alive = (int)(players_alive / 4) ? (int)(players_alive / 4) : 1;
+		int players_got_lines = 0;
+		bool done = players_got_lines >= quarter_player_alive;
+		int max_trys = emulated_gbs * 4;
+		int current_try = 0;
+
+		std::srand(std::time(0));
+		while (!done) {
+
+				if (current_try++ >= max_trys) done = true;
+				
+				int randomIndex = std::rand() % emulated_gbs;
+		
+				if (players_state[randomIndex] == IS_IN_WINNER_SCREEN)  continue;
+				if (randomIndex == next.from) continue;
+				if (next_bytes_to_send[randomIndex]) continue;
+
+				next_bytes_to_send[randomIndex] = next.lines;
+				done = ++players_got_lines >= quarter_player_alive;
+				
+		}
+	
+		/*
+		for (int i = 0; i < emulated_gbs; i++)
 		{
-			if (players_state[i] == IS_IN_WINNER_SCREEN) continue;
+			if (!((players_state[i] == IS_ALIVE) || (players_state[i] == IS_SENDING_LINES)))  continue;
 			if (next.from == i) continue;
 			if (!next_bytes_to_send[i]) next_bytes_to_send[i] = next.lines; // ?? do lines get lost??
-		}
+		}*/
+
+
 	}
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (int i = 0; i < emulated_gbs; i++)
 	{
 		if (!next_bytes_to_send[i]) next_bytes_to_send[i] = current_max_height;
 		if (players_state[i] != IS_IN_WINNER_SCREEN) 	send_byte(i, next_bytes_to_send[i]);
@@ -611,19 +776,19 @@ void hack_4p_tetris::save_state_mem(void* buf)
 
 	size = out_height_blocks.size();
 	s_VAR(size);
-	s_ARRAY(out_height_blocks.data());
+	if(size)s_ARRAY(out_height_blocks.data());
 
 	size = out_falling_blocks.size();
 	s_VAR(size);
-	s_ARRAY(out_falling_blocks.data());
+	if (size)s_ARRAY(out_falling_blocks.data());
 	
 	size = send_data_vec.size();
 	s_VAR(size);
-	s_ARRAY(send_data_vec.data());
+	if (size)s_ARRAY(send_data_vec.data());
 
 	size = lines_vec.size();
 	s_VAR(size);
-	s_ARRAY(lines_vec.data());
+	if (size)s_ARRAY(lines_vec.data());
 
 	
 }
@@ -635,40 +800,46 @@ void hack_4p_tetris::restore_state_mem(void* buf)
 
 	int size;
 	byte* tmp;
-
-	s_VAR(size);
-	tmp = new byte[size];
-	s_ARRAY(tmp);
 	out_height_blocks = std::vector<byte>();
-	for (int i = 0; i < size; i++)
-		out_height_blocks.emplace_back(tmp[i]);
-	
-
-	s_VAR(size);
-	tmp = new byte[size];
-	s_ARRAY(tmp);
 	out_falling_blocks = std::vector<byte>();
-	
-	for (int i = 0; i < size; i++)
-		out_falling_blocks.emplace_back(tmp[i]);
-
-
-	s_VAR(size);
-	tmp = new byte[size];
-	s_ARRAY(tmp);
 	send_data_vec = std::vector<byte>();
-
-	for (int i = 0; i < size; i++)
-		send_data_vec.emplace_back(tmp[i]);
-
-	s_VAR(size);
-	hack_4p_tetris_lines_packet* lp = new hack_4p_tetris_lines_packet[size];
-	s_ARRAY(lp);
 	lines_vec = std::vector<hack_4p_tetris_lines_packet>();
 
-	for (int i = 0; i < size; i++)
-		lines_vec.emplace_back(lp[i]);
+	s_VAR(size);
+	if (size) {
+		tmp = new byte[size];
+		s_ARRAY(tmp);
 
+		for (int i = 0; i < size; i++)
+			out_height_blocks.push_back(tmp[i]);
+	}
+	
+	s_VAR(size);
+	if (size) {
+		tmp = new byte[size];
+		s_ARRAY(tmp);
+		for (int i = 0; i < size; i++)
+			out_falling_blocks.push_back(tmp[i]);
+	}
+
+	s_VAR(size);
+	if (size) {
+		tmp = new byte[size];
+		s_ARRAY(tmp);
+
+		for (int i = 0; i < size; i++)
+			send_data_vec.push_back(tmp[i]);
+	}
+
+
+	s_VAR(size);
+	if (size) {
+		hack_4p_tetris_lines_packet* lp = new hack_4p_tetris_lines_packet[size];
+		s_ARRAY(lp);
+
+		for (int i = 0; i < size; i++)
+			lines_vec.push_back(lp[i]);
+	}
 	
 }
 

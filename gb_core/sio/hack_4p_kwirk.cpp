@@ -235,9 +235,22 @@ byte hack_4p_kwirk::get_second_level()
 	return second; 
 }
 
+bool hack_4p_kwirk::has_draw_max_level()
+{
+	byte max = get_max_level();
+	byte count = 0;
+	for (int i = 0; i < v_gb.size(); i++)
+	{
+		if (in_data_buffer[i] == max) count++;
+		if (count >= 2) return true; 
+	}
+	return false;
+}
+
 byte hack_4p_kwirk::send_current_levels() {
 	
 	byte max = get_max_level();
+	bool draw = has_draw_max_level(); 
 	byte second = get_second_level();
 	byte my_level = 0;
 
@@ -247,10 +260,18 @@ byte hack_4p_kwirk::send_current_levels() {
 
 		my_level = in_data_buffer[i];
 		if (my_level < max) v_gb[i]->seri_send(max);
-		else v_gb[i]->seri_send(second);
+		else {
+			if(draw)
+				v_gb[i]->seri_send(max);
+			else
+				v_gb[i]->seri_send(second);
+		}
 	}
 	
-	return in_data_buffer[master_id] < max ? max : second;
+	my_level = in_data_buffer[master_id];
+	if (my_level < max) return max;
+	return draw ? max : second; 
+
 
 }
 
@@ -300,7 +321,7 @@ void hack_4p_kwirk::reset()
 	master_id = -1;
 	current_state = TITLE_SCREEN;
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < 16; i++)
 	{
 		in_data_buffer[i] = 0;
 	}

@@ -118,7 +118,25 @@ libretro-build-windows-i686:
   extends:
     - .libretro-windows-i686-mingw-make-default
     - .core-defs
-    
+
+# Windows msvc10 64-bit
+#libretro-build-windows-msvc10-x64:
+#  extends:
+#    - .libretro-windows-x64-msvc10-msys2-make-default
+#    - .core-defs
+
+# Windows msvc10 32-bit
+#libretro-build-windows-msvc10-i686:
+#  extends:
+#    - .libretro-windows-i686-msvc10-msys2-make-default
+#    - .core-defs
+
+# Windows msvc05 32-bit
+#libretro-build-windows-msvc05-i686:
+#  extends:
+#    - .libretro-windows-i686-msvc05-msys2-make-default
+#    - .core-defs
+
 # Linux 64-bit
 libretro-build-linux-x64:
   extends:
@@ -131,6 +149,17 @@ libretro-build-linux-i686:
     - .libretro-linux-i686-make-default
     - .core-defs
 
+# MacOS 64-bit
+#libretro-build-osx-x64:
+#  extends:
+#    - .libretro-osx-x64-make-10-7
+#    - .core-defs
+
+# MacOS ARM 64-bit
+#libretro-build-osx-arm64:
+#  extends:
+#    - .libretro-osx-arm64-make-default
+#    - .core-defs
 
 ################################### CELLULAR #################################
 # Android ARMv7a
@@ -157,6 +186,23 @@ android-x86:
     - .libretro-android-jni-x86
     - .core-defs
 
+# iOS
+libretro-build-ios-arm64:
+  extends:
+    - .libretro-ios-arm64-make-default
+    - .core-defs
+
+# iOS (armv7) [iOS 9 and up]
+libretro-build-ios9:
+  extends:
+    - .libretro-ios9-make-default
+    - .core-defs
+
+# tvOS
+libretro-build-tvos-arm64:
+  extends:
+    - .libretro-tvos-arm64-make-default
+    - .core-defs
 
 ################################### CONSOLES #################################
 # PlayStation 2

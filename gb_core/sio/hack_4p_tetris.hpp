@@ -111,7 +111,7 @@ private:
 
 	void generate_height_blocks();
 	void generate_falling_blocks();
-
+	void hard_reset();
 	/*
 	void get_all_SC_reg_data();
 	void get_all_SB_reg_data();
@@ -125,8 +125,10 @@ private:
 	void send_ingame_bytes();
 	void handle_ingame_data();
 	void update_ingame_states();
+	int player_alive_count(); 
 	int check_winner_id();
 	bool all_are_in_winnerscreen();
+	bool winner_winner_chicken_dinner();
 
 	/*
 	std::vector<gb*> v_gb;
@@ -156,11 +158,12 @@ private:
 	};
 
 	hack_4p_tetris_state tetris_state;
-	hack_4p_tetris_player_state players_state[4];
+	hack_4p_tetris_player_state players_state[16];
 	byte current_max_height;
 	int lines_from_player_id;
-	byte lines_to_send[4] = { 0,0,0,0 };
-	byte next_bytes_to_send[4] = { 0,0,0,0 };
+	byte lines_to_send[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+	byte next_bytes_to_send[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+	byte win_counter[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 	int process_counter;
 	//int process_occer;
 
