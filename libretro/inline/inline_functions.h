@@ -60,6 +60,12 @@ void auto_config_4p_hack()
 void auto_config_1p_link() {
     if (!cart_name) return;
 
+    if (!strncmp(cart_name, "POKEMON", 7 )) 
+    {
+        v_gb[0]->set_linked_target(new pokebuddy_gen1());
+    }
+
+
     //link barcodeboy
     if (!strcmp(cart_name, "BATTLE SPACE") || 
         !strcmp(cart_name, "MONSTER MAKER") ||

@@ -7,3 +7,4 @@
 #include "barcodeboy.hpp"
 #include "faceball2000_cable.hpp"
 #include "power_antenna.hpp"
+#include "pokebuddy_gen1.hpp"

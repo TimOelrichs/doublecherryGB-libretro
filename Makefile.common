@@ -24,3 +24,4 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/sio/barcodeboy.cpp \
 	$(CORE_DIR)/gb_core/sio/faceball2000_cable.cpp \
 	$(CORE_DIR)/gb_core/sio/power_antenna.cpp \
+	$(CORE_DIR)/gb_core/sio/pokebuddy_gen1.cpp \

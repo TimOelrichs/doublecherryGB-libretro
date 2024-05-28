@@ -880,7 +880,7 @@ byte cpu::seri_send(byte dat)
 void cpu::log_link_traffic(byte a, byte b)
 {
 	
-	if (logging_allowed)
+	//if (logging_allowed)
 	{
 		std::string filePath = "./2p_link_log.txt";
 		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
@@ -1049,6 +1049,7 @@ void cpu::exec(int clocks)
 				//gb* g = ref_gb->get_target();
 				//byte ret=g->get_cpu()->seri_send(ref_gb->get_regs()->SB);
 				byte ret = ref_gb->get_linked_target()->seri_send(ref_gb->get_regs()->SB);
+				log_link_traffic(ref_gb->get_regs()->SB, ret);
 				//byte ret = ref_gb->get_target()->send_byte(ref_gb->get_regs()->SB);
 				ref_gb->get_regs()->SB=ret;
 				ref_gb->get_regs()->SC&=3;
