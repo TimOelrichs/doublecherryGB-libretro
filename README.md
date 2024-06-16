@@ -55,13 +55,16 @@ To emulate up to 16 units, use the core options in your frontend.
 
 DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
 
-- If you haven't owned a Mew it will trade you a Lv 5 Mew. 
+- If you don't own a Mew it will trade you a Lv 5 Mew. 
 - If you already own a Mew it will give you weekly custom Distribution Event. 
 
 You can uses the Numkeys on your keyboard or the SELECT Button to change Pokemon you want to get. 
 
 Weekly Gen1 Pokemon Distribution List
 https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
+
+![](/screenshots/gotMew.png)
+
 
 ### Link Cable over network
 #### Easy gen1/gen2 pokemon online trading
