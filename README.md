@@ -21,6 +21,7 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
 ### Features
 
+- Builtin Mew Maschine and weekly GEN1 Pokemon Distributions 
 - [Link Cable over network](#Link-Cable-over-network), easy Pokemon Gen1 and Gen2 online trading via Lobby (Retroarch 1.17 needed) 
 - GAMEBOY 4 PLAYER ADAPTER (DMG-07) emulation (F1-Race, Wave Race, Yoshi's Cookie...) [compatibility list](https://peppermint-theater-276.notion.site/4-player-adapter-compatibility-8d33abe17f1d4bf5a361b368af6622b7)
 - up to 16-Player Faceball 2000 emulation (1-15 without bugfix-patch, 16 players needs [patched](https://github.com/Zarithya/Faceball2000DX) rom)
@@ -49,6 +50,18 @@ You can download the core via RetroArch Online-Updater on Windows, Linux and And
 To emulate up to 16 units, use the core options in your frontend.  
 
 <br>
+
+### Builtin Mew Maschine and weekly GEN1 Pokemon Distributions 
+
+DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
+
+- If you haven't owned a Mew it will trade you a Lv 5 Mew. 
+- If you already own a Mew it will give you weekly custom Distribution Event. 
+
+You can uses the Numkeys on your keyboard or the SELECT Button to change Pokemon you want to get. 
+
+Weekly Gen1 Pokemon Distribution List
+https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
 
 ### Link Cable over network
 #### Easy gen1/gen2 pokemon online trading
