@@ -46,7 +46,8 @@ Netplay is working. Make sure to have all the same amount of emulated gameboys i
 
 ### How to
 
-You can download the core via RetroArch Online-Updater on Windows, Linux and Android.
+You can download the core via RetroArch Online-Updater on Windows, Linux, Android and IOS.
+For Android make sure to use the retroarch APK from retroarch.com and not the GooglePlay Version.
 To emulate up to 16 units, use the core options in your frontend.  
 
 <br>
