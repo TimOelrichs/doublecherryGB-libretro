@@ -24,8 +24,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Pokemon Stadium RBY Starters Week");
 
 			int len = 3;
-			int dex_no[len] = { 0,3,6 };
-			int levels[len] = { 5,5,5 };
+			int dex_no[] = { 0,3,6 };
+			int levels[] = { 5,5,5 };
 
 			event_pokemon_msg_str = "";
 
@@ -55,8 +55,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Stadium Fighters Week");
 
 			int len = 2;
-			int dex_no[len] = { 105,106 };
-			int levels[len] = { 20,20 };
+			int dex_no[] = { 105,106 };
+			int levels[] = { 20,20 };
 
 			event_pokemon_msg_str = "";
 
@@ -84,8 +84,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Stadium EEVEE WeekK");
 
 			int len = 1;
-			int dex_no[len] = { 132 };
-			int levels[len] = { 25 };
+			int dex_no[] = { 132 };
+			int levels[] = { 25 };
 
 			event_pokemon_msg_str = "";
 
@@ -113,8 +113,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Stadium Water WEEK");
 
 			int len = 2;
-			int dex_no[len] = { 137,139 };
-			int levels[len] = { 20, 20 };
+			int dex_no[] = { 137,139 };
+			int levels[] = { 20, 20 };
 
 			event_pokemon_msg_str = "";
 
@@ -138,8 +138,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Stadium AMNESIA PSYDUCK Days");
 
 			int len = 1;
-			int dex_no[len] = { 53 };
-			int levels[len] = { 15 };
+			int dex_no[] = { 53 };
+			int levels[] = { 15 };
 
 			event_pokemon_msg_str = "";
 
@@ -178,8 +178,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("FIGHT TYPE WEEK");
 
 			int len = 5;
-			int dex_no[len] = { 56,61,65,66,67};
-			int levels[len] = { 25,40,5,28,40 };
+			int dex_no[] = { 56,61,65,66,67};
+			int levels[] = { 25,40,5,28,40 };
 
 			event_pokemon_msg_str = "";
 
@@ -199,8 +199,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Valentin's Weeks");
 
 			int len = 2;
-			int dex_no[len] = { 28,31 };
-			int levels[len] = { 5, 5 };
+			int dex_no[] = { 28,31 };
+			int levels[] = { 5, 5 };
 
 			event_pokemon_msg_str = "";
 
@@ -231,8 +231,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Legendary Birds Week");
 
 			int len = 3;
-			int dex_no[len] = { 143, 144, 145 };
-			int levels[len] = { 50, 50, 50 };
+			int dex_no[] = { 143, 144, 145 };
+			int levels[] = { 50, 50, 50 };
 
 			event_pokemon_msg_str = "";
 
@@ -260,8 +260,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Rare Pokemon Week");
 
 			int len = 3;
-			int dex_no[len] = { 142, 132, 136 };
-			int levels[len] = { 5, 5, 5 };
+			int dex_no[] = { 142, 132, 136 };
+			int levels[] = { 5, 5, 5 };
 
 			event_pokemon_msg_str = "";
 
@@ -304,8 +304,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Bug Type Week");
 
 			int len = 2;
-			int dex_no[len] = { 122, 126};
-			int levels[len] = { 5, 5};
+			int dex_no[] = { 122, 126};
+			int levels[] = { 5, 5};
 
 			event_pokemon_msg_str = "";
 
@@ -337,8 +337,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("RED Exclusives Week");
 
 			int len = 5;
-			int dex_no[len] = { 22,42,55,57,124};
-			int levels[len] = { 5, 5, 5,5,30 };
+			int dex_no[] = { 22,42,55,57,124};
+			int levels[] = { 5, 5, 5,5,30 };
 
 			event_pokemon_msg_str = "";
 
@@ -365,8 +365,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("BLUE Exclusives Week");
 
 			int len = 5;
-			int dex_no[len] = { 26,36,51,68,125 };
-			int levels[len] = { 5, 5, 5,5,30 };
+			int dex_no[] = { 26,36,51,68,125 };
+			int levels[] = { 5, 5, 5,5,30 };
 
 			event_pokemon_msg_str = "";
 
@@ -393,8 +393,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Safari Week");
 
 			int len = 5;
-			int dex_no[len] = { 114,127,112,29,32 };
-			int levels[len] = { 30, 5, 23,31,31 };
+			int dex_no[] = { 114,127,112,29,32 };
+			int levels[] = { 30, 5, 23,31,31 };
 
 			event_pokemon_msg_str = "";
 
@@ -424,8 +424,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Psychic Jynx Days");
 
 			int len = 1;
-			int dex_no[len] = { 123 };
-			int levels[len] = { 5 };
+			int dex_no[] = { 123 };
+			int levels[] = { 5 };
 
 			event_pokemon_msg_str = "";
 
@@ -457,8 +457,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Brock Week");
 
 			int len = 2;
-			int dex_no[len] = { 73, 93 };
-			int levels[len] = { 12, 14 };
+			int dex_no[] = { 73, 93 };
+			int levels[] = { 12, 14 };
 
 			event_pokemon_msg_str = "";
 
@@ -485,8 +485,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Misty Week");
 
 			int len = 2;
-			int dex_no[len] = { 119, 120 };
-			int levels[len] = { 18, 21 };
+			int dex_no[] = { 119, 120 };
+			int levels[] = { 18, 21 };
 
 			event_pokemon_msg_str = "";
 
@@ -513,8 +513,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Lt. Surge Week");
 
 			int len = 3;
-			int dex_no[len] = { 99, 24, 25 };
-			int levels[len] = { 21, 18, 24 };
+			int dex_no[] = { 99, 24, 25 };
+			int levels[] = { 21, 18, 24 };
 
 			event_pokemon_msg_str = "";
 
@@ -541,8 +541,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Erika Week");
 
 			int len = 3;
-			int dex_no[len] = { 70,113,44 };
-			int levels[len] = { 29,24,29 };
+			int dex_no[] = { 70,113,44 };
+			int levels[] = { 29,24,29 };
 
 			event_pokemon_msg_str = "";
 
@@ -564,8 +564,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Blizzard Lapras Days");
 
 			int len = 1;
-			int dex_no[len] = { 130 };
-			int levels[len] = { 5 };
+			int dex_no[] = { 130 };
+			int levels[] = { 5 };
 
 			event_pokemon_msg_str = "";
 
@@ -598,8 +598,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Koga Week");
 
 			int len = 4;
-			int dex_no[len] = { 108,108,88,109 };
-			int levels[len] = { 37,37,39,43};
+			int dex_no[] = { 108,108,88,109 };
+			int levels[] = { 37,37,39,43};
 
 			event_pokemon_msg_str = "";
 
@@ -626,8 +626,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Sabrina Week");
 
 			int len = 4;
-			int dex_no[len] = { 63,111,48,64 };
-			int levels[len] = { 38,37,38,43};
+			int dex_no[] = { 63,111,48,64 };
+			int levels[] = { 38,37,38,43};
 
 			event_pokemon_msg_str = "";
 
@@ -654,8 +654,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Blaine Week");
 
 			int len = 4;
-			int dex_no[len] = { 57,76,77,58 };
-			int levels[len] = { 42,40,42,47 };
+			int dex_no[] = { 57,76,77,58 };
+			int levels[] = { 42,40,42,47 };
 
 			event_pokemon_msg_str = "";
 
@@ -682,8 +682,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Giovanni Week");
 
 			int len = 4;
-			int dex_no[len] = { 57,76,77,58 };
-			int levels[len] = { 42,40,42,47 };
+			int dex_no[] = { 57,76,77,58 };
+			int levels[] = { 42,40,42,47 };
 
 			event_pokemon_msg_str = "";
 
@@ -706,8 +706,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Psychic Starmie Days");
 
 			int len = 1;
-			int dex_no[len] = { 120 };
-			int levels[len] = { 30 };
+			int dex_no[] = { 120 };
+			int levels[] = { 30 };
 
 			event_pokemon_msg_str = "";
 
@@ -739,8 +739,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Lorelei Week");
 
 			int len = 5;
-			int dex_no[len] = { 86,90,79,123,130 };
-			int levels[len] = { 54,43,54,56,56};
+			int dex_no[] = { 86,90,79,123,130 };
+			int levels[] = { 54,43,54,56,56};
 
 			event_pokemon_msg_str = "";
 
@@ -768,8 +768,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Bruno Week");
 
 			int len = 5;
-			int dex_no[len] = { 94,106,105,94,67 };
-			int levels[len] = { 53,55,55,56,58};
+			int dex_no[] = { 94,106,105,94,67 };
+			int levels[] = { 53,55,55,56,58};
 
 			event_pokemon_msg_str = "";
 
@@ -796,8 +796,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Agatha Week");
 
 			int len = 5;
-			int dex_no[len] = { 93,41,92,23,93 };
-			int levels[len] = { 56,56,55,58,60 };
+			int dex_no[] = { 93,41,92,23,93 };
+			int levels[] = { 56,56,55,58,60 };
 
 			event_pokemon_msg_str = "";
 
@@ -824,8 +824,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Team Lance Week");
 
 			int len = 5;
-			int dex_no[len] = { 129,147,147,141,148 };
-			int levels[len] = { 58,56,56,60,62 };
+			int dex_no[] = { 129,147,147,141,148 };
+			int levels[] = { 58,56,56,60,62 };
 
 			event_pokemon_msg_str = "";
 
@@ -848,8 +848,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Fireblast Hyper Beam Ninetales Days");
 
 			int len = 1;
-			int dex_no[len] = { 37 };
-			int levels[len] = { 40 };
+			int dex_no[] = { 37 };
+			int levels[] = { 40 };
 
 			event_pokemon_msg_str = "";
 
@@ -882,8 +882,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("University Magikarp Week");
 
 			int len = 1;
-			int dex_no[len] = { 128 };
-			int levels[len] = { 15 };
+			int dex_no[] = { 128 };
+			int levels[] = { 15 };
 
 			event_pokemon_msg_str = "";
 
@@ -913,8 +913,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Tropical Promotion to Summer Festival 2");
 
 			int len = 3;
-			int dex_no[len] = { 53,71,130 };
-			int levels[len] = { 5,5,5};
+			int dex_no[] = { 53,71,130 };
+			int levels[] = { 5,5,5};
 
 			event_pokemon_msg_str = "";
 
@@ -946,8 +946,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("ICE IN THE SUNSHINE WEEK");
 
 			int len = 4;
-			int dex_no[len] = { 86,90,129,6 };
-			int levels[len] = { 34,25,20,5};
+			int dex_no[] = { 86,90,129,6 };
+			int levels[] = { 34,25,20,5};
 
 			event_pokemon_msg_str = "";
 
@@ -973,8 +973,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("GRASS TYPE WEEK");
 
 			int len = 4;
-			int dex_no[len] = { 113,2,44,102};
-			int levels[len] = { 5,32,32,32};
+			int dex_no[] = { 113,2,44,102};
+			int levels[] = { 5,32,32,32};
 
 			event_pokemon_msg_str = "";
 
@@ -991,8 +991,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Earthquake Rhydon Days");
 
 			int len = 1;
-			int dex_no[len] = { 111 };
-			int levels[len] = { 42 };
+			int dex_no[] = { 111 };
+			int levels[] = { 42 };
 
 			event_pokemon_msg_str = "";
 
@@ -1021,8 +1021,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Pokemon Stamp Week");
 
 			int len = 2;
-			int dex_no[len] = { 21,77};
-			int levels[len] = { 25,40 };
+			int dex_no[] = { 21,77};
+			int levels[] = { 25,40 };
 
 			event_pokemon_msg_str = "";
 
@@ -1053,8 +1053,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("EEVEE EVOLUTION WEEK");
 
 			int len = 3;
-			int dex_no[len] = { 133,134,135 };
-			int levels[len] = { 20,20,20 };
+			int dex_no[] = { 133,134,135 };
+			int levels[] = { 20,20,20 };
 
 			event_pokemon_msg_str = "";
 
@@ -1080,8 +1080,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("ROCKSTAR WEEK");
 
 			int len = 3;
-			int dex_no[len] = { 138,140,75 };
-			int levels[len] = { 40,40,40 };
+			int dex_no[] = { 138,140,75 };
+			int levels[] = { 40,40,40 };
 
 			event_pokemon_msg_str = "";
 
@@ -1101,8 +1101,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("PSYCH Week");
 
 			int len = 5;
-			int dex_no[len] = { 62,63,64,95,96 };
-			int levels[len] = { 5,15,40,5,5};
+			int dex_no[] = { 62,63,64,95,96 };
+			int levels[] = { 5,15,40,5,5};
 
 			event_pokemon_msg_str = "";
 
@@ -1154,8 +1154,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("YELLOW MISSING WEEK");
 
 			int len = 6;
-			int dex_no[len] = { 123,124,125,25,51,12 };
-			int levels[len] = { 30,30,30,30,5,5,5};
+			int dex_no[] = { 123,124,125,25,51,12 };
+			int levels[] = { 30,30,30,30,5,5,5};
 
 			event_pokemon_msg_str = "";
 
@@ -1175,8 +1175,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("WATER TYPE WEEK");
 
 			int len = 5;
-			int dex_no[len] = { 6,117,119,130,54 };
-			int levels[len] = { 5,5,5,5,30 };
+			int dex_no[] = { 6,117,119,130,54 };
+			int levels[] = { 5,5,5,5,30 };
 
 			event_pokemon_msg_str = "";
 
@@ -1219,8 +1219,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("NORMAL TYPE WEEK");
 
 			int len = 4;
-			int dex_no[len] = { 51,83,127,142 };
-			int levels[len] = { 5,5,20,20 };
+			int dex_no[] = { 51,83,127,142 };
+			int levels[] = { 5,5,20,20 };
 
 			event_pokemon_msg_str = "";
 
@@ -1261,8 +1261,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("GROUND TYPE WEEK");
 
 			int len = 4;
-			int dex_no[len] = { 110,50,33,30 };
-			int levels[len] = { 5,26,30,30 };
+			int dex_no[] = { 110,50,33,30 };
+			int levels[] = { 5,26,30,30 };
 
 			event_pokemon_msg_str = "";
 
@@ -1282,8 +1282,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("POISON TYPE WEEK");
 
 			int len = 4;
-			int dex_no[len] = { 22,108,0,68 };
-			int levels[len] = { 5,5,5,5};
+			int dex_no[] = { 22,108,0,68 };
+			int levels[] = { 5,5,5,5};
 
 			event_pokemon_msg_str = "";
 
@@ -1331,8 +1331,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("FLYING TYPE WEEK");
 
 			int len = 5;
-			int dex_no[len] = { 17,141,21,11,82 };
-			int levels[len] = { 36,5,2,10,5 };
+			int dex_no[] = { 17,141,21,11,82 };
+			int levels[] = { 36,5,2,10,5 };
 
 			event_pokemon_msg_str = "";
 
@@ -1348,8 +1348,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("HALLOWEEN GHOST SPECIAL");
 
 			int len = 3;
-			int dex_no[len] = { 91,92,93 };
-			int levels[len] = { 5,25,40};
+			int dex_no[] = { 91,92,93 };
+			int levels[] = { 5,25,40};
 
 			event_pokemon_msg_str = "";
 
@@ -1378,8 +1378,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("COZY WEEK");
 
 			int len = 4;
-			int dex_no[len] = { 142,78,79,35 };
-			int levels[len] = { 15,5,37,5};
+			int dex_no[] = { 142,78,79,35 };
+			int levels[] = { 15,5,37,5};
 
 			event_pokemon_msg_str = "";
 
@@ -1399,8 +1399,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("RBY Starters Evolutions WEEK");
 
 			int len = 3;
-			int dex_no[len] = { 2,5,8 };
-			int levels[len] = { 32,36,36 };
+			int dex_no[] = { 2,5,8 };
+			int levels[] = { 32,36,36 };
 
 			event_pokemon_msg_str = "";
 
@@ -1420,8 +1420,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("RED Exclusives Week");
 
 			int len = 5;
-			int dex_no[len] = { 22,42,55,57,124 };
-			int levels[len] = { 5, 5, 5,5,30 };
+			int dex_no[] = { 22,42,55,57,124 };
+			int levels[] = { 5, 5, 5,5,30 };
 
 			event_pokemon_msg_str = "";
 
@@ -1448,8 +1448,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("BLUE Exclusives Week");
 
 			int len = 5;
-			int dex_no[len] = { 26,36,51,68,125 };
-			int levels[len] = { 5, 5, 5,5,30 };
+			int dex_no[] = { 26,36,51,68,125 };
+			int levels[] = { 5, 5, 5,5,30 };
 
 			event_pokemon_msg_str = "";
 
@@ -1471,8 +1471,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("DRAGON DAYS");
 
 			int len = 3;
-			int dex_no[len] = { 146,147,149 };
-			int levels[len] = { 5,30,55 };
+			int dex_no[] = { 146,147,149 };
+			int levels[] = { 5,30,55 };
 
 			event_pokemon_msg_str = "";
 
@@ -1501,8 +1501,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("Legendary Birds Week");
 
 			int len = 3;
-			int dex_no[len] = { 143, 144, 145 };
-			int levels[len] = { 50, 50, 50 };
+			int dex_no[] = { 143, 144, 145 };
+			int levels[] = { 50, 50, 50 };
 
 			event_pokemon_msg_str = "";
 
@@ -1529,8 +1529,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("FIRE TYPE WEEK");
 
 			int len = 5;
-			int dex_no[len] = { 125,58,3,36,76 };
-			int levels[len] = { 30,30,5,5,5};
+			int dex_no[] = { 125,58,3,36,76 };
+			int levels[] = { 30,30,5,5,5};
 
 			event_pokemon_msg_str = "";
 
@@ -1550,8 +1550,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("ELECTRIC TYPE WEEK");
 
 			int len = 3;
-			int dex_no[len] = { 100,81,25 };
-			int levels[len] = { 30,30,30 };
+			int dex_no[] = { 100,81,25 };
+			int levels[] = { 30,30,30 };
 
 			event_pokemon_msg_str = "";
 
@@ -1571,8 +1571,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 			display_message("FAIRY TYPE WEEK");
 
 			int len = 5;
-			int dex_no[len] = { 121,39,35,37,77 };
-			int levels[len] = { 40,40,40,40,40 };
+			int dex_no[] = { 121,39,35,37,77 };
+			int levels[] = { 40,40,40,40,40 };
 
 			event_pokemon_msg_str = "";
 
