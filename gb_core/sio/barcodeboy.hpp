@@ -6,7 +6,7 @@
 #pragma once
 #include "../../libretro/dcgb_hotkey_target.hpp"
 
-class barcodeboy : public link_target, public link_master_device, public dcgb_hotkey_target
+class barcodeboy : public I_link_target, public link_master_device, public I_dcgb_hotkey_target, public I_savestate
 {
 	
 

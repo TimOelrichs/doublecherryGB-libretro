@@ -21,7 +21,7 @@
 //-------------------------------------------------
 
 #pragma once
-class dcgb_hotkey_target {
+class I_dcgb_hotkey_target {
 	
 public:
 	virtual void handle_special_hotkey(int key) = 0;

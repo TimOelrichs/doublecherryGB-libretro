@@ -178,17 +178,26 @@ struct rom_info {
 };
 
 
-class link_target {
+class I_savestate{
+public:
+	void virtual save_state_mem(void* buf) = 0;
+	void virtual restore_state_mem(void* buf) = 0;
+	size_t virtual get_state_size(void) = 0;
+	void virtual serialize(serializer& s) = 0;
+	virtual void reset() = 0;
+};
+
+class I_link_target {
 	friend class gb; 
 
 public:
 	virtual byte seri_send(byte) = 0;	
 	virtual byte get_SB_value() = 0;
 	virtual byte get_SC_value() = 0;
-	virtual void reset() = 0;
+	
 };
 
-class ir_target {
+class I_ir_target {
 	friend class gb;
 
 public:
@@ -198,10 +207,10 @@ public:
 
 
 
-class gb : public link_target, ir_target
+class gb : public I_link_target, I_ir_target
 {
 friend class cpu;
-friend class link_target; 
+friend class I_link_target; 
 
 public:
 	gb(renderer *ref,bool b_lcd,bool b_apu);
@@ -227,11 +236,11 @@ public:
 		this->linked_ir_device = target;
 	};
 
-	link_target* get_linked_target() { return linked_cable_device; }
-	void set_linked_target(link_target* target) { this->linked_cable_device = target; };
+	I_link_target* get_linked_target() { return linked_cable_device; }
+	void set_linked_target(I_link_target* target) { this->linked_cable_device = target; };
 
-	ir_target* get_ir_target() { return linked_ir_device; }
-	void set_ir_target(ir_target* target) { this->linked_ir_device = target; };
+	I_ir_target* get_ir_target() { return linked_ir_device; }
+	void set_ir_target(I_ir_target* target) { this->linked_ir_device = target; };
 
 	gb_regs *get_regs() { return &regs; }
 	gbc_regs *get_cregs() { return &c_regs; }
@@ -277,8 +286,8 @@ private:
 	cheat *m_cheat;
 
 	//gb* target;
-	link_target* linked_cable_device;
-	ir_target* linked_ir_device;
+	I_link_target* linked_cable_device;
+	I_ir_target* linked_ir_device;
 
 	gb_regs regs;
 	gbc_regs c_regs;
@@ -597,7 +606,7 @@ private:
 	void log();
 
 	gb *ref_gb;
-	link_target* linked_device;
+	I_link_target* linked_device;
 	cpu_regs regs;
 
 	byte ram[0x2000*4];

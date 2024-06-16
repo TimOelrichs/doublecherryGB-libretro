@@ -274,6 +274,8 @@ byte barcodeboy::get_SC_value() { return is_in_mastermode ? 0x81 : 0x80; };
 
 void barcodeboy::handle_special_hotkey(int key) {
 
+	if (key < 0) return;
+
 	if (!strcmp(this->cart_name, "BATTLE SPACE"))
 	{
 		barcodes.clear();

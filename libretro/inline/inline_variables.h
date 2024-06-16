@@ -21,7 +21,9 @@ retro_set_led_state_t led_state_cb;
 unsigned int power_antenna_use_rumble = 0;
 
 int dcgb_hotkey_pressed = -1;
-dcgb_hotkey_target* hotkey_target = NULL; 
+int dcgb_last_hotkey_pressed = -1;
+int dcgb_hotkey_frame_counter = 0;
+I_dcgb_hotkey_target* hotkey_target = NULL; 
 
 
 
@@ -104,10 +106,15 @@ enum mode {
 static enum mode mode = MODE_SINGLE_GAME;
 
 
+
 std::vector<gb*> v_gb;
 std::vector <dmy_renderer*> render;
 link_master_device* master_link;
-link_target* linked_target_device; 
+I_link_target* linked_target_device; 
+
+std::vector<I_savestate*> v_serializable_devices; 
+
+
 bool use_multi_adapter = false;
 bool use_tetris_4p_hack = false;
 bool log_2p_link = false;
