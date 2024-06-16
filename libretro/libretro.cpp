@@ -312,12 +312,12 @@ bool retro_load_game(const struct retro_game_info *info)
         }
         if (!strcmp(cart_name, "TETRIS"))
         {
-            master_link = new hack_4p_tetris(v_gb);
+            master_link = new hack_4p_tetris(v_gb);         
             display_message("TETRIS Battle Royal Multiplayer Hack Adapter plugged in");
             break;
         }
 
-        master_link = new dmg07x4(v_gb, emulated_gbs);
+        master_link = new dmg07x4(v_gb, emulated_gbs);   
         display_message("FOUR PLAYER ADAPTERs plugged in");
 
         break;
@@ -326,6 +326,7 @@ bool retro_load_game(const struct retro_game_info *info)
    }
 
     check_variables();
+    if (master_link) v_serializable_devices.push_back(master_link);
 
    return true;
 }
@@ -435,8 +436,17 @@ void retro_reset(void)
         if (v_gb[i])
             v_gb[i]->reset();
     }
+    /*
     if (master_link)
         master_link->reset();
+        */
+
+    for (int i = 0; i < v_serializable_devices.size(); i++)
+    {
+        v_serializable_devices[i]->reset();
+    }
+    
+
 }
 
 void retro_run(void)
@@ -448,11 +458,7 @@ void retro_run(void)
 
     input_poll_cb();
 
-    if (hotkey_target) {
-        check_special_hotkey();
-        if(dcgb_hotkey_pressed >= 0) 
-           hotkey_target->handle_special_hotkey(dcgb_hotkey_pressed);
-    }
+    hotkey_handle();
 
     for (int line = 0; line < 154; line++)
     {
@@ -584,9 +590,12 @@ bool retro_serialize(void *data, size_t size)
                 ptr += _serialize_size[i];
             }
         }
+   
 
-        if (master_link)
-            master_link->save_state_mem(ptr);
+        for (int i = 0; i < v_serializable_devices.size(); i++)
+        {
+            v_serializable_devices[i]->save_state_mem(ptr);
+        }
 
         return true;
     }
@@ -610,8 +619,10 @@ bool retro_unserialize(const void *data, size_t size)
             }
         }
 
-        if (master_link)
-            master_link->restore_state_mem(ptr);
+        for (int i = 0; i < v_serializable_devices.size(); i++)
+        {
+            v_serializable_devices[i]->restore_state_mem(ptr);
+        }
         return true;
     }
     return false;
@@ -624,6 +635,7 @@ void retro_cheat_reset(void)
         if (v_gb[i])
             v_gb[i]->get_cheat()->clear();
     }
+
 }
 
 void retro_cheat_set(unsigned index, bool enabled, const char *code)

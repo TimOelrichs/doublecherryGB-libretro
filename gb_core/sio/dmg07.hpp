@@ -112,7 +112,7 @@ public:
 	void restore_state_mem(void* buf) override;
 	size_t get_state_size() override;
 
-	void serialize(serializer& s);
+	void serialize(serializer& s) override;
 
 
 	void log_save_state(char* data, size_t size);
@@ -141,32 +141,7 @@ private:
 	void fill_buffer_for_less_than_4p();
 	void clear_all_buffers();
 
-	//std::vector<gb*> v_gb;
 	dmg07_state current_state = PING_PHASE;
-
-	/*
-	int transfer_speed = 512 * 8;
-	int seri_occer = 2048 * 2048 * 2048;
-	*/
-	/*
-	int transfer_count = 0;
-	int phase_byte_count = 0;
-
-	int last_trans_nr[4] = { 0,0,0,0 };
-	int restart_in = 0;
-	byte enter_status = 0x00;
-
-	byte packet_size = 0;
-	byte transfer_rate = 0x00;
-
-	int first_aa_trans_nr = 0;
-	int sync_trans_nr = 0;
-
-	int delay = 0;
-	bool ready_to_sync_master = false;
-	bool master_is_synced = false;
-
-	*/
 
 	//converted to no initialize for compat with windows MCSV
 	int transfer_count;

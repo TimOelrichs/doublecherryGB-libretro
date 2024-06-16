@@ -26,10 +26,12 @@
 
 extern bool logging_allowed; 
 
-class hack_4p_kwirk : public link_target {
+class hack_4p_kwirk : public I_link_target {
 
 public:
 	hack_4p_kwirk(std::vector<gb*> g_gb);
+
+	//I_link_target
 	byte seri_send(byte data) override;
 	byte get_SB_value() override { return 0xFF;};
 	byte get_SC_value() override { return 0x80; };

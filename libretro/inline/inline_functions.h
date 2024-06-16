@@ -21,7 +21,7 @@ if (libretro_msg_interface_version >= 1)
        1,
        RETRO_LOG_INFO,
        RETRO_MESSAGE_TARGET_OSD,
-       RETRO_MESSAGE_TYPE_NOTIFICATION_ALT,
+       RETRO_MESSAGE_TYPE_NOTIFICATION,
        -1
     };
     environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &msg);
@@ -62,7 +62,13 @@ void auto_config_1p_link() {
 
     if (!strncmp(cart_name, "POKEMON", 7 )) 
     {
-        v_gb[0]->set_linked_target(new pokebuddy_gen1());
+        pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
+        hotkey_target = pkbuddy;
+        v_serializable_devices.push_back(pkbuddy);
+        v_gb[0]->set_linked_target(pkbuddy);
+
+        display_message("PKMBUDDY BOY plugged in");
+        display_message("Check out the CABLE CLUB for weekly GEN1 Distributions!");
     }
 
 
@@ -509,8 +515,36 @@ void check_special_hotkey() {
         }
     }
 
+    //check SELECT BUTTON
+    key_state = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT);
+    if (key_state)
+    {
+        //check if also the start button is pressed
+        key_state = input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START);
+        dcgb_hotkey_pressed = key_state ? 0x30 : 0x10;
+        return; 
+    }
+
     dcgb_hotkey_pressed = -1; 
    
+}
+
+void hotkey_handle() {
+
+    if (hotkey_target) {
+        check_special_hotkey();
+        if (dcgb_hotkey_pressed >= 0 && dcgb_hotkey_pressed != dcgb_last_hotkey_pressed) {
+            dcgb_last_hotkey_pressed = dcgb_hotkey_pressed;
+            hotkey_target->handle_special_hotkey(dcgb_hotkey_pressed);
+            return;
+        }
+        if (dcgb_hotkey_frame_counter++ >= 55) {
+            dcgb_hotkey_frame_counter = 0;
+            dcgb_last_hotkey_pressed = -1;
+        }
+  
+    }
+
 }
 
 

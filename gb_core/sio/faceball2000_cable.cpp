@@ -25,5 +25,4 @@ byte faceball2000_cable::get_SB_value() {
 byte faceball2000_cable::get_SC_value() {
 	return 0x80;
 }
-void faceball2000_cable::reset() {};
 

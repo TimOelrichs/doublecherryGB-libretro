@@ -7,7 +7,7 @@
 
 extern bool logging_allowed;
 
-class link_master_device{
+class link_master_device : public I_savestate {
 
 	
 public:
@@ -20,10 +20,15 @@ public:
 	}
 	virtual void process() = 0;
 	virtual void reset() = 0;
+
+	/*
 	void virtual save_state_mem(void* buf) = 0;
 	void virtual restore_state_mem(void* buf) = 0;
 	size_t virtual get_state_size();
 	void virtual serialize(serializer& s) = 0;
+	*/
+
+	size_t get_state_size() override;
 	
 	int transfer_speed;
 	int seri_occer;

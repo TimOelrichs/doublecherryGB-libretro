@@ -40,7 +40,7 @@ union pokemon {
 union trading_data_block {
 	struct {
 		unsigned char trainer_name[11];
-		unsigned char beginn_species_list; 
+		unsigned char species_list_size; 
 		unsigned char species[6];
 		unsigned char end_species_list;
 		pokemon pokemons[6];
