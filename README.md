@@ -27,7 +27,7 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
   <br>
 
-### Multiplayer Stuff
+### Multiplayer
 - GAMEBOY 4 PLAYER ADAPTER (DMG-07) emulation (F1-Race, Wave Race, Yoshi's Cookie...) [compatibility list](https://peppermint-theater-276.notion.site/4-player-adapter-compatibility-8d33abe17f1d4bf5a361b368af6622b7)
 - up to 16-Player Faceball 2000 emulation (1-15 without bugfix-patch, 16 players needs [patched](https://github.com/Zarithya/Faceball2000DX) rom)
   
