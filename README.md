@@ -21,16 +21,22 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
 ## Features
 
+### Pokemon Stuff
 - [Builtin Mew Maschine and weekly GEN1 Pokemon Distributions](#Builtin-Mew-Maschine-and-weekly-GEN1-Pokemon-Distributions)
-- [Link Cable over network](#Link-Cable-over-network), easy Pokemon Gen1 and Gen2 online trading via Lobby (Retroarch 1.17 needed) 
+- [Link Cable Trading over network](#Link-Cable-Trading-over-network), easy Pokemon Gen1 and Gen2 online trading via Lobby (Retroarch 1.17 needed)
+
+### Multiplayer Stuff
 - GAMEBOY 4 PLAYER ADAPTER (DMG-07) emulation (F1-Race, Wave Race, Yoshi's Cookie...) [compatibility list](https://peppermint-theater-276.notion.site/4-player-adapter-compatibility-8d33abe17f1d4bf5a361b368af6622b7)
 - up to 16-Player Faceball 2000 emulation (1-15 without bugfix-patch, 16 players needs [patched](https://github.com/Zarithya/Faceball2000DX) rom)
+  
 - up to 16-Player Tetris Battle Royal Hack (virtual link device, no modified rom needed)
 - up to 16-Player Kwirk Multiplayer Hack (virtual link device, no modified rom needed)
 - up to 16 Player 4x4Player Adapter
 - Of course up to 16 Player Singleplayer for speedrun-battles or if you have arguing kids :D
 - local splitscreen
 - netplay support
+
+  ### Addon Emulation
 - [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection) 
 - [POWER ANTENNA/BUGSENSOR](#power-antenna-and-bugsensor) Emulation (LED via led driver overlay & controller rumble on led flash)
 
@@ -50,7 +56,9 @@ Netplay is working. Make sure to have all the same amount of emulated gameboys i
 
 You can download the core via RetroArch Online-Updater on Windows, Linux, Android and IOS.
 For Android make sure to use the retroarch APK from retroarch.com and not the GooglePlay Version.
-To emulate up to 16 units, use the core options in your frontend.  
+
+For Multiplayer you have to increase the amount of emulated Gameboy in the core options in your frontend and reload.
+
 
 <br>
 
@@ -70,7 +78,7 @@ https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw
 
 <br>
 
-## Link Cable over network
+## Link Cable Trading over network
 #### Easy gen1/gen2 pokemon online trading
 
 Why is this easier? No setup and no workarounds. No need to own the same roms (region, edition). Should work cross platform.
