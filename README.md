@@ -99,9 +99,7 @@ Only the linkcable data is transfered over network, so you won't see the others 
 - start or join a netplay (a second player can join any time)
 
 The netpacket api is activated when you set emulated gameboys to 1. 
-
-<b>This is only meant for trading purposes and may be too slow for actual Multiplayer.</b>
-
+This is only meant for trading purposes and may be too slow for actual Multiplayer.
 For Multiplayer-sessions please set the amount of emulated gameboys to 2 or higher, because this will activate the old savestate sync for lagfree netplay.  
 
 Trading should work with other GB/GBC Games as well:
