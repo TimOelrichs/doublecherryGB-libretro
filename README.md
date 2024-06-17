@@ -19,7 +19,7 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
 <br>
 
-### Features
+## Features
 
 - [Builtin Mew Maschine and weekly GEN1 Pokemon Distributions](#Builtin-Mew-Maschine-and-weekly-GEN1-Pokemon-Distributions)
 - [Link Cable over network](#Link-Cable-over-network), easy Pokemon Gen1 and Gen2 online trading via Lobby (Retroarch 1.17 needed) 
@@ -44,7 +44,9 @@ Netplay is working. Make sure to have all the same amount of emulated gameboys i
 ![](/screenshots/YoshisCookie.png)
 ![](/screenshots/WaveRace.png)
 
-### How to
+<br>
+
+## How to
 
 You can download the core via RetroArch Online-Updater on Windows, Linux, Android and IOS.
 For Android make sure to use the retroarch APK from retroarch.com and not the GooglePlay Version.
@@ -52,7 +54,7 @@ To emulate up to 16 units, use the core options in your frontend.
 
 <br>
 
-### Builtin Mew Maschine and weekly GEN1 Pokemon Distributions 
+## Builtin Mew Maschine and weekly GEN1 Pokemon Distributions 
 
 DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
 
@@ -66,8 +68,9 @@ https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw
 
 ![](/screenshots/gotMew.png)
 
+<br>
 
-### Link Cable over network
+## Link Cable over network
 #### Easy gen1/gen2 pokemon online trading
 
 Why is this easier? No setup and no workarounds. No need to own the same roms (region, edition). Should work cross platform.
@@ -106,7 +109,7 @@ Have fun!
 
 <br>
  
-### BARCODE BOY
+## BARCODE BOY
 
 The BARCODE BOY is a japan exclusive peripheral (See https://shonumi.github.io/articles/art7.html).
 
@@ -123,7 +126,7 @@ If you don't have a keyboard, the the barcode cards will be changed randomly.
 
 <br>
 
-### POWER ANTENNA and BUGSENSOR
+## POWER ANTENNA and BUGSENSOR
 
 These are devices, that came with the games **Keitai Denjuu Telefang** and **Network Adventure Bugsite**  and are plugged into the linkport. It's simply a led that flashes when, something special happens ingame.
 DoubleCherryGB uses the controller rumble and the retroarch led api to simulate the led flashing on an overlay.
