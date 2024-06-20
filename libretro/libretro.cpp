@@ -326,6 +326,8 @@ bool retro_load_game(const struct retro_game_info *info)
    }
 
     check_variables();
+    set_memory_maps();
+
     if (master_link) v_serializable_devices.push_back(master_link);
 
    return true;

@@ -58,8 +58,9 @@ void auto_config_4p_hack()
 };
 
 void auto_config_1p_link() {
-    if (!cart_name) return;
 
+    if (!cart_name) return;
+    
     if (!strncmp(cart_name, "POKEMON", 7 )) 
     {
         pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
@@ -69,6 +70,7 @@ void auto_config_1p_link() {
 
         display_message("PKMBUDDY BOY plugged in");
         display_message("Check out the CABLE CLUB for weekly GEN1 Distributions!");
+        return; 
     }
 
 
@@ -638,3 +640,55 @@ void log_save_state(uint8_t* data, size_t size)
     }
 }
 
+void set_memory_maps() {
+
+    unsigned sramlen = v_gb[0]->get_rom()->get_sram_size();
+    const uint64_t vram = RETRO_MEMDESC_VIDEO_RAM;
+    const uint64_t rom = RETRO_MEMDESC_CONST;
+    const uint64_t mainram = RETRO_MEMDESC_SYSTEM_RAM;
+    struct retro_memory_map mmaps;
+
+    struct retro_memory_descriptor descs[10] =
+    {
+       { mainram, v_gb[0]->get_cpu()->get_ram(),     0, 0xC000,          0, 0, 0x1000, NULL},
+       { mainram, v_gb[0]->get_cpu()->get_ram(),     0x1000, 0xD000,          0, 0, 0x1000, NULL },
+       { mainram, v_gb[0]->get_cpu()->get_stack() ,     0, 0xFF80,          0, 0, 0x0080, NULL},
+       { vram,    v_gb[0]->get_cpu()->get_vram(),         0, 0x8000,          0, 0, 0x2000, NULL},
+       {       0, v_gb[0]->get_cpu()->get_oam(),       0, 0xFE00, 0, 0, 0x00A0, NULL},
+       {     rom, v_gb[0]->get_rom()->get_rom(),     0, 0x0000,          0, 0, 0x4000, NULL },
+       {     rom, v_gb[0]->get_rom()->get_rom(),     0x4000, 0x4000,          0, 0, 0x4000, NULL },
+       {       0, v_gb[0]->get_cpu()->get_oam(),   0, 0xFF00,          0, 0, 0x0080, NULL },
+       {       0, 0,                     0,      0,          0, 0,      0,    0 },
+       {       0, 0,                     0,      0,          0, 0,      0,    0 }
+    };
+
+
+
+    unsigned i = 8;
+    if (sramlen)
+    {
+        descs[i].ptr = v_gb[0]->get_mbc()->get_sram();
+        descs[i].start = 0x0000;
+        descs[i].select = (size_t)~0x1FFF;
+        descs[i].len = sramlen;
+        i++;
+    }
+
+    if (v_gb[0]->get_rom()->get_info()->cart_type > 1)
+    {
+        descs[i].flags = mainram;
+        descs[i].ptr = v_gb[0]->get_cpu()->get_ram();
+        descs[i].start = 0x00000;
+        descs[i].select = 0xFFFFA000;
+        descs[i].len = 0x6000;
+        i++;
+    }
+
+    mmaps.descriptors = descs;
+    mmaps.num_descriptors = i;
+    environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
+
+    bool yes = true;
+    environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &yes);
+
+}

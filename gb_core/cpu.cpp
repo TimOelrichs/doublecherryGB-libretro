@@ -1049,7 +1049,7 @@ void cpu::exec(int clocks)
 				//gb* g = ref_gb->get_target();
 				//byte ret=g->get_cpu()->seri_send(ref_gb->get_regs()->SB);
 				byte ret = ref_gb->get_linked_target()->seri_send(ref_gb->get_regs()->SB);
-				log_link_traffic(ref_gb->get_regs()->SB, ret);
+				//log_link_traffic(ref_gb->get_regs()->SB, ret);
 				//byte ret = ref_gb->get_target()->send_byte(ref_gb->get_regs()->SB);
 				ref_gb->get_regs()->SB=ret;
 				ref_gb->get_regs()->SC&=3;
