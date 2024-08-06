@@ -1,6 +1,7 @@
 /*--------------------------------------------------
-
+	
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
+   Faceball 2000 16 Player Cable Emulation, i call it "Ring-Link"-Cable
    Copyright (C) 2023  Tim Oelrichs
 
    This program is free software; you can redistribute it and/or
@@ -18,23 +19,23 @@
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-//-------------------------------------------------
+
+#include "./include/faceball2000_cable.hpp"
+
+extern int emulated_gbs; 
+
+faceball2000_cable::faceball2000_cable(std::vector<gb*> g_gb) {
+	v_gb.insert(v_gb.begin(), std::begin(g_gb), std::end(g_gb));
+}
 
 
-#include "../gb.h"
+byte faceball2000_cable::receive_from_linkcable(byte data) {
 
-extern bool power_antenna_on;
+	byte ret = data; 
+	for (size_t i = 1; i < emulated_gbs; i++)
+	{
+		ret = v_gb[i]->receive_from_linkcable(ret);
+	}
+	return ret; 
+}
 
-class power_antenna : public I_link_target {
-
-public:
-	power_antenna() {};
-	byte seri_send(byte data) override;
-	byte get_SB_value() override { return 0xFF; };
-	byte get_SC_value() override { return 0x80; };
-
-	bool power_antenna_last_state = false; 
-	bool power_antenna_on = false; 
-	
-	
-};

@@ -1,6 +1,7 @@
 /*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
+   Power Antenna / Bug Sensor Emulation
    Copyright (C) 2023  Tim Oelrichs
 
    This program is free software; you can redistribute it and/or
@@ -20,7 +21,7 @@
 
 //-------------------------------------------------
 
-#include "power_antenna.hpp"
+#include "./include/power_antenna.hpp"
 #pragma once
 #include "../../libretro/libretro.h"
 
@@ -28,9 +29,9 @@ extern retro_set_rumble_state_t rumble_state_cb;
 extern retro_set_led_state_t led_state_cb;
 extern unsigned int power_antenna_use_rumble;
 
-byte power_antenna::seri_send(byte data) 
+byte power_antenna::receive_from_linkcable(byte in_data)
 {
-	if (data == 0x00) {
+	if (in_data == 0x00) {
 		power_antenna_on = false;
 		if(rumble_state_cb) rumble_state_cb(0, RETRO_RUMBLE_WEAK, 0);
 	}

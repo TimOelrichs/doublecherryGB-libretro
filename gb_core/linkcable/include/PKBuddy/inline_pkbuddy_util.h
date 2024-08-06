@@ -56,6 +56,8 @@ unsigned char pokebuddy_gen1::convert_ASCII2TABLE(unsigned char c, bool toUpper)
 	default:
 		break;
 	}
+
+	return 0xFF;
 }
 
 std::string pokebuddy_gen1::convert_string_to_name(std::string str) {
@@ -109,6 +111,7 @@ unsigned char pokebuddy_gen1::convert_TABLE2ASCII(unsigned char c) {
 		break;
 	}
 
+	return 0xFF;
 }
 
 std::string pokebuddy_gen1::convert_name_to_string(std::string str) {

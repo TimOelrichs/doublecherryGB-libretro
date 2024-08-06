@@ -93,6 +93,8 @@ void gb::reset()
 	re_render=0;
 
 	if (use_gba) this->get_cpu()->get_regs()->BC.b.l = 0x01;
+
+	
 }
 
 void gb::hook_extport(ext_hook *ext)
@@ -106,9 +108,9 @@ void gb::unhook_extport()
 	hook_ext=false;
 }
 
-byte gb::seri_send(byte data)
+byte gb::receive_from_linkcable(byte data)
 {
-	return get_cpu()->seri_send(data);
+	return get_cpu()->receive_from_linkcable(data);
 }
 
 void gb::set_skip(int frame)
@@ -465,4 +467,69 @@ void gb::run()
 			m_cpu->exec(456);
 		}
 	}
+}
+
+byte gb::send_over_linkcable(byte out_data)
+{
+	I_linkcable_target* connected_linkcable_device = this->get_linked_target();
+	return connected_linkcable_device ? connected_linkcable_device->receive_from_linkcable(out_data) : 0xFF;
+
+}
+
+void gb::receive_ir_signal(ir_signal* signal)
+{
+	received_ir_signals.push_back(signal); 
+
+	this->get_cpu()->log_ir_traffic(signal, true);
+
+	/*
+	if(!this->get_cpu()->out_ir_signal_que.empty()) 
+		this->get_cpu()->out_ir_signal_que.clear();
+	*/
+	
+}
+
+
+
+void gb::send_ir_signal(ir_signal* signal)
+{
+	get_ir_target()->receive_ir_signal(signal);
+
+}
+
+
+static int asHex(const char c)
+{
+	return c >= 'A' ? c - 'A' + 0xA : c - '0';
+}
+
+void gb::set_Game_Genie(bool enable, std::string code)
+{
+	if (code.size() < 7) return; 
+
+	const unsigned val = (asHex(code[0]) << 4 | asHex(code[1])) & 0xFF;
+	const unsigned addr = (asHex(code[2]) << 8 | asHex(code[4]) << 4 | asHex(code[5]) | (asHex(code[6]) ^ 0xF) << 12) & 0x7FFF;
+
+	if (enable)
+	{
+	
+		if (addr <= 0x4000 * 2)
+		{
+			byte original_value = this->get_rom()->get_rom()[addr];
+			this->get_rom()->get_rom()[addr] = val;
+			undo_cheat_map[code] = original_value;
+		}
+		return; 
+	}
+
+	std::map<std::string, byte>::iterator it;
+	it = undo_cheat_map.find(code);
+	if (it != undo_cheat_map.end())
+	{	
+		byte original_value = undo_cheat_map[code];
+		this->get_rom()->get_rom()[addr] = original_value;
+		undo_cheat_map.erase(it);
+	}
+		
+
 }

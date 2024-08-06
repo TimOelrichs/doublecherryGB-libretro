@@ -1,0 +1,12 @@
+#pragma once
+#include "dmg07.hpp"
+#include "dmg07x4.hpp"
+#include "hack_4p_tetris.hpp"
+#include "hack_4p_kwirk.hpp"
+#include "hack_4p_burger_time_deluxe.hpp"
+#pragma once
+#include "barcodeboy.hpp"
+#include "faceball2000_cable.hpp"
+#include "power_antenna.hpp"
+#include "pokebuddy_gen1.hpp"
+#include "game_and_watch_gallery_unlocker.hpp"

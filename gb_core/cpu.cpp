@@ -99,6 +99,8 @@ void cpu::reset()
 	rp_que[0]=0x000001cc;
 	rp_que[1]=0x00000000;
 	que_cur=1;
+
+	next_ir_clock = 0;
 }
 
 void cpu::save_state(int *dat)
@@ -308,17 +310,47 @@ byte cpu::io_read(word adr)
 	case 0xFF55://HDMA5(転送実行) // HDMA5 (run forward)
 		return (dma_executing?((dma_rest-1)&0x7f):0xFF);
 	case 0xFF56://RP(赤外線) // RP (infrared)
-		if (ref_gb->get_ir_target()){
-			if ((ref_gb->get_cregs()->RP&0xC0)==0xC0){
+		//if (ref_gb->get_ir_target())
+		{
+			if ((ref_gb->get_cregs()->RP&0xC0)==0xC0)
+			{
 				
 				//gb* g = ref_gb->get_target();
 				//dword *que=g->get_cpu()->rp_que;
+
+				/*
+				// TGBDUal Implementation
 				dword* que = ref_gb->get_ir_target()->get_rp_que();
 				int que_cnt=0;
 				int cur;
 				while((que[que_cnt]&0xffff)>rest_clock)	cur=que[que_cnt++]>>16;
+				*/
 //				fprintf(file,"read RP %02X\n",(ref_gb->get_cregs()->RP&1)|((cur&1)<<1)|0xC0);
-				return (ref_gb->get_cregs()->RP&1)|((cur&1)<<1)|0xC0;
+
+				
+				rp_bitfield ir_state;
+				ir_state.byte = ref_gb->get_cregs()->RP;
+
+				if (ir_state.bits.read_enabled == 3 && total_clock >= next_ir_clock)
+				{
+					if (ref_gb->ir_master_device) ref_gb->ir_master_device->process_ir();
+
+					if (!ref_gb->received_ir_signals.empty())
+					{
+						
+						ir_state.bits.received_signal = ref_gb->received_ir_signals[0]->light_on;
+						ref_gb->get_cregs()->RP = ir_state.byte;
+
+						next_ir_clock = total_clock + ref_gb->received_ir_signals[0]->duration;
+						ref_gb->received_ir_signals.erase(ref_gb->received_ir_signals.begin());
+					
+					}
+					
+
+				}
+
+				return ref_gb->get_cregs()->RP;
+				//return (ref_gb->get_cregs()->RP&1)|((cur&1)<<1)|0xC0;
 
 //				fprintf(file,"read RP %02X\n",(ref_gb->get_cregs()->RP&1)|((ref_gb->get_target()->get_cregs()->RP&1)<<1)|0xC0);
 //				return (ref_gb->get_cregs()->RP&1)|((ref_gb->get_target()->get_cregs()->RP&1)<<1)|0xC0;
@@ -328,6 +360,7 @@ byte cpu::io_read(word adr)
 				return (ref_gb->get_cregs()->RP&1);
 			}
 		}
+		/*
 		else{
 			if (ref_gb->hook_ext){ // フックします // Hook
 				if ((ref_gb->get_cregs()->RP&0xC0)==0xC0)
@@ -337,7 +370,7 @@ byte cpu::io_read(word adr)
 			}
 			else
 				return (ref_gb->get_cregs()->RP&0xC1);
-		}
+		}*/
 	case 0xFF68://BCPS(BGパレット書き込み指定) // BG write palette
 		return ref_gb->get_cregs()->BCPS;
 	case 0xFF69://BCPD(BGパレット書きこみデータ) // BG palette data written
@@ -346,9 +379,9 @@ byte cpu::io_read(word adr)
 		else
 			ret=ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3]&0xff;
 /*		if (ref_gb->get_cregs()->BCPS&1)
-			ret=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])>>8;
+			out_data=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])>>8;
 		else
-			ret=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])&0xff;
+			out_data=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])&0xff;
 */		//ポインタはインクリメントされない(おじゃる丸) // pointer is not incremented (Round Ojaru)
 		return ret;
 	case 0xFF6A://OCPS(OBJパレット書きこみ指定) // OBJ palette specified written
@@ -359,9 +392,9 @@ byte cpu::io_read(word adr)
 		else
 			ret=ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3]&0xff;
 /*		if (ref_gb->get_cregs()->OCPS&1)
-			ret=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])>>8;
+			out_data=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])>>8;
 		else
-			ret=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])&0xff;
+			out_data=ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])&0xff;
 */		return ret;
 	case 0xFF70://SVBK(内部RAMバンク切り替え) // Internal RAM bank switching
 		return ref_gb->get_cregs()->SVBK;
@@ -407,7 +440,7 @@ void cpu::io_write(word adr,byte dat)
 		case 0xFF02://SC(コントロール) // SC (control)
 			if (ref_gb->get_rom()->get_info()->gb_type==1){
 				
-				//if (this->m_dmg07)  ref_gb->get_regs()->SC = dat & net_id;
+				//if (this->m_dmg07)  ref_gb->get_regs()->SC = in_data & net_id;
 				//else 
 				ref_gb->get_regs()->SC = dat & 0x81;
 
@@ -450,7 +483,7 @@ void cpu::io_write(word adr,byte dat)
 				ref_gb->get_lcd()->clear_win_count();
 			}
 			ref_gb->get_regs()->LCDC=dat;
-//			fprintf(file,"LCDC=%02X at line %d\n",dat,ref_gb->get_regs()->LY);
+//			fprintf(file,"LCDC=%02X at line %d\n",in_data,ref_gb->get_regs()->LY);
 			return;
 		case 0xFF41://STAT(LCDステータス) // STAT (LCD status)
 			if (ref_gb->get_rom()->get_info()->gb_type==1)
@@ -524,7 +557,7 @@ void cpu::io_write(word adr,byte dat)
 
 			//以下カラーでの追加 // Add color below
 		case 0xFF4D://KEY1システムクロック変更 // KEY1 change system clock
-//			speed=dat&1;
+//			speed=in_data&1;
 			ref_gb->get_cregs()->KEY1=dat&1;
 			speed_change=dat&1;
 			return;
@@ -553,7 +586,7 @@ void cpu::io_write(word adr,byte dat)
 		case 0xFF55://HDMA5(転送実行) // HDMA5 (run forward)
 			word tmp_adr;
 			tmp_adr=0x8000+(dma_dest&0x1ff0);
-//			fprintf(file,"%03d : %04X -> %04X  %d byte %s\n",ref_gb->get_regs()->LY,dma_src,dma_dest,((dat&0x7f)+1)*16,(dat&0x80)?"delay":"immidiately");
+//			fprintf(file,"%03d : %04X -> %04X  %d byte %s\n",ref_gb->get_regs()->LY,dma_src,dma_dest,((in_data&0x7f)+1)*16,(in_data&0x80)?"delay":"immidiately");
 			if ((dma_src>=0x8000&&dma_src<0xA000)||(dma_src>=0xE000)||(!(tmp_adr>=0x8000&&tmp_adr<0xA000))){
 				ref_gb->get_cregs()->HDMA5=0;
 				return;
@@ -631,10 +664,35 @@ void cpu::io_write(word adr,byte dat)
 			}
 			return;
 		case 0xFF56://RP(赤外線) // RP (infrared)
-//			fprintf(file,"RP=%02X\n",dat);
+//			fprintf(file,"RP=%02X\n",in_data);
+
+			//old TGBDUAL implementation
 			rp_que[que_cur++]=(((dword)dat)<<16)|((word)rest_clock);
 			rp_que[que_cur]=0x00000000;
-			ref_gb->get_cregs()->RP=dat;
+
+
+			//DCGB implementation
+			rp_bitfield old_ir_state, new_ir_state; 
+
+			old_ir_state.byte = ref_gb->get_cregs()->RP;
+			new_ir_state.byte = dat; 
+			new_ir_state.bits.received_signal = old_ir_state.bits.received_signal; //is READ-ONLY
+			ref_gb->get_cregs()->RP = new_ir_state.byte;
+
+			if (old_ir_state.bits.ir_light_on != new_ir_state.bits.ir_light_on)
+			{
+				if (!out_ir_signal_que.empty()) {
+					//correct last duration value
+					int size = out_ir_signal_que.size();
+					out_ir_signal_que[size - 1]->duration = total_clock - out_ir_signal_que[size - 1]->duration;
+					log_ir_traffic(out_ir_signal_que[size - 1], false);
+					ref_gb->send_ir_signal(out_ir_signal_que[size - 1]);
+				}
+
+				//add signal to out queu
+				out_ir_signal_que.push_back(new ir_signal(new_ir_state.bits.ir_light_on, total_clock));
+			}
+			
 			return;
 		case 0xFF68://BCPS(BGパレット書き込み指定) // BCPS (write BG palette)
 			ref_gb->get_cregs()->BCPS=dat;
@@ -652,16 +710,16 @@ void cpu::io_write(word adr,byte dat)
 				ref_gb->get_renderer()->map_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3]);
 /*			if (ref_gb->get_cregs()->BCPS&1){
 				ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3]=
-					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])&0xff)|(dat<<8)));
+					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])&0xff)|(in_data<<8)));
 			}
 			else{
 				ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3]=
-					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])&0xff00)|(dat)));
+					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal((ref_gb->get_cregs()->BCPS>>3)&7)[(ref_gb->get_cregs()->BCPS>>1)&3])&0xff00)|(in_data)));
 			}*/
 			ref_gb->get_cregs()->BCPD=dat;
 			if (ref_gb->get_cregs()->BCPS&0x80)
 				ref_gb->get_cregs()->BCPS=0x80|((ref_gb->get_cregs()->BCPS+1)&0x3f);
-//			fprintf(file,"%d :BCPS = %02X\n",ref_gb->get_regs()->LY,dat);
+//			fprintf(file,"%d :BCPS = %02X\n",ref_gb->get_regs()->LY,in_data);
 			return;
 		case 0xFF6A://OCPS(OBJパレット書きこみ指定) // OCPS (Specify write OBJ palette)
 			ref_gb->get_cregs()->OCPS=dat;
@@ -679,11 +737,11 @@ void cpu::io_write(word adr,byte dat)
 				ref_gb->get_renderer()->map_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3]);
 /*			if (ref_gb->get_cregs()->OCPS&1){
 				ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3]=
-					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])&0xff)|(dat<<8)));
+					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])&0xff)|(in_data<<8)));
 			}
 			else{
 				ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3]=
-					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])&0xff00)|(dat)));
+					ref_gb->get_renderer()->map_color(((ref_gb->get_renderer()->unmap_color(ref_gb->get_lcd()->get_pal(((ref_gb->get_cregs()->OCPS>>3)&7)+8)[(ref_gb->get_cregs()->OCPS>>1)&3])&0xff00)|(in_data)));
 			}*/
 			ref_gb->get_cregs()->OCPD=dat;
 			if (ref_gb->get_cregs()->OCPS&0x80)
@@ -701,7 +759,7 @@ void cpu::io_write(word adr,byte dat)
 		case 0xFFFF://IE(割りこみマスク) // IE (Interrupt mask)
 			ref_gb->get_regs()->IE=dat;
 //			ref_gb->get_regs()->IF=0;
-//			fprintf(file,"IE = %02X\n",dat);
+//			fprintf(file,"IE = %02X\n",in_data);
 			return;
 
 		// undocumented register
@@ -855,32 +913,27 @@ static const byte ZTable[256] =
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 };
 
-byte cpu::seri_send(byte dat)
+byte cpu::receive_from_linkcable(byte in_data)
 {
-//	if ((!(ref_gb->get_regs()->IE&INT_SERIAL))||(ref_gb->get_regs()->IF&INT_SERIAL))
-//		return 0xFF;
 
+	bool is_external_clock = (ref_gb->get_regs()->SC & 0x81) == 0x80;
+	if (!is_external_clock) return 0xFF;
 
-	if ((ref_gb->get_regs()->SC & 0x81) == 0x80) {
-			//		fprintf(file,"seri_recv my:%02X tar:%02X state SC:%02X\n",ref_gb->get_regs()->SB,dat,ref_gb->get_regs()->SC);
-			byte ret = ref_gb->get_regs()->SB;
+	byte out_data = ref_gb->get_regs()->SB;
+	log_link_traffic(in_data, out_data);
 
-			log_link_traffic(dat, ret);
+	ref_gb->get_regs()->SB = in_data;
+	ref_gb->get_regs()->SC &= 1;
+	irq(INT_SERIAL);
+	return out_data;
 
-			ref_gb->get_regs()->SB = dat;
-			ref_gb->get_regs()->SC &= 1;
-			irq(INT_SERIAL);
-			return ret;
-		}
-		else
-			return 0xFF;
 	
 }
 
 void cpu::log_link_traffic(byte a, byte b)
 {
 	
-	//if (logging_allowed)
+	if (logging_allowed)
 	{
 		std::string filePath = "./2p_link_log.txt";
 		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
@@ -899,6 +952,31 @@ void cpu::log_link_traffic(byte a, byte b)
 	}
 
 }
+
+void cpu::log_ir_traffic(ir_signal *signal, bool incoming) {
+
+	if (logging_allowed)
+	{
+		std::string filePath = "./ir_logger.txt";
+		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
+
+	
+		//ofs << "" << clocks_occer << tabs;
+		//ofs << "" << std::hex << (int)a << "\t";
+		//ofs << "" << std::hex << (int)b << "";
+
+		//ofs << "" << (int)signal->light_on << "\t";
+		if(incoming) ofs << "<" << signal->light_on << "\t" << signal->duration;
+		else ofs << ">" << signal->light_on << "\t" << signal->duration;
+
+		ofs << std::endl;
+		ofs.close();
+
+		clocks_since_last_serial = total_clock;
+	}
+}
+
+
 
 void cpu::irq(int irq_type)
 {
@@ -1031,8 +1109,6 @@ void cpu::exec(int clocks)
 
 
 		
-	
-	
 		if (total_clock>seri_occer){
 			seri_occer=0x7fffffff;
 
@@ -1046,11 +1122,9 @@ void cpu::exec(int clocks)
 
 			else if (ref_gb->get_linked_target()){
 
-				//gb* g = ref_gb->get_target();
-				//byte ret=g->get_cpu()->seri_send(ref_gb->get_regs()->SB);
-				byte ret = ref_gb->get_linked_target()->seri_send(ref_gb->get_regs()->SB);
-				//log_link_traffic(ref_gb->get_regs()->SB, ret);
-				//byte ret = ref_gb->get_target()->send_byte(ref_gb->get_regs()->SB);
+				byte linkcable_data = ref_gb->get_regs()->SB;
+				byte ret = ref_gb->send_over_linkcable(linkcable_data);
+				//log_link_traffic(ref_gb->get_regs()->SB, out_data);
 				ref_gb->get_regs()->SB=ret;
 				ref_gb->get_regs()->SC&=3;
 			}
@@ -1132,10 +1206,7 @@ void cpu::serialize(serializer &s)
 	s_VAR(_ff6c); s_VAR(_ff72); s_VAR(_ff73); s_VAR(_ff74); s_VAR(_ff75);
 }
 
-/*
-void cpu::set_is_seri_master(bool enable) {
-	
-	//this->is_clock_giver = enable;
-}
-*/
+
+
+
 
