@@ -6,4 +6,5 @@ tgbdual
 .goutputstream-*
 .github/
 .vs/
+buildnmove.sh
 

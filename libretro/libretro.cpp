@@ -14,8 +14,8 @@
 #include <stdlib.h>
 #include "libretro.h"
 
-#pragma once
-#include "../gb_core/sio/sio_devices.hpp"
+#include "../gb_core/linkcable/include/sio_devices.hpp"
+#include "../gb_core/infrared/include/ir_devices.hpp"
 #include "inline/inline_variables.h"
 #include "inline/inline_functions.h"
 
@@ -295,7 +295,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
         if (!strncmp(cart_name, "FACEBALL 2000", 13))
         {
-            delete master_link;
+            
             master_link = NULL;
             linked_target_device = new faceball2000_cable(v_gb);
             v_gb[0]->set_linked_target(linked_target_device);
@@ -304,7 +304,7 @@ bool retro_load_game(const struct retro_game_info *info)
         }
         if (!strcmp(cart_name, "KWIRK"))
         {
-            delete master_link;
+            
             master_link = NULL;
             linked_target_device = new hack_4p_kwirk(v_gb);
             display_message("KWIRK Multiplayer Hack Adapter plugged in");
@@ -318,7 +318,7 @@ bool retro_load_game(const struct retro_game_info *info)
         }
 
         master_link = new dmg07x4(v_gb, emulated_gbs);   
-        display_message("FOUR PLAYER ADAPTERs plugged in");
+        display_message("4x FOUR PLAYER ADAPTERs are plugged in");
 
         break;
     }
@@ -412,6 +412,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
    return true;
 
    */
+    return false; 
 }
 
 void retro_unload_game(void)
@@ -421,7 +422,7 @@ void retro_unload_game(void)
     {
         if (v_gb[i])
         {
-            delete v_gb[i];
+            
             v_gb[i] = NULL;
             delete render[i];
             render[i] = NULL;
@@ -693,6 +694,16 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
     }
     g_gb[0].get_cheat().add_cheat(&cdat);
 #endif
+
+    std::string code_str(code);
+
+   // replace(code_str.begin(), code_str.end(), '+', ';');
+
+    //if (code_str.find("-") != std::string::npos) 
+    {
+        v_gb[0]->set_Game_Genie(enabled, code_str);
+    }
+
 }
 
 // start boilerplate

@@ -177,6 +177,33 @@ byte mbc::ext_read(word adr)
 	case 0xFE:
 //		extern FILE *file;
 //		fprintf(file,"%04X : HuC-3 ext_read %04X \n",ref_gb->get_cpu()->get_regs()->PC,adr);
+
+		if (huc_ir_mode)
+		{
+			if (((adr & 0xa0f0) >= 0xA000) && ((adr & 0xa0f0) <= 0xBFFF))
+			{
+				
+				if (ref_gb->get_cpu()->get_clock() <= ref_gb->get_cpu()->next_ir_clock)
+					return (0xC0 | (byte)huc_ir_last_received_light);
+				
+				if (ref_gb->get_ir_master_device()) ref_gb->get_ir_master_device()->process_ir();
+
+				if (!ref_gb->received_ir_signals.empty())
+				{
+					huc_ir_last_received_light = !ref_gb->received_ir_signals[0]->light_on;
+
+					ref_gb->get_cpu()->next_ir_clock = ref_gb->get_cpu()->get_clock() + ref_gb->received_ir_signals[0]->duration;
+					ref_gb->received_ir_signals.erase(ref_gb->received_ir_signals.begin());
+
+					return (0xC0 | (byte)huc_ir_last_received_light);
+				}
+				return 0xC1;
+				
+
+			}
+			
+		}
+
 		return 1;
 	case 0xFF:
 		return 0;
@@ -212,6 +239,7 @@ void mbc::ext_write(word adr,byte dat)
 	case 0xFE: //HuC-3
 //		extern FILE *file;
 //		fprintf(file,"%04X : HuC-3 ext_write %04X <= %02X\n",ref_gb->get_cpu()->get_regs()->PC,adr,dat);
+		huc3_write(adr, dat);
 		break;
 	case 0xFD: //TAMA5
 //		extern FILE *file;
@@ -678,19 +706,31 @@ void mbc::huc3_write(word adr,byte dat)
 //	fprintf(file,"%04X : HuC-3 write %04X <= %02X\n",ref_gb->get_cpu()->get_regs()->PC,adr,dat);
 	switch(adr>>13){
 	case 0:
-		if (dat==0xA)
-			ext_is_ram=true;
+		if (dat == 0xA)
+		{
+			ext_is_ram = true;
+			huc_ir_mode = false;
+		}
 		else if (dat==0x0B){
 			ext_is_ram=false;
+			huc_ir_mode = false;
 		}
 		else if (dat==0x0C){
 			ext_is_ram=false;
+			huc_ir_mode = false;
 		}
 		else if (dat==0x0D){
 			ext_is_ram=false;
+			huc_ir_mode = false;
+		}
+		else if (dat == 0x0E) {
+			ext_is_ram = false;
+			huc_ir_mode = true; 
+			ref_gb->get_cpu()->next_ir_clock = -2147483648;
 		}
 		else {
-			ext_is_ram=false;
+			ext_is_ram = false;
+			huc_ir_mode = false;
 		}
 		break;
 	case 1:
@@ -722,6 +762,31 @@ void mbc::huc3_write(word adr,byte dat)
 		}
 */
 		break;
+	}
+
+	if (huc_ir_mode)
+	{
+		if (((adr & 0xa0f0) >= 0xA000) && ((adr & 0xa0f0) <= 0xBFFF))
+		{
+
+			if (last_huc_ir_out_signal != (dat & 0x01) )
+			{
+				if (!ref_gb->get_cpu()->out_ir_signal_que.empty()) {
+					//correct last duration value
+					int size = ref_gb->get_cpu()->out_ir_signal_que.size();
+					ref_gb->get_cpu()->out_ir_signal_que[size - 1]->duration = ref_gb->get_cpu()->get_clock() - ref_gb->get_cpu()->out_ir_signal_que[size - 1]->duration;
+					ref_gb->get_cpu()->log_ir_traffic(ref_gb->get_cpu()->out_ir_signal_que[size - 1], false);
+					//ref_gb->send_ir_signal(ref_gb->get_cpu()->out_ir_signal_que[size - 1]);
+				}
+
+				//add signal to out queu
+				last_huc_ir_out_signal = dat & 0x01; 
+				ref_gb->get_cpu()->out_ir_signal_que.push_back(new ir_signal((dat == 0x01), ref_gb->get_cpu()->get_clock()));
+			}
+	
+
+		}
+
 	}
 }
 
