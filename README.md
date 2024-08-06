@@ -41,7 +41,7 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
   <br>
   
 ### Gameboy Addon Emulation
-- TV REMOTE Emulation
+- [TV REMOTE](#TV-REMOTE) Emulation
 - [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection) 
 - [POWER ANTENNA/BUGSENSOR](#power-antenna-and-bugsensor) Emulation (LED via led driver overlay & controller rumble on led flash)
 
