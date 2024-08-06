@@ -41,9 +41,13 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
   <br>
   
 ### Gameboy Addon Emulation
+- TV REMOTE Emulation
 - [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection) 
 - [POWER ANTENNA/BUGSENSOR](#power-antenna-and-bugsensor) Emulation (LED via led driver overlay & controller rumble on led flash)
 
+### Retroarch-Features
+- Retroarchivments support
+- Netplay
 
 Netplay is working. Make sure to have all the same amount of emulated gameboys in your core options.
 
@@ -119,6 +123,19 @@ Trading should work with other GB/GBC Games as well:
 Infrared over network is currently not supported (GBE+ does) but maybe in a future release.
 
 Have fun!
+
+<br>
+
+## TV REMOTE
+
+The GBC has a IR receicer and some games used this to unlock cotent with a TV REMOTE.
+You can choose between 4 different JVC TV-Remotes. Use SELECT to switch between the Remotes and use the Numpad to press a button.
+If you are playing on a handheld you can activate the "autorandom IR Signal" in the Core options.
+
+- Robopon Sun (HUC3) - works
+- Bomberman MAX Blue/RED - works
+- Bomberman Daman Bakugaiden V - Final Mega Tune - works
+- Doraemon Memories - Nobita no Omoide Daibouken - not working
 
 <br>
  
