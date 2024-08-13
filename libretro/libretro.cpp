@@ -486,9 +486,6 @@ void *retro_get_memory_data(unsigned id)
         case RETRO_MEMORY_SAVE_RAM:
             return v_gb[id]->get_rom()->get_sram();
         case RETRO_MEMORY_RTC:
-            if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
-                return &v_gb[id]->get_mbc()->huc3_baseTime;
-
             return &(render[id]->fixed_time);
         case RETRO_MEMORY_VIDEO_RAM:
             return v_gb[id]->get_cpu()->get_vram();
@@ -505,8 +502,6 @@ void *retro_get_memory_data(unsigned id)
         case RETRO_MEMORY_GAMEBOY_1_SRAM:
             return v_gb[id]->get_rom()->get_sram();
         case RETRO_MEMORY_GAMEBOY_1_RTC:
-            if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
-                return &v_gb[id]->get_mbc()->huc3_baseTime;
             return &(render[id]->fixed_time);
         case RETRO_MEMORY_GAMEBOY_2_SRAM:
             return v_gb[id]->get_rom()->get_sram();
@@ -530,12 +525,8 @@ size_t retro_get_memory_size(unsigned id)
         switch (id)
         {
         case RETRO_MEMORY_SAVE_RAM:
-            if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
-                return v_gb[id]->get_rom()->get_sram_size();
             return v_gb[id]->get_rom()->get_sram_size();
         case RETRO_MEMORY_RTC:
-            if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
-                return sizeof(v_gb[id]->get_mbc()->huc3_baseTime);
             return sizeof(render[id]->fixed_time);
         case RETRO_MEMORY_VIDEO_RAM:
             if (v_gb[id]->get_rom()->get_info()->gb_type >= 3)

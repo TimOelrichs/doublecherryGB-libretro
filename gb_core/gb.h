@@ -21,7 +21,7 @@
 //--------------------------------------------------
 // GB クラス定義部,その他
 
-#include <stdint.h>
+
 #include <vector>
 //#include <array>
 #include <queue>
@@ -524,9 +524,6 @@ public:
 	void reset();
 
 	void serialize(serializer &s);
-
-	unsigned long huc3_baseTime; 
-
 private:
 	void mbc1_write(word adr,byte dat);
 	void mbc2_write(word adr,byte dat);
@@ -534,17 +531,9 @@ private:
 	void mbc5_write(word adr,byte dat);
 	void mbc7_write(word adr,byte dat);
 	void huc1_write(word adr,byte dat);
-	void huc3_write(word adr,byte dat);	
-	byte huc3_read(word adr);
+	void huc3_write(word adr,byte dat);
 	void tama5_write(word adr,byte dat);
 	void mmm01_write(word adr,byte dat);
-
-	void huc3_doLatch();
-	void huc3_updateTime();
-	void huc3_execute_command();
-	void huc3_copy_Scratch2RTC();
-	void huc3_copy_RTC2Scratch();
-	void huc3_log(bool read, byte adress, byte value);
 
 	byte *rom_page;
 	byte *sram_page;
@@ -584,19 +573,6 @@ private:
 
 	bool huc1_16_8;
 	byte huc1_dat;
-
-	unsigned long huc3_haltTime, huc3_writingTime;
-	unsigned long huc3_dataTime;
-	byte huc3_ramValue, huc3_shift, huc3_current_mem_control_reg, huc3_modeflag;
-	bool huc3_halted; 
-	byte huc3_command, huc3_access_adress; 
-	byte *huc3_rtc_register;
-
-	uint64_t last_rtc_second;
-	uint16_t minutes;
-	uint16_t days;
-	uint16_t alarm_minutes, alarm_days;
-	uint8_t alarm_enabled;
 
 	gb *ref_gb;
 };

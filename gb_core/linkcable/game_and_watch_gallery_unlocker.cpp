@@ -24,7 +24,7 @@
 * You need to collect 80 Stars in G&W Gallery 1, and than you can link your GBC with G&W2, or G&W3 
 * and press START on the Museum Note Screen. 
 * 
-* I tried to record data send over the linkcable. Because i couldn't find a legit savefile,
+* I tried to record data send over the linkcable. Because i could find a legit savefile,
 * i used cheats to get the 80 Stars in G&W1. But i couldn't recreate it.
 * Not sure if G&W1 really unlocks this feature, when using cheats.
 * G&W2 send 0xFC and G&W1 answers with 0xEE. I tried to bruteforce the answer, but G&W2 doesn't react
