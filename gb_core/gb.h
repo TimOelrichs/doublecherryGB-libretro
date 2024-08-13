@@ -34,6 +34,9 @@
 #include <map>
 #include <list>
 
+#include <ctime>
+#include <stdint.h>
+
 #include "gb_types.h"
 #include "renderer.h"
 #include "serializer.h"
@@ -502,41 +505,51 @@ private:
 	bool b_enable[4];
 };
 
-class mbc
-{
+class mbc {
 public:
-	mbc(gb *ref);
+	mbc(gb* ref);
 	~mbc();
 
-	byte *get_rom() { return rom_page; }
-	byte *get_sram() { return sram_page; }
+	byte* get_rom() { return rom_page; }
+	byte* get_sram() { return sram_page; }
 	bool is_ext_ram() { return ext_is_ram; }
-	void set_ext_is(bool ext) { ext_is_ram=ext; }
+	void set_ext_is(bool ext) { ext_is_ram = ext; }
 
 	int get_state();
 	void set_state(int dat);
-	void set_page(int rom,int sram);
+	void set_page(int rom, int sram);
 
 	byte read(word adr);
-	void write(word adr,byte dat);
+	void write(word adr, byte dat);
 	byte ext_read(word adr);
-	void ext_write(word adr,byte dat);
+	void ext_write(word adr, byte dat);
 	void reset();
 
-	void serialize(serializer &s);
-private:
-	void mbc1_write(word adr,byte dat);
-	void mbc2_write(word adr,byte dat);
-	void mbc3_write(word adr,byte dat);
-	void mbc5_write(word adr,byte dat);
-	void mbc7_write(word adr,byte dat);
-	void huc1_write(word adr,byte dat);
-	void huc3_write(word adr,byte dat);
-	void tama5_write(word adr,byte dat);
-	void mmm01_write(word adr,byte dat);
+	void serialize(serializer& s);
 
-	byte *rom_page;
-	byte *sram_page;
+	unsigned long huc3_baseTime;
+
+private:
+	void mbc1_write(word adr, byte dat);
+	void mbc2_write(word adr, byte dat);
+	void mbc3_write(word adr, byte dat);
+	void mbc5_write(word adr, byte dat);
+	void mbc7_write(word adr, byte dat);
+	void huc1_write(word adr, byte dat);
+	void huc3_write(word adr, byte dat);
+	byte huc3_read(word adr);
+	void tama5_write(word adr, byte dat);
+	void mmm01_write(word adr, byte dat);
+
+	void huc3_doLatch();
+	void huc3_updateTime();
+	void huc3_execute_command();
+	void huc3_copy_Scratch2RTC();
+	void huc3_copy_RTC2Scratch();
+	void huc3_log(bool read, byte adress, byte value);
+
+	byte* rom_page;
+	byte* sram_page;
 
 	bool mbc1_16_8;
 	byte mbc1_dat;
@@ -555,7 +568,7 @@ private:
 
 	//1 = saw no light
 	bool huc_ir_last_received_light = true;
-	
+
 	// total 32bits
 	int mbc5_dat;
 
@@ -574,7 +587,20 @@ private:
 	bool huc1_16_8;
 	byte huc1_dat;
 
-	gb *ref_gb;
+	unsigned long huc3_haltTime, huc3_writingTime;
+	unsigned long huc3_dataTime;
+	byte huc3_ramValue, huc3_shift, huc3_current_mem_control_reg, huc3_modeflag;
+	bool huc3_halted;
+	byte huc3_command, huc3_access_adress;
+	byte* huc3_rtc_register;
+
+	uint64_t last_rtc_second;
+	uint16_t minutes;
+	uint16_t days;
+	uint16_t alarm_minutes, alarm_days;
+	uint8_t alarm_enabled;
+
+	gb* ref_gb;
 };
 
 class rom

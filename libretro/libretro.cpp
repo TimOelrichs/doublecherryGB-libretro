@@ -486,7 +486,10 @@ void *retro_get_memory_data(unsigned id)
         case RETRO_MEMORY_SAVE_RAM:
             return v_gb[id]->get_rom()->get_sram();
         case RETRO_MEMORY_RTC:
-            return &(render[id]->fixed_time);
+            if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
+                return &v_gb[id]->get_mbc()->huc3_baseTime;
+            else
+                return &(render[id]->fixed_time);
         case RETRO_MEMORY_VIDEO_RAM:
             return v_gb[id]->get_cpu()->get_vram();
         case RETRO_MEMORY_SYSTEM_RAM:
