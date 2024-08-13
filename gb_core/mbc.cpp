@@ -23,6 +23,13 @@
 
 #include "gb.h"
 
+#include <ctime>
+#include <stdint.h>
+#include <string>
+#include <istream>
+#include <iostream>
+#include <fstream>
+
 mbc::mbc(gb *ref)
 {
 	ref_gb=ref;
@@ -62,6 +69,22 @@ void mbc::reset()
 	if (ref_gb->get_rom()->get_info()->cart_type==0xFD){
 		ext_is_ram=false;
 	}
+
+	huc3_haltTime = huc3_baseTime = 0;
+	huc3_dataTime = huc3_writingTime = 0;
+	huc3_ramValue = huc3_shift = huc3_current_mem_control_reg = huc3_modeflag = huc3_access_adress = 0;
+	huc3_halted = false;
+
+	
+	huc3_rtc_register = (byte*)calloc(0xFF, sizeof(byte));
+	/*
+	for (int i = 0; i < 0xFF; i++)
+	{
+		huc3_rtc_register[i] = 0xFF;
+	}
+	*/
+
+
 }
 
 byte mbc::read(word adr)
@@ -178,33 +201,7 @@ byte mbc::ext_read(word adr)
 //		extern FILE *file;
 //		fprintf(file,"%04X : HuC-3 ext_read %04X \n",ref_gb->get_cpu()->get_regs()->PC,adr);
 
-		if (huc_ir_mode)
-		{
-			if (((adr & 0xa0f0) >= 0xA000) && ((adr & 0xa0f0) <= 0xBFFF))
-			{
-				
-				if (ref_gb->get_cpu()->get_clock() <= ref_gb->get_cpu()->next_ir_clock)
-					return (0xC0 | (byte)huc_ir_last_received_light);
-				
-				if (ref_gb->get_ir_master_device()) ref_gb->get_ir_master_device()->process_ir();
-
-				if (!ref_gb->received_ir_signals.empty())
-				{
-					huc_ir_last_received_light = !ref_gb->received_ir_signals[0]->light_on;
-
-					ref_gb->get_cpu()->next_ir_clock = ref_gb->get_cpu()->get_clock() + ref_gb->received_ir_signals[0]->duration;
-					ref_gb->received_ir_signals.erase(ref_gb->received_ir_signals.begin());
-
-					return (0xC0 | (byte)huc_ir_last_received_light);
-				}
-				return 0xC1;
-				
-
-			}
-			
-		}
-
-		return 1;
+		return huc3_read(adr);
 	case 0xFF:
 		return 0;
 	}
@@ -700,39 +697,54 @@ void mbc::huc1_write(word adr,byte dat)
 	}
 }
 
+byte mbc::huc3_read(word adr)
+{
+	if (adr >> 13 == 5) //A000
+	{
+		switch (huc3_current_mem_control_reg)
+		{
+		case 0x0C: return (huc3_command & 0xF0) | (huc3_ramValue & 0x0F);
+		case 0x0D: return 1;
+		case 0x0E:
+		{
+			if (ref_gb->get_cpu()->get_clock() <= ref_gb->get_cpu()->next_ir_clock)
+				return (0xC0 | (byte)huc_ir_last_received_light);
+
+			if (ref_gb->get_ir_master_device()) ref_gb->get_ir_master_device()->process_ir();
+
+			if (!ref_gb->received_ir_signals.empty())
+			{
+				huc_ir_last_received_light = !ref_gb->received_ir_signals[0]->light_on;
+
+				ref_gb->get_cpu()->next_ir_clock = ref_gb->get_cpu()->get_clock() + ref_gb->received_ir_signals[0]->duration;
+				ref_gb->received_ir_signals.erase(ref_gb->received_ir_signals.begin());
+
+				return (0xC0 | (byte)huc_ir_last_received_light);
+			}
+			return 0xC1;
+		}
+		default:return 0xFF;
+		}
+
+	}
+
+	return 1;
+}
+
 void mbc::huc3_write(word adr,byte dat)
 {
 //	extern FILE *file;
 //	fprintf(file,"%04X : HuC-3 write %04X <= %02X\n",ref_gb->get_cpu()->get_regs()->PC,adr,dat);
 	switch(adr>>13){
 	case 0:
-		if (dat == 0xA)
-		{
-			ext_is_ram = true;
-			huc_ir_mode = false;
-		}
-		else if (dat==0x0B){
-			ext_is_ram=false;
-			huc_ir_mode = false;
-		}
-		else if (dat==0x0C){
-			ext_is_ram=false;
-			huc_ir_mode = false;
-		}
-		else if (dat==0x0D){
-			ext_is_ram=false;
-			huc_ir_mode = false;
-		}
-		else if (dat == 0x0E) {
-			ext_is_ram = false;
-			huc_ir_mode = true; 
-			ref_gb->get_cpu()->next_ir_clock = -2147483648;
-		}
-		else {
-			ext_is_ram = false;
-			huc_ir_mode = false;
-		}
+	{
+		huc3_current_mem_control_reg = dat;
+		ext_is_ram = (dat == 0xA);
+		huc_ir_mode = (dat == 0xE);
+		if (huc_ir_mode) ref_gb->get_cpu()->next_ir_clock = -2147483648;
 		break;
+	}
+	
 	case 1:
 		rom_page=ref_gb->get_rom()->get_rom()+0x4000*((dat==0?1:dat)&0x7F&(rom_size_tbl[ref_gb->get_rom()->get_info()->rom_size]-1))-0x4000;
 		break;
@@ -762,14 +774,25 @@ void mbc::huc3_write(word adr,byte dat)
 		}
 */
 		break;
-	}
-
-	if (huc_ir_mode)
+	case 5: //A000-BFFF
 	{
-		if (((adr & 0xa0f0) >= 0xA000) && ((adr & 0xa0f0) <= 0xBFFF))
+		switch (huc3_current_mem_control_reg)
+		{
+			//RTC command/argument (write)
+		case 0x0B: huc3_command = dat; break;
+			//RTC command/argument (write)
+		case 0x0C:;  break;
+			//RTC semaphore (read/write)
+		case 0x0D:
+		{
+			if ((dat & 0x01) == 0x00) huc3_execute_command();
+			break;
+		}
+		//HUC IR MODE
+		case 0x0E:
 		{
 
-			if (last_huc_ir_out_signal != (dat & 0x01) )
+			if (last_huc_ir_out_signal != (dat & 0x01))
 			{
 				if (!ref_gb->get_cpu()->out_ir_signal_que.empty()) {
 					//correct last duration value
@@ -780,13 +803,237 @@ void mbc::huc3_write(word adr,byte dat)
 				}
 
 				//add signal to out queu
-				last_huc_ir_out_signal = dat & 0x01; 
+				last_huc_ir_out_signal = dat & 0x01;
 				ref_gb->get_cpu()->out_ir_signal_que.push_back(new ir_signal((dat == 0x01), ref_gb->get_cpu()->get_clock()));
 			}
-	
+			break;
 
 		}
+		}
+	}
+	}
 
+	
+}
+
+void mbc::huc3_execute_command()
+{
+	byte argument = (huc3_command & 0x0F);
+	// command
+	switch (huc3_command & 0xF0)
+	{
+	case 0x10:
+	{
+		// read time
+		
+		//huc3_doLatch();
+		huc3_ramValue = huc3_rtc_register[huc3_access_adress];
+		//huc3_log(1, huc3_access_adress, huc3_ramValue);
+		/*
+			if (huc3_modeflag == HUC3_READ) {
+				huc3_ramValue = (huc3_dataTime >> huc3_shift) & 0x0F;
+				huc3_shift += 4;
+				if (huc3_shift > 24) huc3_shift = 0;
+			}
+			*/
+		huc3_access_adress++;
+		break;
+	}
+	case 0x30:
+	{
+		// write time
+		huc3_rtc_register[huc3_access_adress] = argument;
+		//huc3_log(0, huc3_access_adress, argument);
+		/*
+		// write time
+		if (huc3_modeflag == HUC3_WRITE) {
+			if (huc3_shift == 0) huc3_writingTime = 0;
+			if (huc3_shift < 24) {
+				huc3_writingTime |= argument << huc3_shift;
+				huc3_shift += 4;
+				if (huc3_shift == 24) {
+					huc3_updateTime();
+					huc3_modeflag = HUC3_READ;
+					huc3_shift = 0;
+				}
+			}
+		}
+		*/
+		huc3_access_adress++;
+		break;
+	}
+	case 0x40:
+	{
+		huc3_access_adress &= 0xF0;
+		huc3_access_adress |= argument;
+		break;
+	}
+	case 0x50:
+		huc3_access_adress &= 0x0F;
+		huc3_access_adress |= (argument << 4);
+		break;
+		//extended command
+	case 0x60:
+	{
+		//huc3_log(0, 0x60, argument);
+		switch (argument)
+		{
+		case 0: huc3_copy_RTC2Scratch(); 
+			break;
+		case 1: huc3_copy_Scratch2RTC(); 
+			break;
+		case 2: huc3_ramValue = 1;
+		case 0xE: break;
+		}
+
+
+
+		break;
+	}
+	}
+}
+
+
+void mbc::huc3_copy_Scratch2RTC()
+{
+
+	huc3_rtc_register[16] = huc3_rtc_register[0];
+	huc3_rtc_register[17] = huc3_rtc_register[1];
+	huc3_rtc_register[18] = huc3_rtc_register[2];
+	huc3_rtc_register[19] = huc3_rtc_register[3];
+	huc3_rtc_register[20] = huc3_rtc_register[4];
+	huc3_rtc_register[21] = huc3_rtc_register[5];
+
+
+	huc3_shift = 0;
+	huc3_writingTime = 0;
+	for (size_t i = 0; i < 7; i++)
+	{
+		huc3_writingTime |= huc3_rtc_register[i] << huc3_shift;
+		huc3_shift += 4;
+	}
+
+
+	unsigned minute = (huc3_writingTime & 0xFFF) % 1440;
+	unsigned day = (huc3_writingTime & 0xFFF000) >> 12;
+
+	huc3_baseTime = std::time(0) - minute * 60 - day * 86400;
+	huc3_haltTime = huc3_baseTime;
+	
+}
+
+void mbc::huc3_copy_RTC2Scratch()
+{
+	huc3_doLatch();
+	huc3_rtc_register[16] = (byte)huc3_dataTime & 0x0F;
+	huc3_rtc_register[17] = (byte)(huc3_dataTime >> 4) & 0x0F;
+	huc3_rtc_register[18] = (byte)(huc3_dataTime >> 8) & 0x0F;
+	huc3_rtc_register[19] = (byte)(huc3_dataTime >> 12) & 0x0F;
+	huc3_rtc_register[20] = (byte)(huc3_dataTime >> 16) & 0x0F;
+	huc3_rtc_register[21] = (byte)(huc3_dataTime >> 20) & 0x0F;
+
+	huc3_rtc_register[0] = huc3_rtc_register[16];
+	huc3_rtc_register[1] = huc3_rtc_register[17];
+	huc3_rtc_register[2] = huc3_rtc_register[18];
+	huc3_rtc_register[3] = huc3_rtc_register[19];
+	huc3_rtc_register[4] = huc3_rtc_register[20];
+	huc3_rtc_register[5] = huc3_rtc_register[21];
+	//huc3_rtc_register[6] = (byte)(huc3_dataTime >> 24) & 0x0F;
+
+}
+
+void mbc::huc3_doLatch()
+{
+	huc3_updateTime();
+
+	uint64_t tmp = (huc3_halted ? huc3_haltTime : std::time(0)) - huc3_baseTime;
+
+	unsigned minute = (tmp / 60) % 1440;
+	unsigned day = (tmp / 86400) & 0xFFF;
+	huc3_dataTime = (day << 12) | minute;
+
+	
+	/*
+	//huc3_dataTime = (day_t << 12) | minute_t;
+
+	unsigned minutes =	(huc3_rtc_register[HUC3_RTC_MINUTES_HI] << 8) |
+						(huc3_rtc_register[HUC3_RTC_MINUTES_MI] << 4) |
+						(huc3_rtc_register[HUC3_RTC_MINUTES_LO]);
+
+	unsigned days =		(huc3_rtc_register[HUC3_RTC_DAYS_HI] << 8) |
+						(huc3_rtc_register[HUC3_RTC_DAYS_MI] << 4) |
+						(huc3_rtc_register[HUC3_RTC_DAYS_LO]);
+
+
+	unsigned long tmp = std::time(0) - huc3_baseTime;
+	//unsigned long minute_t = (tmp / 60) % 1440;
+	//unsigned long day_t = (tmp / 86400) & 0xFFF;
+
+	minutes += (tmp / 60) % 1440;
+	days += (tmp / 86400) & 0xFFF;
+
+	huc3_dataTime = (days << 12) | minutes;
+
+	*/
+
+	/*
+	huc3_rtc_register[0] = (byte)(minute) & 0x0F;
+	huc3_rtc_register[1] = (byte)(minute >> 4) & 0x0F;
+	huc3_rtc_register[2] = (byte)(minute >> 8) & 0x0F;
+	huc3_rtc_register[3] = (byte)(day) & 0x0F;
+	huc3_rtc_register[4] = (byte)(day >> 4) & 0x0F;
+	huc3_rtc_register[5] = (byte)(day >> 8) & 0x0F;
+	huc3_rtc_register[6] = (byte)(day >> 12) & 0x0F;
+
+
+
+	huc3_rtc_register[HUC3_RTC_MINUTES_LO] = (byte)(minutes) & 0x0F;
+	huc3_rtc_register[HUC3_RTC_MINUTES_MI] = (byte)(minutes >> 4) & 0x0F;
+	huc3_rtc_register[HUC3_RTC_MINUTES_HI] = (byte)(minutes >> 8) & 0x0F;
+	huc3_rtc_register[HUC3_RTC_DAYS_LO]	 = (byte)(days) & 0x0F;
+	huc3_rtc_register[HUC3_RTC_DAYS_MI]	 = (byte)(days >> 4) & 0x0F;
+	huc3_rtc_register[HUC3_RTC_DAYS_HI]	 = (byte)(days >> 8) & 0x0F;
+
+
+	*/
+}
+
+void mbc::huc3_updateTime()
+{
+	unsigned minute = (huc3_writingTime & 0xFFF) % 1440;
+	unsigned day = (huc3_writingTime & 0xFFF000) >> 12;
+	huc3_baseTime = std::time(0) - minute * 60 - day * 86400;
+	huc3_haltTime = huc3_baseTime;
+
+	/*
+	unsigned minute = (huc3_rtc_register[HUC3_RTC_MINUTES_HI] << 8) |
+		(huc3_rtc_register[HUC3_RTC_MINUTES_MI] << 4) |
+		(huc3_rtc_register[HUC3_RTC_MINUTES_LO]);
+
+	unsigned day = (huc3_rtc_register[HUC3_RTC_DAYS_HI] << 8) |
+		(huc3_rtc_register[HUC3_RTC_DAYS_MI] << 8) |
+		(huc3_rtc_register[HUC3_RTC_DAYS_LO]);
+
+
+	huc3_baseTime = std::time(0) - minute * 60 - day * 86400;
+	huc3_haltTime = huc3_baseTime;
+	*/
+}
+
+void mbc::huc3_log(bool read, byte adress, byte value)
+{
+	//if (logging_allowed)
+	{
+		std::string filePath = "./huc3.txt";
+		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
+
+		//ofs << "" << clocks_occer << tabs;
+		//ofs << "" << std::hex << (int)a << "\t";
+		//ofs << "" << std::hex << (int)b << "";
+		ofs << (read ? "read adress: " : "write adress: ") << std::hex << (unsigned int)adress;
+		ofs << " value: " << std::hex << (unsigned int)value;
+		ofs << std::endl;
+		ofs.close();
 	}
 }
 
