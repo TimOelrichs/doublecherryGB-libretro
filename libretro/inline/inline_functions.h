@@ -69,6 +69,22 @@ void auto_config_4p_hack()
 
 void auto_config_1p_link() {
 
+    //GB Printer
+    if (!strncmp(cart_name, "POKEMONPINB", 11) ||       //Pokemon Pinball
+        (!strncmp(cart_name, "ZELDA", 5) &&             //Zelda Link's Awakening DX 
+        (strncmp(cart_name, "ZELDA N", 7) ||            //but not the Oracle Games
+         strncmp(cart_name, "ZELDA D", 7))
+        )
+        )
+    {
+        v_gb[0]->set_linked_target(new gameboy_printer());
+
+        display_message("Game support Gameboy Printer");
+        display_message("Gameboy Printer plugged in");
+        return;
+    }
+
+    //Pokemon Stuff
     if (!strncmp(cart_name, "POKEMON", 7 )) 
     {
         pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
@@ -88,10 +104,10 @@ void auto_config_1p_link() {
         
         */
       
-
         return; 
     }
 
+ 
   
     //TV REMOTE Emulation
     if (!strncmp(cart_name, "SUN",  3)      ||      //ROBONPON SUN
