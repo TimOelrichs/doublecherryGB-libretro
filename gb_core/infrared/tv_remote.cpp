@@ -274,10 +274,10 @@ void tv_remote::build_nec_signal_frame(byte adress, byte code)
 	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(9000)));
 	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(4500)));
 
-	add_nec_byte_to_out_ir_signals(adress);
-	add_nec_byte_to_out_ir_signals(~adress);
-	add_nec_byte_to_out_ir_signals(code);
-	add_nec_byte_to_out_ir_signals(~code);
+	add_byte_to_out_ir_signals(adress);
+	add_byte_to_out_ir_signals(~adress);
+	add_byte_to_out_ir_signals(code);
+	add_byte_to_out_ir_signals(~code);
 
 	//End burst
 	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(562)));
@@ -293,7 +293,7 @@ void tv_remote::build_nec_signal_frame(byte adress, byte code)
 
 }
 
-void tv_remote::add_nec_byte_to_out_ir_signals(byte data)
+void tv_remote::add_byte_to_out_ir_signals(byte data)
 {
 	byte out_bit = data;
 	for (int i = 7; i >= 0; i--)

@@ -126,7 +126,8 @@ void pikachu_2_gs::receive_ir_signal(ir_signal* signal)
 						*/
 					
 						current_state = WAIT_FOR_ACK;
-						set_sending_delay(micro_seconds_to_clocks(1000));
+						//set_sending_delay(micro_seconds_to_clocks(1000));
+						set_sending_delay(12925);
 					
 						
 					}
@@ -146,7 +147,7 @@ void pikachu_2_gs::receive_ir_signal(ir_signal* signal)
 
 		}
 	}
-	//i implemented SLAVE MODE is only for research purposes
+	//i implemented SLAVE MODE only for research purposes
 	//in prod it will always acts as a master cause this make bypassing the region-lock possible
 	else
 	{
@@ -296,10 +297,11 @@ void pikachu_2_gs::build_hello_msg()
 void pikachu_2_gs::build_ack_msg()
 {
 	add_preamble_to_out_signals();
-	add_nec_byte_to_out_ir_signals(0x6C);
+	add_byte_to_out_ir_signals(0x6C);
 	add_postamble_to_out_signals();
 
 	set_sending_delay(micro_seconds_to_clocks(2000));
+	
 }
 
 void pikachu_2_gs::build_data_msg(std::vector<byte> bytes)
@@ -307,7 +309,7 @@ void pikachu_2_gs::build_data_msg(std::vector<byte> bytes)
 	add_preamble_to_out_signals();
 	for (int i = 0; i < bytes.size(); i++)
 	{
-		add_nec_byte_to_out_ir_signals(bytes[i]);
+		add_byte_to_out_ir_signals(bytes[i]);
 	}
 	add_postamble_to_out_signals();
 
@@ -323,15 +325,17 @@ dword* pikachu_2_gs::get_rp_que() {
 
 void pikachu_2_gs::reset() 
 {
+
+	is_master = false;
+	log_answer_delay = true;
+
 	sending_delay = 0;
 	in_data_length = 0;
 	current_state = RECEIVE_HELLO;
-
 	in_ir_signals.clear();
 	out_ir_signals.clear();
 	in_bytes.clear();
-	is_master = false;
-	log_answer_delay = false;
+	
 	clock_at_last_sended_signal = 0;
 	
 }
@@ -370,7 +374,7 @@ void pikachu_2_gs::translate_signals_to_bytes() {
 	//log_ir_received_bytes();
 }
 
-void pikachu_2_gs::add_nec_byte_to_out_ir_signals(byte data) {
+void pikachu_2_gs::add_byte_to_out_ir_signals(byte data) {
 
 	byte out_bit = data;
 	for (int i = 7; i >= 0; i--)
@@ -402,7 +406,7 @@ void pikachu_2_gs::set_sending_delay(int clocks)
 	{
 		delay_start_clock = v_gb[0]->get_cpu()->get_clock();
 		sending_delay -= 0x7fffffff;
-		delay_start_clock = true;
+		is_waiting_for_delay_carry = true;
 	}
 }
 

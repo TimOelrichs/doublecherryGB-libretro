@@ -79,16 +79,16 @@ void auto_config_1p_link() {
         display_message("PKMBUDDY BOY plugged in");
         display_message("Check out the CABLE CLUB for weekly GEN1 Distributions!");
 
-        /* Mytery Gift Maschine WIP - Not working yet
+        
+        //Mytery Gift Maschine WIP - Not working yet
         
         //TODO IR ONLY  for GEN2
         pikachu_2_gs* pika2gs = new pikachu_2_gs(v_gb);
         v_gb[0]->set_ir_target(pika2gs);
         v_gb[0]->set_ir_master_device(pika2gs);
         
-        */
+        
       
-
         return; 
     }
 

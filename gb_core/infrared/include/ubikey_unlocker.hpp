@@ -42,7 +42,7 @@ private:
 
 	void translate_signals_to_bytes();
 
-	void add_nec_byte_to_out_ir_signals(byte data);
+	void add_byte_to_out_ir_signals(byte data);
 	void add_preamble_to_out_signals();
 	void add_postamble_to_out_signals();
 

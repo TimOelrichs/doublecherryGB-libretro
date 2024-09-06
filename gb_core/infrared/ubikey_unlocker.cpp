@@ -362,7 +362,7 @@ void ubikey_unlocker::check_hello_msg()
 void ubikey_unlocker::build_ack_msg()
 {
 	add_preamble_to_out_signals();
-	add_nec_byte_to_out_ir_signals(0x6E);
+	add_byte_to_out_ir_signals(0x6E);
 	add_postamble_to_out_signals();
 
 	sending_delay = v_gb[0]->get_cpu()->get_clock() + micro_seconds_to_clocks(23000);
@@ -373,7 +373,7 @@ void ubikey_unlocker::build_data_msg(std::vector<byte> bytes)
 	add_preamble_to_out_signals();
 	for (int i = 0; i < bytes.size(); i++)
 	{
-		add_nec_byte_to_out_ir_signals(bytes[i]);
+		add_byte_to_out_ir_signals(bytes[i]);
 	}
 	add_postamble_to_out_signals();
 
@@ -417,7 +417,7 @@ void ubikey_unlocker::translate_signals_to_bytes() {
 	//log_ir_received_bytes();
 }
 
-void ubikey_unlocker::add_nec_byte_to_out_ir_signals(byte data) {
+void ubikey_unlocker::add_byte_to_out_ir_signals(byte data) {
 
 	byte out_bit = data;
 	for (int i = 7; i >= 0; i--)
