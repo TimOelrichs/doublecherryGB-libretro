@@ -38,7 +38,7 @@ private:
 	void build_signal_frame(byte code);
 
 	void build_nec_signal_frame(byte adress, byte code);
-	void add_nec_byte_to_out_ir_signals(byte data);
+	void add_byte_to_out_ir_signals(byte data);
 
 	void build_rc5_signal_frame(byte adress, byte command);
 	void add_rc5_byte_to_out_ir_signals(byte data, byte length);

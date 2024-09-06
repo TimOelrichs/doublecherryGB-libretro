@@ -685,8 +685,16 @@ void cpu::io_write(word adr,byte dat)
 					//correct last duration value
 					int size = out_ir_signal_que.size();
 					out_ir_signal_que[size - 1]->duration = total_clock - out_ir_signal_que[size - 1]->duration;
-					log_ir_traffic(out_ir_signal_que[size - 1], false);
-					ref_gb->send_ir_signal(out_ir_signal_que[size - 1]);
+					
+					
+					//don't send light off, when role has changed
+					bool role_has_changed =	!out_ir_signal_que[size - 1]->light_on &&
+											out_ir_signal_que[size - 1]->duration > 45000;
+					if (!role_has_changed) {
+						ref_gb->send_ir_signal(out_ir_signal_que[size - 1]);
+						log_ir_traffic(out_ir_signal_que[size - 1], false);
+					}
+						
 				}
 
 				//add signal to out queu
