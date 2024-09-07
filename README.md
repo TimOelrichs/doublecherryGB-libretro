@@ -42,7 +42,8 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
   
 ### Gameboy Addon Emulation
 - [TV REMOTE](#TV-REMOTE) Emulation
-- [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection) 
+- [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection)
+- [BARCODE TAISEN BARDIGUN](#BARCODE-TAISEN-BARDIGUN) Emulation full Support (all barcodes are hardcoded, use the numkeys 0-8 for selection)
 - [POWER ANTENNA/BUGSENSOR](#power-antenna-and-bugsensor) Emulation (LED via led driver overlay & controller rumble on led flash)
 
 ### Retroarch-Features
@@ -153,6 +154,14 @@ The following games have support or even need the BARCODE BOY to be played:
 
 All Barcode Cards are hardcoded. You can select different cards with the Numkeys 0-9.
 If you don't have a keyboard, the the barcode cards will be changed randomly.
+
+<br>
+
+## BARCODE TAISEN BARDIGUN
+
+A japan exclusive GBC game that came with Barcode Reader(See https://shonumi.github.io/articles/art6.html).
+
+All Barcode Cards are hardcoded. You can select different cards with the Numkeys 0-8 or use the SELECT Button.
 
 <br>
 
