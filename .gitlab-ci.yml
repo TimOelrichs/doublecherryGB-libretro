@@ -150,16 +150,16 @@ libretro-build-linux-i686:
     - .core-defs
 
 # MacOS 64-bit
-#libretro-build-osx-x64:
-#  extends:
-#    - .libretro-osx-x64-make-10-7
-#    - .core-defs
+libretro-build-osx-x64:
+  extends:
+    - .libretro-osx-x64-make-10-7
+    - .core-defs
 
 # MacOS ARM 64-bit
-#libretro-build-osx-arm64:
-#  extends:
-#    - .libretro-osx-arm64-make-default
-#    - .core-defs
+libretro-build-osx-arm64:
+  extends:
+    - .libretro-osx-arm64-make-default
+    - .core-defs
 
 ################################### CELLULAR #################################
 # Android ARMv7a

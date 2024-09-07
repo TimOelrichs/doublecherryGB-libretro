@@ -31,4 +31,4 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/infrared/pikachu_2_gs.cpp \
 	$(CORE_DIR)/gb_core/infrared/ubikey_unlocker.cpp \
 	$(CORE_DIR)/gb_core/infrared/tv_remote.cpp \
-	$(CORE_DIR)/gb_core/infrared/full_changer.cpp \
+	$(CORE_DIR)/gb_core/infrared/full_changer.cpp
