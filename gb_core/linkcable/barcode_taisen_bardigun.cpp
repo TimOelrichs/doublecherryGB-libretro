@@ -20,12 +20,13 @@
 */
 
 #include "./include/barcode_taisen_bardigun.hpp"
-#include "./include/data/barcode_taisen_bardigun_data.h"
+#include "./include/barcodes/barcode_taisen_bardigun_data.h"
 
 extern void display_message(std::string msg_str);
 
 barcode_taisen_bardigun::barcode_taisen_bardigun() 
 {
+	current_barcode_index = 0;
 	set_barcode();
 }
 
@@ -36,9 +37,6 @@ byte barcode_taisen_bardigun::receive_from_linkcable(byte data)
 
 	byte ret = data_out[0];
 	data_out.erase(data_out.begin());
-
-	//log_link_traffic(data, ret);
-
 	return ret;
 }
 
@@ -103,20 +101,3 @@ void barcode_taisen_bardigun::handle_special_hotkey(int key)
 	set_barcode();
 		
 }
-
-
-
-barcode_taisen_bardigun::log_link_traffic(byte in, byte out)
-{
-	//if (logging_allowed)
-	{
-		std::string filePath = "./bardigun_log.txt";
-		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
-	
-		ofs << "" << std::hex << in << " ";
-		ofs << "" << std::hex << out << std::endl;
-
-		ofs.close();
-	}
-}
-

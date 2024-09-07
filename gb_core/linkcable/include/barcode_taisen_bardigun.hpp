@@ -42,7 +42,7 @@ public:
 	void handle_special_hotkey(int key) override;
 
 	std::vector<byte> data_out; 
-	byte current_barcode_index = 0;
+	byte current_barcode_index;
 
 
 };
