@@ -6,6 +6,7 @@
 #include "hack_4p_burger_time_deluxe.hpp"
 #pragma once
 #include "barcodeboy.hpp"
+#include "barcode_taisen_bardigun.hpp"
 #include "faceball2000_cable.hpp"
 #include "power_antenna.hpp"
 #include "pokebuddy_gen1.hpp"

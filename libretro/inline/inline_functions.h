@@ -83,12 +83,13 @@ void auto_config_1p_link() {
         //Mytery Gift Maschine WIP - Not working yet
         
         //TODO IR ONLY  for GEN2
+        /*
         pikachu_2_gs* pika2gs = new pikachu_2_gs(v_gb);
         v_gb[0]->set_ir_target(pika2gs);
         v_gb[0]->set_ir_master_device(pika2gs);
+        */
         
-        
-      
+       
         return; 
     }
 
@@ -121,12 +122,23 @@ void auto_config_1p_link() {
         !strcmp(cart_name, "FAMISTA3")
         )
     {
+        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
         barcodeboy* bcb = new barcodeboy(v_gb, cart_name);
         master_link = bcb; 
         hotkey_target = bcb;
-        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
         return; 
     }
+
+    //link barcode taisen bardigun
+    if (!strcmp(cart_name, "BARDIGUN") )
+    {
+        display_message("Game supports BARCODE TAISEN BARDIGUN! BARDIGUN plugged in");
+        barcode_taisen_bardigun* btb = new barcode_taisen_bardigun();
+        hotkey_target = btb;
+        v_gb[0]->set_linked_target(btb); 
+        return;
+    }
+
 
     //link power_antenna/bugsensor
     if (!strncmp(cart_name, "TELEFANG", 8) ||

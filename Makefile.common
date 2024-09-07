@@ -23,6 +23,7 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/linkcable/hack_4p_kwirk.cpp \
 	$(CORE_DIR)/gb_core/linkcable/hack_4p_burger_time_deluxe.cpp \
 	$(CORE_DIR)/gb_core/linkcable/barcodeboy.cpp \
+	$(CORE_DIR)/gb_core/linkcable/barcode_taisen_bardigun.cpp \
 	$(CORE_DIR)/gb_core/linkcable/faceball2000_cable.cpp \
 	$(CORE_DIR)/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp \
 	$(CORE_DIR)/gb_core/linkcable/power_antenna.cpp \
