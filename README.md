@@ -82,6 +82,8 @@ You can uses the Numkeys on your keyboard or the SELECT Button to change Pokemon
 
 You can also use this to trade pokemon back for trading evolutions.
 
+It's already setup. Leave emulated Gameboys at 1 and just visit the cable club in game.
+
 Weekly Gen1 Pokemon Distribution List
 https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
 
