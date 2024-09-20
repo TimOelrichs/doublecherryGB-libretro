@@ -76,12 +76,12 @@ For Multiplayer you have to increase the amount of emulated Gameboy in the core 
 DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
 
 - If you don't own a Mew it will trade you a Lv 5 Mew. 
-- If you already own a Mew it will give you weekly custom Distribution Events. 
+- If you already own a Mew it will give you weekly Pokemon Distribution Events with a choice of different Pokemon. See table below. 
 - You can also use this to trade pokemon back for trading evolutions.
 
 You can uses the Numkeys on your keyboard or the SELECT Button to change Pokemon you want to get. 
 
-It's already preconfigured. Leave emulated Gameboys at 1 and just visit the cable club in game.
+It's already preconfigured. Leave emulated Gameboys at 1 and just visit the cable club ingame.
 
 Weekly Gen1 Pokemon Distribution List
 https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
