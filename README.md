@@ -80,6 +80,8 @@ DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I 
 
 You can uses the Numkeys on your keyboard or the SELECT Button to change Pokemon you want to get. 
 
+You can also use this to trade pokemon back for trading evolutions.
+
 Weekly Gen1 Pokemon Distribution List
 https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
 
