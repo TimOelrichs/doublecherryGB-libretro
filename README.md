@@ -71,7 +71,7 @@ For Multiplayer you have to increase the amount of emulated Gameboy in the core 
 
 ## Builtin Mew Maschine and weekly GEN1 Pokemon Distributions 
 
-DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
+DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy. Currently only  for GEN1, but you can also use it with the Time Capsule feature in GEN2.
 
 - If you don't own a Mew it will trade you a Lv 5 Mew. 
 - If you already own a Mew it will give you weekly Pokemon Distribution Events with a choice of different Pokemon. See table below. 
