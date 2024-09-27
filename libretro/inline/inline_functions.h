@@ -257,6 +257,51 @@ void check_for_new_players() {
 
 }
 
+static void update_multiplayer_geometry() {
+
+    int screenw = 160, screenh = 144;
+
+    if (_screen_4p_split && (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)) {
+
+        if (emulated_gbs < 5) {
+            screenw *= 2;
+            screenh *= 2;
+        }
+        else if (emulated_gbs < 10) {
+            screenw *= 3;
+            screenh *= 3;
+        }
+        else {
+            screenw *= 4;
+            screenh *= 4;
+        }
+
+    }
+    else if (emulated_gbs > 1 && _show_player_screen == 2 && _number_of_local_screens == 1)
+    {
+        if (_screen_vertical)
+            screenh *= emulated_gbs;
+        else
+            screenw *= emulated_gbs;
+    }
+    else if (_number_of_local_screens > 1)
+    {
+        if (_screen_vertical)
+            screenh *= _number_of_local_screens;
+        else
+            screenw *= _number_of_local_screens;
+    }
+
+
+    my_av_info->geometry.base_width = screenw;
+    my_av_info->geometry.base_height = screenh;
+    my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+
+    already_checked_options = true;
+    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+
+}
+
 static void check_variables(void)
 {
     libretro_msg_interface_version = 0;
@@ -492,48 +537,7 @@ static void check_variables(void)
         else
             _show_player_screen = emulated_gbs;
 
-
-        int screenw = 160, screenh = 144;
-
-        if (_screen_4p_split && (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)) {
-
-            if (emulated_gbs < 5) {
-                screenw *= 2;
-                screenh *= 2;
-            }
-            else if (emulated_gbs < 10) {
-                screenw *= 3;
-                screenh *= 3;
-            }
-            else {
-                screenw *= 4;
-                screenh *= 4;
-            }
-          
-        }
-        else if (emulated_gbs > 1 && _show_player_screen == 2 && _number_of_local_screens == 1)
-        {
-            if (_screen_vertical)
-                screenh *= emulated_gbs;
-            else
-                screenw *= emulated_gbs;
-        }
-        else if (_number_of_local_screens > 1)
-        {
-            if (_screen_vertical)
-                screenh *= _number_of_local_screens;
-            else
-                screenw *= _number_of_local_screens;
-        }
-
-
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
-
-        already_checked_options = true;
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
-
+        update_multiplayer_geometry();
 
         // check whether which audio should play
         var.key = "dcgb_audio_output";
@@ -737,7 +741,6 @@ static void netpacket_disconnected(unsigned short client_id) {
     num_clients--;
 }
 
-
 const struct retro_netpacket_callback netpacket_iface = {
   netpacket_start,          // start
   netpacket_receive,        // receive
@@ -747,6 +750,7 @@ const struct retro_netpacket_callback netpacket_iface = {
   netpacket_disconnected,   // disconnected
   "DoubleCherryGB netpack V1.0",   // core version char* 
 };
+
 
 void log_save_state(uint8_t* data, size_t size)
 {

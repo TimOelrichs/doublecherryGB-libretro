@@ -6,9 +6,7 @@
 
 **author:** Tim Oelrichs<br>
 **email:** timoelrichs@gmail.com<br>
-**website:** [timoelrichs.is-a.dev](https://timoelrichs.is-a.dev)<br>
-https://patreon.com/double_cherry_projects<br>
-https://www.buymeacoffee.com/timoelrichs<br>
+**website:** [timoelrichs.is-a.dev](https://timoelrichs.is-a.dev)<br>
 
 
 > DoubleCherryGB is an open source (GPLv2) GB/GBC emulator with up to 16 Player support, based on the TGBDual libretro core by GIGO and Hii.
@@ -73,12 +71,15 @@ For Multiplayer you have to increase the amount of emulated Gameboy in the core 
 
 ## Builtin Mew Maschine and weekly GEN1 Pokemon Distributions 
 
-DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
+DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy. Currently only  for GEN1, but you can also use it with the Time Capsule feature in GEN2.
 
 - If you don't own a Mew it will trade you a Lv 5 Mew. 
-- If you already own a Mew it will give you weekly custom Distribution Events. 
+- If you already own a Mew it will give you weekly Pokemon Distribution Events with a choice of different Pokemon. See table below. 
+- You can also use this to trade pokemon back for trading evolutions.
 
 You can uses the Numkeys on your keyboard or the SELECT Button to change Pokemon you want to get. 
+
+It's already preconfigured. Leave emulated Gameboys at 1 and just visit the cable club ingame.
 
 Weekly Gen1 Pokemon Distribution List
 https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
