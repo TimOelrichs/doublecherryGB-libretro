@@ -9,7 +9,7 @@ void set_cart_name(byte* rombuf)
 }
 
 
-void display_message(std::string msg_str, unsigned int seconds)
+void display_message(std::string msg_str, unsigned int seconds, bool alt)
 {
     seconds %= 10;
 
@@ -21,7 +21,7 @@ if (libretro_msg_interface_version >= 1)
        1,
        RETRO_LOG_INFO,
        RETRO_MESSAGE_TARGET_OSD,
-       RETRO_MESSAGE_TYPE_NOTIFICATION,
+       alt ? RETRO_MESSAGE_TYPE_NOTIFICATION_ALT : RETRO_MESSAGE_TYPE_NOTIFICATION,
        -1
     };
     environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &msg);
@@ -35,11 +35,11 @@ else
     environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
 }
 }
-void display_message(std::string msg_str) { display_message(msg_str, 5); }
+void display_message(std::string msg_str) { display_message(msg_str, 5, false); }
+void display_message_alt(std::string msg_str) { display_message(msg_str, 5, true); }
 
 void auto_config_4p_hack()
 {
-    if (!cart_name) return; 
     if (!strcmp(cart_name, "TETRIS"))
     {
         master_link = new hack_4p_tetris(v_gb);
@@ -48,17 +48,26 @@ void auto_config_4p_hack()
     }
     if (!strcmp(cart_name, "KWIRK"))
     {
-        delete master_link; 
+         
         master_link = NULL; 
         linked_target_device = new hack_4p_kwirk(v_gb);
         display_message("KWIRK Multiplayer Hack Adapter plugged in");
         return;
     }
+
+    if (!strcmp(cart_name, "BURGER TIME"))
+    {   
+        master_link = new hack_4p_burger_time_deluxe(v_gb);
+        display_message("Burger Time Deluxe Multiplayer Hack Adapter plugged in");
+        return;
+    }
+
+
+
     
 };
 
 void auto_config_1p_link() {
-    if (!cart_name) return;
 
     if (!strncmp(cart_name, "POKEMON", 7 )) 
     {
@@ -69,8 +78,41 @@ void auto_config_1p_link() {
 
         display_message("PKMBUDDY BOY plugged in");
         display_message("Check out the CABLE CLUB for weekly GEN1 Distributions!");
+
+        
+        //Mytery Gift Maschine WIP - Not working yet
+        
+        //TODO IR ONLY  for GEN2
+        /*
+        pikachu_2_gs* pika2gs = new pikachu_2_gs(v_gb);
+        v_gb[0]->set_ir_target(pika2gs);
+        v_gb[0]->set_ir_master_device(pika2gs);
+        */
+        
+       
+        return; 
     }
 
+  
+    //TV REMOTE Emulation
+    if (!strncmp(cart_name, "SUN",  3)      ||      //ROBONPON SUN
+        !strncmp(cart_name, "STAR", 4)      ||      //ROBOPON STAR (BETA)
+        !strncmp(cart_name, "B-MAX", 5)     ||      //Bomberman Max Blue/Red/AIN
+        !strncmp(cart_name, "F.MEGA", 6)    ||      //Bomberman Daman Bakugaiden V - Final Mega Tune
+        !strncmp(cart_name, "DORAEMONMEM", 11)      //Doraemon Memories - Nobita no Omoide Daibouken
+        )
+    {
+
+        display_message("Game can unlock content with a TV REMOTE");
+        if(auto_random_tv_remote) display_message("TV REMOTE Emulation enabled (auto random signals) ");
+        else display_message("TV REMOTE EMULATION enabled (use the Numpad to send signals)");
+       
+        tv_remote* tvremote = new tv_remote(v_gb);
+        hotkey_target = tvremote;
+        v_gb[0]->set_ir_master_device(tvremote);
+
+        return;
+    }
 
     //link barcodeboy
     if (!strcmp(cart_name, "BATTLE SPACE") || 
@@ -80,12 +122,24 @@ void auto_config_1p_link() {
         !strcmp(cart_name, "FAMISTA3")
         )
     {
+        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
         barcodeboy* bcb = new barcodeboy(v_gb, cart_name);
         master_link = bcb; 
         hotkey_target = bcb;
-        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
         return; 
     }
+
+    //link barcode taisen bardigun
+    if (!strcmp(cart_name, "BARDIGUN") )
+    {
+        display_message("Game supports BARCODE TAISEN BARDIGUN! BARDIGUN plugged in");
+        barcode_taisen_bardigun* btb = new barcode_taisen_bardigun();
+        hotkey_target = btb;
+        v_gb[0]->set_linked_target(btb); 
+        return;
+    }
+
+
     //link power_antenna/bugsensor
     if (!strncmp(cart_name, "TELEFANG", 8) ||
         !strncmp(cart_name, "BUGSITE", 7)
@@ -95,6 +149,60 @@ void auto_config_1p_link() {
         v_gb[0]->set_linked_target(new power_antenna());
         display_message("Game supports POWER ANTENNA/BUGSENSOR! POWER ANTENNA/BUGSENSOR plugged in");
         return; 
+    }
+
+    //Full Changer Emulation Zok Zok Heroes
+    if (!strncmp(cart_name, "ZOKZOK", 6))
+    {
+
+        /*
+        //WIP not working yet
+
+        display_message("Game features the Full Changer Accessory");
+        display_message("Full Changer Emulation enabled! ");
+
+        full_changer* fullchanger = new full_changer(v_gb);
+        hotkey_target = fullchanger;
+        v_gb[0]->set_ir_master_device(fullchanger);
+
+        return;
+        */
+    }
+
+    //Game and Watch Gallery Unlocker
+    if (!strncmp(cart_name, "G&W GALLERY2", 12))
+    {
+        /*
+
+        //WIP - not working yet
+        v_gb[0]->set_linked_target(new game_and_watch_gallery_unlocker(v_gb));
+
+        display_message("This Game as unlockable Content!");
+        display_message("UNLOCKER BOY plugged in");
+
+        */
+
+    }
+
+
+    //UbiKey Games WIP
+    if (!strncmp(cart_name, "LAURA", 5) ||
+        !strncmp(cart_name, "CARL LEWIS", 10) ||
+        !strncmp(cart_name, "FLIPPER", 7)
+        )
+    {
+        /*
+
+        //WIP not working yet
+
+        display_message("Game has UBIKEY feature");
+        display_message("Ubikey Unlocker is ready");
+        ubikey_unlocker* ubi_unlocker = new ubikey_unlocker(v_gb);
+        v_gb[0]->set_ir_target(ubi_unlocker);
+        v_gb[0]->set_ir_master_device(ubi_unlocker);
+        */
+
+        return;
     }
    
 }
@@ -167,6 +275,16 @@ static void check_variables(void)
             power_antenna_use_rumble = 1;
         else if (!strcmp(var.value, "Strong"))
             power_antenna_use_rumble = 2;
+    }
+
+    var.key = "dcgb_tv_remote";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strncmp(var.value, "use Numpad", 9))
+            auto_random_tv_remote = false;
+        else
+            auto_random_tv_remote = true;
     }
 
     var.key = "dcgb_emulated_gameboys";
@@ -247,7 +365,7 @@ static void check_variables(void)
             else if (!strcmp(var.value, "2x2 - player link"))
             {
                 use_multi_adapter = false;
-                if(master_link) delete master_link; 
+                if(master_link)  
                 master_link = NULL;
 
             }
@@ -505,14 +623,21 @@ void check_special_hotkey() {
         }
     }
     //check numpad keys
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 16; i++)
     {
         key_state = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, 256 + i);
         if (key_state)
         {
-            dcgb_hotkey_pressed = i;
+            dcgb_hotkey_pressed = i < 10 ? i : 256 + i;
             return;
         }
+    }
+
+    //check NUMLOCK
+    key_state = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_NUMLOCK);
+    if (key_state) {
+        dcgb_hotkey_pressed = 300;
+        return;
     }
 
     //check SELECT BUTTON
@@ -582,7 +707,8 @@ static void netpacket_receive(const void* buf, size_t len, unsigned short client
     bool isMaster = (v_gb[0]->get_regs()->SC & 0x01) == 01;
     if (!isMaster)
     {    
-        byte retbuf[1] = { v_gb[0]->seri_send(data[0])};
+        byte retbuf[1] = { v_gb[0]->receive_from_linkcable(data[0])};
+        
         netpacket_send(client_id, retbuf, 1 );
         return;
     }
@@ -638,3 +764,55 @@ void log_save_state(uint8_t* data, size_t size)
     }
 }
 
+void set_memory_maps() {
+
+    unsigned sramlen = v_gb[0]->get_rom()->get_sram_size();
+    const uint64_t vram = RETRO_MEMDESC_VIDEO_RAM;
+    const uint64_t rom = RETRO_MEMDESC_CONST;
+    const uint64_t mainram = RETRO_MEMDESC_SYSTEM_RAM;
+    struct retro_memory_map mmaps;
+
+    struct retro_memory_descriptor descs[10] =
+    {
+       { mainram, v_gb[0]->get_cpu()->get_ram(),     0, 0xC000,          0, 0, 0x1000, NULL},
+       { mainram, v_gb[0]->get_cpu()->get_ram(),     0x1000, 0xD000,          0, 0, 0x1000, NULL },
+       { mainram, v_gb[0]->get_cpu()->get_stack() ,     0, 0xFF80,          0, 0, 0x0080, NULL},
+       { vram,    v_gb[0]->get_cpu()->get_vram(),         0, 0x8000,          0, 0, 0x2000, NULL},
+       {       0, v_gb[0]->get_cpu()->get_oam(),       0, 0xFE00, 0, 0, 0x00A0, NULL},
+       {     rom, v_gb[0]->get_rom()->get_rom(),     0, 0x0000,          0, 0, 0x4000, NULL },
+       {     rom, v_gb[0]->get_rom()->get_rom(),     0x4000, 0x4000,          0, 0, 0x4000, NULL },
+       {       0, v_gb[0]->get_cpu()->get_oam(),   0, 0xFF00,          0, 0, 0x0080, NULL },
+       {       0, 0,                     0,      0,          0, 0,      0,    0 },
+       {       0, 0,                     0,      0,          0, 0,      0,    0 }
+    };
+
+
+
+    unsigned i = 8;
+    if (sramlen)
+    {
+        descs[i].ptr = v_gb[0]->get_mbc()->get_sram();
+        descs[i].start = 0x0000;
+        descs[i].select = (size_t)~0x1FFF;
+        descs[i].len = sramlen;
+        i++;
+    }
+
+    if (v_gb[0]->get_rom()->get_info()->cart_type > 1)
+    {
+        descs[i].flags = mainram;
+        descs[i].ptr = v_gb[0]->get_cpu()->get_ram();
+        descs[i].start = 0x00000;
+        descs[i].select = 0xFFFFA000;
+        descs[i].len = 0x6000;
+        i++;
+    }
+
+    mmaps.descriptors = descs;
+    mmaps.num_descriptors = i;
+    environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
+
+    bool yes = true;
+    environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &yes);
+
+}

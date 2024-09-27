@@ -19,6 +19,7 @@ retro_set_rumble_state_t rumble_state_cb;
 retro_set_led_state_t led_state_cb;
 
 unsigned int power_antenna_use_rumble = 0;
+bool auto_random_tv_remote; 
 
 int dcgb_hotkey_pressed = -1;
 int dcgb_last_hotkey_pressed = -1;
@@ -30,7 +31,9 @@ I_dcgb_hotkey_target* hotkey_target = NULL;
 
 static const struct retro_variable vars_single[] = {
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
+    { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
     { "dcgb_power_antenna_use_rumble", "Power Antenna/Bugsensor use rumble; Strong|Weak|Off" },
+   
     // { "doublecherrygb_detect_gba", "detect playing on gba (gba enhancements); Off|On" },
     { NULL, NULL },
 };
@@ -110,7 +113,7 @@ static enum mode mode = MODE_SINGLE_GAME;
 std::vector<gb*> v_gb;
 std::vector <dmy_renderer*> render;
 link_master_device* master_link;
-I_link_target* linked_target_device; 
+I_linkcable_target* linked_target_device; 
 
 std::vector<I_savestate*> v_serializable_devices; 
 

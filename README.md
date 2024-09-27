@@ -6,9 +6,7 @@
 
 **author:** Tim Oelrichs<br>
 **email:** timoelrichs@gmail.com<br>
-**website:** [timoelrichs.is-a.dev](https://timoelrichs.is-a.dev)<br>
-https://patreon.com/double_cherry_projects<br>
-https://www.buymeacoffee.com/timoelrichs<br>
+**website:** [timoelrichs.is-a.dev](https://timoelrichs.is-a.dev)<br>
 
 
 > DoubleCherryGB is an open source (GPLv2) GB/GBC emulator with up to 16 Player support, based on the TGBDual libretro core by GIGO and Hii.
@@ -19,20 +17,36 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
 <br>
 
-### Features
+## Features
 
-- [Link Cable over network](#Link-Cable-over-network), easy Pokemon Gen1 and Gen2 online trading via Lobby (Retroarch 1.17 needed) 
+### Pokemon Stuff
+- [Builtin Mew Maschine and weekly GEN1 Pokemon Distributions](#Builtin-Mew-Maschine-and-weekly-GEN1-Pokemon-Distributions)
+- [Link Cable Trading over network](#Link-Cable-Trading-over-network), easy Pokemon Gen1 and Gen2 online trading via Lobby (Retroarch 1.17 needed)
+
+  <br>
+
+### Multiplayer
 - GAMEBOY 4 PLAYER ADAPTER (DMG-07) emulation (F1-Race, Wave Race, Yoshi's Cookie...) [compatibility list](https://peppermint-theater-276.notion.site/4-player-adapter-compatibility-8d33abe17f1d4bf5a361b368af6622b7)
 - up to 16-Player Faceball 2000 emulation (1-15 without bugfix-patch, 16 players needs [patched](https://github.com/Zarithya/Faceball2000DX) rom)
+  
 - up to 16-Player Tetris Battle Royal Hack (virtual link device, no modified rom needed)
 - up to 16-Player Kwirk Multiplayer Hack (virtual link device, no modified rom needed)
 - up to 16 Player 4x4Player Adapter
 - Of course up to 16 Player Singleplayer for speedrun-battles or if you have arguing kids :D
 - local splitscreen
 - netplay support
-- [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection) 
+
+  <br>
+  
+### Gameboy Addon Emulation
+- [TV REMOTE](#TV-REMOTE) Emulation
+- [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection)
+- [BARCODE TAISEN BARDIGUN](#BARCODE-TAISEN-BARDIGUN) Emulation full Support (all barcodes are hardcoded, use the numkeys 0-8 for selection)
 - [POWER ANTENNA/BUGSENSOR](#power-antenna-and-bugsensor) Emulation (LED via led driver overlay & controller rumble on led flash)
 
+### Retroarch-Features
+- Retroarchivments support
+- Netplay
 
 Netplay is working. Make sure to have all the same amount of emulated gameboys in your core options.
 
@@ -43,14 +57,38 @@ Netplay is working. Make sure to have all the same amount of emulated gameboys i
 ![](/screenshots/YoshisCookie.png)
 ![](/screenshots/WaveRace.png)
 
-### How to
+<br>
 
-You can download the core via RetroArch Online-Updater on Windows, Linux and Android.
-To emulate up to 16 units, use the core options in your frontend.  
+## How to
+
+You can download the core via RetroArch Online-Updater on Windows, Linux, Android and IOS.
+For Android make sure to use the retroarch APK from retroarch.com and not the GooglePlay Version.
+
+For Multiplayer you have to increase the amount of emulated Gameboy in the core options in your frontend and reload.
+
 
 <br>
 
-### Link Cable over network
+## Builtin Mew Maschine and weekly GEN1 Pokemon Distributions 
+
+DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy. Currently only  for GEN1, but you can also use it with the Time Capsule feature in GEN2.
+
+- If you don't own a Mew it will trade you a Lv 5 Mew. 
+- If you already own a Mew it will give you weekly Pokemon Distribution Events with a choice of different Pokemon. See table below. 
+- You can also use this to trade pokemon back for trading evolutions.
+
+You can uses the Numkeys on your keyboard or the SELECT Button to change Pokemon you want to get. 
+
+It's already preconfigured. Leave emulated Gameboys at 1 and just visit the cable club ingame.
+
+Weekly Gen1 Pokemon Distribution List
+https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
+
+<img src="/screenshots/gotMew.png" height="500">
+
+<br>
+
+## Link Cable Trading over network
 #### Easy gen1/gen2 pokemon online trading
 
 Why is this easier? No setup and no workarounds. No need to own the same roms (region, edition). Should work cross platform.
@@ -66,7 +104,8 @@ Only the linkcable data is transfered over network, so you won't see the others 
 - load your rom
 - start or join a netplay (a second player can join any time)
 
-The netpacket api is activated when you set emulated gameboys to 1. This is only meant for trading purposes and may be too slow for actual Multiplayer.
+The netpacket api is activated when you set emulated gameboys to 1. 
+This is only meant for trading purposes and may be too slow for actual Multiplayer.
 For Multiplayer-sessions please set the amount of emulated gameboys to 2 or higher, because this will activate the old savestate sync for lagfree netplay.  
 
 Trading should work with other GB/GBC Games as well:
@@ -88,8 +127,21 @@ Infrared over network is currently not supported (GBE+ does) but maybe in a futu
 Have fun!
 
 <br>
+
+## TV REMOTE
+
+The GBC has a IR receicer and some games used this to unlock cotent with a TV REMOTE.
+You can choose between 4 different JVC TV-Remotes. Use SELECT to switch between the Remotes and use the Numpad to press a button.
+If you are playing on a handheld you can activate the "autorandom IR Signal" in the Core options.
+
+- Robopon Sun (HUC3) - works
+- Bomberman MAX Blue/RED - works
+- Bomberman Daman Bakugaiden V - Final Mega Tune - works
+- Doraemon Memories - Nobita no Omoide Daibouken - not working
+
+<br>
  
-### BARCODE BOY
+## BARCODE BOY
 
 The BARCODE BOY is a japan exclusive peripheral (See https://shonumi.github.io/articles/art7.html).
 
@@ -106,7 +158,15 @@ If you don't have a keyboard, the the barcode cards will be changed randomly.
 
 <br>
 
-### POWER ANTENNA and BUGSENSOR
+## BARCODE TAISEN BARDIGUN
+
+A japan exclusive GBC game that came with Barcode Reader(See https://shonumi.github.io/articles/art6.html).
+
+All Barcode Cards are hardcoded. You can select different cards with the Numkeys 0-8 or use the SELECT Button.
+
+<br>
+
+## POWER ANTENNA and BUGSENSOR
 
 These are devices, that came with the games **Keitai Denjuu Telefang** and **Network Adventure Bugsite**  and are plugged into the linkport. It's simply a led that flashes when, something special happens ingame.
 DoubleCherryGB uses the controller rumble and the retroarch led api to simulate the led flashing on an overlay.

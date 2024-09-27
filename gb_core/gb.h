@@ -34,6 +34,9 @@
 #include <map>
 #include <list>
 
+#include <ctime>
+#include <stdint.h>
+
 #include "gb_types.h"
 #include "renderer.h"
 #include "serializer.h"
@@ -55,6 +58,32 @@ class mbc;
 class cheat;
 
 
+union rp_bitfield {
+	unsigned char byte;
+	struct {
+		unsigned char ir_light_on : 1;
+		unsigned char received_signal : 1;
+		unsigned char unused : 4;
+		unsigned char read_enabled : 2;
+	} bits;
+};
+
+struct ir_signal {
+	bool light_on;
+	int duration;
+	ir_signal(bool light, int clocks) {
+		light_on = light;
+		duration = clocks; 
+	}
+};
+
+class I_ir_sender {
+	void virtual send_ir_signal(ir_signal* signal) = 0;
+};
+
+class I_ir_receiver {
+	void virtual receive_ir_signal(ir_signal* signal) =  0;
+};
 
 struct ext_hook{
 	byte (*send)(byte);
@@ -187,40 +216,59 @@ public:
 	virtual void reset() = 0;
 };
 
-class I_link_target {
-	friend class gb; 
-
-public:
-	virtual byte seri_send(byte) = 0;	
-	virtual byte get_SB_value() = 0;
-	virtual byte get_SC_value() = 0;
+class I_linkcable_target {
 	
+public:
+	virtual byte receive_from_linkcable(byte) = 0;	
+
 };
 
-class I_ir_target {
+class I_linkcable_sender{
+	friend class gb;
+public:
+	virtual byte send_over_linkcable(byte) = 0;
+};
+
+class I_ir_target : public I_ir_receiver{
 	friend class gb;
 
 public:
+	
+	void virtual receive_ir_signal(ir_signal* signal) = 0;
 	virtual dword* get_rp_que() = 0;
 	virtual void reset() = 0;
 };
 
+class I_ir_master_device : public I_ir_sender
+{
+public:
+	void virtual process_ir() = 0;
+};
+
+class I_multiplayer_hack {
+
+	friend class gb;
+public:
+	virtual byte get_SB_value() = 0;
+	virtual byte get_SC_value() = 0;
+};
 
 
-class gb : public I_link_target, I_ir_target
+class gb : public I_linkcable_target, public I_linkcable_sender, public I_ir_target, public I_ir_sender
 {
 friend class cpu;
-friend class I_link_target; 
+friend class I_linkcable_target; 
 
 public:
 	gb(renderer *ref,bool b_lcd,bool b_apu);
 	~gb();
 
 	/*
-	byte seri_send(byte data) {
-		return this->get_cpu()->seri_send(data);
+	byte receive_from_linkcable(byte data) {
+		return this->get_cpu()->receive_from_linkcable(data);
 	}
 	*/
+
 	cpu *get_cpu() { return m_cpu; }
 	lcd *get_lcd() { return m_lcd; }
 	apu *get_apu() { return m_apu; }
@@ -236,11 +284,15 @@ public:
 		this->linked_ir_device = target;
 	};
 
-	I_link_target* get_linked_target() { return linked_cable_device; }
-	void set_linked_target(I_link_target* target) { this->linked_cable_device = target; };
+	I_linkcable_target* get_linked_target() { return linked_cable_device; }
+	void set_linked_target(I_linkcable_target* target) { this->linked_cable_device = target; };
 
 	I_ir_target* get_ir_target() { return linked_ir_device; }
 	void set_ir_target(I_ir_target* target) { this->linked_ir_device = target; };
+	void set_ir_master_device(I_ir_master_device* ir_master) { this->ir_master_device = ir_master;  };
+	I_ir_master_device* get_ir_master_device() { return this->ir_master_device; };
+	void receive_ir_signal(ir_signal* signal) override;
+	void send_ir_signal(ir_signal* signal) override;
 
 	gb_regs *get_regs() { return &regs; }
 	gbc_regs *get_cregs() { return &c_regs; }
@@ -261,18 +313,22 @@ public:
 
 	void refresh_pal();
 
-	//void set_target(gb* tar) { target = tar; }
-	byte seri_send(byte data) override;
-	byte get_SB_value() override {
+	byte send_over_linkcable(byte) override;
+	byte receive_from_linkcable(byte data) override;
+	byte get_SB_value(){
 		return this->get_regs()->SB;
 	}
-	byte get_SC_value() override {
+	byte get_SC_value() {
 		return this->get_regs()->SC;
 	}
+
+	void set_Game_Genie(bool enable, std::string code);
 
 	dword* get_rp_que() override;
 	void hook_extport(ext_hook *ext);
 	void unhook_extport();
+
+	std::vector<ir_signal*> received_ir_signals;
 
 private:
 	cpu *m_cpu;
@@ -286,7 +342,7 @@ private:
 	cheat *m_cheat;
 
 	//gb* target;
-	I_link_target* linked_cable_device;
+	I_linkcable_target* linked_cable_device;
 	I_ir_target* linked_ir_device;
 
 	gb_regs regs;
@@ -303,6 +359,11 @@ private:
 
 	bool hook_ext;
 	bool use_gba;
+
+	std::map<std::string, byte> undo_cheat_map; 
+
+	
+	I_ir_master_device* ir_master_device; 
 };
 
 class cheat
@@ -444,41 +505,51 @@ private:
 	bool b_enable[4];
 };
 
-class mbc
-{
+class mbc {
 public:
-	mbc(gb *ref);
+	mbc(gb* ref);
 	~mbc();
 
-	byte *get_rom() { return rom_page; }
-	byte *get_sram() { return sram_page; }
+	byte* get_rom() { return rom_page; }
+	byte* get_sram() { return sram_page; }
 	bool is_ext_ram() { return ext_is_ram; }
-	void set_ext_is(bool ext) { ext_is_ram=ext; }
+	void set_ext_is(bool ext) { ext_is_ram = ext; }
 
 	int get_state();
 	void set_state(int dat);
-	void set_page(int rom,int sram);
+	void set_page(int rom, int sram);
 
 	byte read(word adr);
-	void write(word adr,byte dat);
+	void write(word adr, byte dat);
 	byte ext_read(word adr);
-	void ext_write(word adr,byte dat);
+	void ext_write(word adr, byte dat);
 	void reset();
 
-	void serialize(serializer &s);
-private:
-	void mbc1_write(word adr,byte dat);
-	void mbc2_write(word adr,byte dat);
-	void mbc3_write(word adr,byte dat);
-	void mbc5_write(word adr,byte dat);
-	void mbc7_write(word adr,byte dat);
-	void huc1_write(word adr,byte dat);
-	void huc3_write(word adr,byte dat);
-	void tama5_write(word adr,byte dat);
-	void mmm01_write(word adr,byte dat);
+	void serialize(serializer& s);
 
-	byte *rom_page;
-	byte *sram_page;
+	unsigned long huc3_baseTime;
+
+private:
+	void mbc1_write(word adr, byte dat);
+	void mbc2_write(word adr, byte dat);
+	void mbc3_write(word adr, byte dat);
+	void mbc5_write(word adr, byte dat);
+	void mbc7_write(word adr, byte dat);
+	void huc1_write(word adr, byte dat);
+	void huc3_write(word adr, byte dat);
+	byte huc3_read(word adr);
+	void tama5_write(word adr, byte dat);
+	void mmm01_write(word adr, byte dat);
+
+	void huc3_doLatch();
+	void huc3_updateTime();
+	void huc3_execute_command();
+	void huc3_copy_Scratch2RTC();
+	void huc3_copy_RTC2Scratch();
+	void huc3_log(bool read, byte adress, byte value);
+
+	byte* rom_page;
+	byte* sram_page;
 
 	bool mbc1_16_8;
 	byte mbc1_dat;
@@ -492,8 +563,13 @@ private:
 
 	byte mbc3_timer; // 4
 	bool ext_is_ram; // 1
-	// total 32bits
+	bool huc_ir_mode = false;
+	byte last_huc_ir_out_signal = 0x00;
 
+	//1 = saw no light
+	bool huc_ir_last_received_light = true;
+
+	// total 32bits
 	int mbc5_dat;
 
 	bool mbc7_write_enable;
@@ -511,7 +587,20 @@ private:
 	bool huc1_16_8;
 	byte huc1_dat;
 
-	gb *ref_gb;
+	unsigned long huc3_haltTime, huc3_writingTime;
+	unsigned long huc3_dataTime;
+	byte huc3_ramValue, huc3_shift, huc3_current_mem_control_reg, huc3_modeflag;
+	bool huc3_halted;
+	byte huc3_command, huc3_access_adress;
+	byte* huc3_rtc_register;
+
+	uint64_t last_rtc_second;
+	uint16_t minutes;
+	uint16_t days;
+	uint16_t alarm_minutes, alarm_days;
+	uint8_t alarm_enabled;
+
+	gb* ref_gb;
 };
 
 class rom
@@ -563,7 +652,7 @@ public:
 	void inline writew(word adr,word dat) { write(adr,(byte)dat);write(adr+1,dat>>8); }
 
 	void exec(int clocks);
-	byte seri_send(byte dat);
+	byte receive_from_linkcable(byte dat);
 	void irq(int irq_type);
 	void inline irq_process();
 	void reset();
@@ -592,9 +681,12 @@ public:
 	void serialize(serializer &s);
 
 	//void set_is_seri_master(bool enable);
-	void log_link_traffic(byte a, byte b);
 
-	//byte net_id = 0x00;
+	void log_link_traffic(byte a, byte b);
+	void log_ir_traffic(ir_signal *signal, bool incoming);
+
+	int next_ir_clock = -2147483648;
+	std::vector<ir_signal*> out_ir_signal_que;
 
 private:
 	byte inline io_read(word adr);
@@ -606,7 +698,7 @@ private:
 	void log();
 
 	gb *ref_gb;
-	I_link_target* linked_device;
+	I_linkcable_target* linked_device;
 	cpu_regs regs;
 
 	byte ram[0x2000*4];
@@ -623,6 +715,7 @@ private:
 	dword rp_que[256];
 	int que_cur;
 //	word org_pal[16][4];
+
 	int total_clock, rest_clock, sys_clock, seri_occer, div_clock;
 	bool halt,speed,speed_change,dma_executing;
 	bool b_trace;
@@ -640,12 +733,8 @@ private:
 
 	byte _ff6c,_ff72,_ff73,_ff74,_ff75;
 
-	/*   DELETE?
-	dmg07* m_dmg07 = NULL;
-	tetris_4p_hack* tetris_hack = NULL; 
-	bool is_clock_giver = false; 
-	*/
-
 	int clocks_since_last_serial;
+	
+
 
 };
