@@ -37,6 +37,43 @@ union pokemon {
 	unsigned char data[44];
 };
 
+union pokemon_gen2 {
+    struct {
+        unsigned char species;
+        unsigned char itemHeld;
+        unsigned char move1;
+        unsigned char move2;
+        unsigned char move3;
+        unsigned char move4;
+        unsigned char originalTrainerId[2];
+        unsigned char exp[3];
+        unsigned char hpEv[2];
+        unsigned char attackEv[2];
+        unsigned char defenseEv[2];
+        unsigned char speedEv[2];
+        unsigned char specialEv[2];
+        unsigned char iv[2];
+        unsigned char move1pp;
+        unsigned char move2pp;
+        unsigned char move3pp;
+        unsigned char move4pp;
+        unsigned char friendship;
+        unsigned char pokerus;
+        unsigned char caughtData[2];
+        unsigned char level;
+        unsigned char statusAilment;
+        unsigned char unused;
+        unsigned char currentHp[2];
+        unsigned char maxHp[2];
+        unsigned char attack[2];
+        unsigned char defense[2];
+        unsigned char speed[2];
+        unsigned char specialAttack[2];
+        unsigned char specialDefense[2];
+    };
+    unsigned char data[48];
+};
+
 union trading_data_block {
 	struct {
 		unsigned char trainer_name[11];
@@ -48,6 +85,19 @@ union trading_data_block {
 		unsigned char nicknames[6][11];
 	};
 	unsigned char data[415];
+};
+
+union trading_data_block_gen2 {
+    struct {
+        unsigned char trainer_name[11];
+        unsigned char species_list_size;
+        unsigned char species[6];
+        unsigned char end_species_list[3]; //???
+        pokemon_gen2 pokemons[6];
+        unsigned char ot_names[6][11];
+        unsigned char nicknames[6][11];
+    };
+    unsigned char data[441];
 };
 
 

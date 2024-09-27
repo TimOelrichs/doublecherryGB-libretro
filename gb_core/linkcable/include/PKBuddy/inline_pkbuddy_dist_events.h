@@ -1,5 +1,6 @@
 #pragma once
 #include "inline_pkbuddy_generator.h"
+#include "inline_pkbuddy_generator_gen2.h"
 
 void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 

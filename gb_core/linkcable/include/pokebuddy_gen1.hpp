@@ -78,9 +78,15 @@ private:
 	void insert_pokemon_into_slot(pokemon pkm, unsigned char slot, std::string nickname);
 	void insert_pokemon_into_next_slot(pokemon pkm, std::string nickname);
 	int pokemon_calculate_exp(pokemon_base_stats pokemon, int level);
-	void pokemon_calc_and_set_stats(pokemon pkm);
 	void generate_pk_event_party(int *dex_no, int* levels, int size);
 	pokemon generate_pk_from_base_table(int index_id, unsigned char level); 
+
+	void generate_data_block_gen2();
+	void insert_pokemon_into_slot_gen2(pokemon_gen2 pkm, unsigned char slot, std::string nickname);
+	void insert_pokemon_into_next_slot_gen2(pokemon_gen2 pkm, std::string nickname);
+	void generate_pk_event_party_gen2(int* dex_no, int* levels, int size);
+	pokemon_gen2 generate_pk_from_base_table_gen2(int index_id, unsigned char level);
+
 
 
 	//utils
@@ -109,11 +115,14 @@ private:
 
 	unsigned char RANDOM_BYTES_BLOCK[10] = { 0xC2, 0xF5, 0x2A, 0x61, 0x9a, 0xd4, 0x10, 0x11, 0x12, 0x13 };
 	trading_data_block DATA_BLOCK, INCOMING_DATA_BLOCK;
+	trading_data_block_gen2 DATA_BLOCK_gen2, INCOMING_DATA_BLOCK_gen2;
 
 
 	std::vector<gb*> v_gb;
 	std::string event_pokemon_msg_str; 
 	pkm_generation generation = GEN_1;
+
+	bool gen2_trade_confirmed = false; 
 
 };
 

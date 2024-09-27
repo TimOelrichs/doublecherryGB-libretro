@@ -336,83 +336,90 @@ bool retro_load_game(const struct retro_game_info *info)
 bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num_info)
 {
 
-    /*
-    if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P)
-        return false; // all other types are unhandled for now
+    libretro_msg_interface_version = 0;
+    environ_cb(RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION,
+        &libretro_msg_interface_version);
+
+   // if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P) return false; // all other types are unhandled for now
 
 
     // implement for 3 - 4 Player
 
 
-   environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_dual);
-   unsigned i;
+    if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P) {
 
-   struct retro_input_descriptor input_desc[] = {
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "Prev Audio Mode" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Next Audio Mode" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+        emulated_gbs = 2;
 
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "Prev Audio Mode" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Next Audio Mode" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
+        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars_dual);
+        unsigned i;
 
-      { 0 },
-   };
+        struct retro_input_descriptor input_desc[] = {
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "A" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "Prev Audio Mode" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Next Audio Mode" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
+           { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
 
-   if (!info)
-      return false;
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "A" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "Prev Audio Mode" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Next Audio Mode" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+           { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
 
-   for (i = 0; i < 2; i++)
-   {
-      v_gb[i]   = NULL;
-      render[i] = NULL;
-   }
+           { 0 },
+        };
 
-   check_variables();
+        if (!info)
+            return false;
 
-   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, input_desc);
+        for (i = 0; i < 2; i++)
+        {
+            v_gb[i] = NULL;
+            render[i] = NULL;
+        }
 
-   render[0] = new dmy_renderer(0);
-   v_gb[0]   = new gb(render[0], true, true);
-   if (!v_gb[0]->load_rom((byte*)info[0].data, info[0].size, NULL, 0, false))
-      return false;
+        //check_variables();
+        update_multiplayer_geometry();
 
-   for (i = 0; i < 2; i++)
-      _serialize_size[i] = 0;
+        environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, input_desc);
 
-   if (gblink_enable)
-   {
-      render[1] = new dmy_renderer(1);
-      v_gb[1] = new gb(render[1], true, true);
+        render[0] = new dmy_renderer(0);
+        v_gb[0] = new gb(render[0], true, true);
+        if (!v_gb[0]->load_rom((byte*)info[0].data, info[0].size, NULL, 0, false))
+            return false;
 
-      if (!v_gb[1]->load_rom((byte*)info[1].data, info[1].size, NULL, 0,
-               false))
-         return false;
+        for (i = 0; i < 2; i++)
+            _serialize_size[i] = 0;
 
-      // for link cables and IR:
-      v_gb[0]->set_target(v_gb[1]);
-      v_gb[1]->set_target(v_gb[0]);
-   }
+        if (gblink_enable)
+        {
+            render[1] = new dmy_renderer(1);
+            v_gb[1] = new gb(render[1], true, true);
 
-   mode = MODE_DUAL_GAME;
-   return true;
+            if (!v_gb[1]->load_rom((byte*)info[1].data, info[1].size, NULL, 0,
+                false))
+                return false;
 
-   */
-    return false; 
+            // for link cables and IR:
+            v_gb[0]->set_target(v_gb[1]);
+            v_gb[1]->set_target(v_gb[0]);
+        }
+
+        mode = MODE_DUAL_GAME;
+        return true;
+    }
+
+
 }
 
 void retro_unload_game(void)
