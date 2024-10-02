@@ -335,30 +335,37 @@ byte pokebuddy_gen1::handle_gen2(byte data) {
 
 		if (!events_were_added)
 		{
-			//if (!has_owned_mew()) 
+			generate_data_block_gen2();
+
+			if (!has_owned_mew_gen2() || !has_owned_celebi()) 
 			{
+				
+				if (!has_owned_celebi())
+				{
+					display_message("Get your Welcome Celebi!");
 
-				display_message("Get your Welcome Celebi!");
+					pokemon_gen2 celebi = generate_pk_from_base_table_gen2(251, 5);
+					celebi.move1 = 0x49;
+					celebi.move2 = 0x5D;
+					celebi.move3 = 0x69;
+					celebi.move4 = 0xD7;
+					insert_pokemon_into_slot_gen2(celebi, 0, "CELEBI");
+					DATA_BLOCK_gen2.species_list_size = 1;
+					memcpy(DATA_BLOCK_gen2.ot_names[0], convert_string_to_name("PKBuddy").data(), 11);
 
+				}
 
-				generate_data_block_gen2();
-
-				pokemon_gen2 celebi = generate_pk_from_base_table_gen2(251, 5);
-				celebi.move1 = 0x49;
-				celebi.move2 = 0x5D;
-				celebi.move3 = 0x69;
-				celebi.move4 = 0xD7;
-				insert_pokemon_into_slot_gen2(celebi, 0, "CELEBI");
-				DATA_BLOCK_gen2.species_list_size = 1;
-				memcpy(DATA_BLOCK_gen2.ot_names[0], convert_string_to_name("PKBuddy").data(), 11);
-
-				pokemon_gen2 mew = generate_pk_from_base_table_gen2(151, 5);
-				insert_pokemon_into_slot_gen2(mew, 1, "Mew");
-				DATA_BLOCK_gen2.species_list_size = 2;
-				memcpy(DATA_BLOCK_gen2.ot_names[1], convert_string_to_name("PKBuddy").data(), 11);
+				if (!has_owned_mew_gen2()) 
+				{
+					display_message("Get your Welcome Mew!");
+					pokemon_gen2 mew = generate_pk_from_base_table_gen2(151, 5);
+					insert_pokemon_into_slot_gen2(mew, 1, "Mew");
+					DATA_BLOCK_gen2.species_list_size = 2;
+					memcpy(DATA_BLOCK_gen2.ot_names[1], convert_string_to_name("PKBuddy").data(), 11);
+				}
 
 			}
-			//else add_event_pokemon_to_datablock();
+			else add_event_pokemon_to_datablock_gen2();
 
 			events_were_added = true;
 		}

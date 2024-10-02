@@ -128,7 +128,8 @@ void pokebuddy_gen1::insert_pokemon_into_slot(pokemon pkm, unsigned char slot, s
 	DATA_BLOCK.species[slot] = pkm.species;
 	memcpy(DATA_BLOCK.pokemons[slot].data, pkm.data, sizeof(pkm.data));
 
-	memcpy(DATA_BLOCK.ot_names[slot], DATA_BLOCK.trainer_name, 11);
+	std::string ot_name = convert_string_to_name("PCNYa", true);
+	memcpy(DATA_BLOCK.ot_names[slot], ot_name.data(), 11);
 	std::string nick_name = convert_string_to_name(nickname, true);
 	memcpy(DATA_BLOCK.nicknames[slot], nick_name.data(), 11);
 	
@@ -153,7 +154,7 @@ void pokebuddy_gen1::generate_data_block_gen2() {
 		DATA_BLOCK_gen2.data[i] = 0xFF;
 	}
 
-	std::string trainer_name = convert_string_to_name("PkBuddy", false);
+	std::string trainer_name = convert_string_to_name("PCNYa", false);
 	memcpy(DATA_BLOCK_gen2.trainer_name, trainer_name.data(), 11);
 	DATA_BLOCK_gen2.end_species_list[0] = 0xff;
 	DATA_BLOCK_gen2.end_species_list[1] = 0xf0; //??
@@ -171,15 +172,15 @@ void pokebuddy_gen1::generate_pk_event_party_gen2(int* dex_no, int* levels, int 
 	for (int i = 0; i < len; i++)
 	{
 		pokemon_gen2 pkm = generate_pk_from_base_table_gen2(dex_no[i], levels[i]);
-		insert_pokemon_into_next_slot_gen2(pkm, pokemon_table[dex_no[i]].name);
+		insert_pokemon_into_next_slot_gen2(pkm, pokemon_table[dex_no[i]-1].name);
 
 		//format event msg_string
-		if (len == 1) event_pokemon_msg_str = std::string(pokemon_table[dex_no[i]].name);
+		if (len == 1) event_pokemon_msg_str = std::string(pokemon_table[dex_no[i]-1].name);
 		else {
 			if ((i < (len - 1))) {
-				event_pokemon_msg_str += std::string(pokemon_table[dex_no[i]].name) + ", ";
+				event_pokemon_msg_str += std::string(pokemon_table[dex_no[i]-1].name) + ", ";
 			}
-			else event_pokemon_msg_str += " and " + std::string(pokemon_table[dex_no[i]].name);
+			else event_pokemon_msg_str += " and " + std::string(pokemon_table[dex_no[i]-1].name);
 		}
 	}
 
@@ -188,7 +189,7 @@ void pokebuddy_gen1::generate_pk_event_party_gen2(int* dex_no, int* levels, int 
 
 pokemon_gen2 pokebuddy_gen1::generate_pk_from_base_table_gen2(int index_id, unsigned char level)
 {
-	pokemon_base_stats pkmn_base = pokemon_table[index_id];
+	pokemon_base_stats pkmn_base = pokemon_table[index_id-1];
 
 	pokemon_gen2 generated_pkmn;
 
@@ -271,4 +272,15 @@ void pokebuddy_gen1::insert_pokemon_into_next_slot_gen2(pokemon_gen2 pkm, std::s
 
 	insert_pokemon_into_slot_gen2(pkm, slot, nickname);
 	DATA_BLOCK_gen2.species_list_size++;
+}
+
+void pokebuddy_gen1::make_pkm_in_slot_shiny(int slot) {
+	if (slot < 0 || slot > 5) return;
+
+	byte shiny_attack_values[8] = { 2,3,6,7,10,11,14,15 };
+	int rnd_index = std::rand() % 8;
+
+	DATA_BLOCK_gen2.pokemons[slot].iv[0] = 0x0A | shiny_attack_values[rnd_index] << 4;
+	DATA_BLOCK_gen2.pokemons[slot].iv[1] = 0xAA;
+
 }

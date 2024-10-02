@@ -136,3 +136,13 @@ bool pokebuddy_gen1::has_owned_mew() {
 	return ((own >> 6) & 1);
  
 }
+
+bool pokebuddy_gen1::has_owned_mew_gen2() {
+	byte own = v_gb[0]->get_cpu()->read_direct(0xDBF6);
+	return ((own >> 6) & 1);
+}
+
+bool pokebuddy_gen1::has_owned_celebi() {
+	byte own = v_gb[0]->get_cpu()->read_direct(0xDC03);
+	return ((own >> 2) & 1);
+}
