@@ -17,6 +17,12 @@
 
 
 #include "./include/gameboy_printer.hpp"
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+
+
 
 
 gameboy_printer::gameboy_printer()
@@ -218,11 +224,10 @@ byte gameboy_printer::receive_from_linkcable(byte data)
 			{
 				execute_command();
 
-				return status;
-				
-
 				packet_buffer.clear();
 				packet_size = 0;
+
+				return status;
 			}
 		}
 
@@ -484,6 +489,7 @@ void gameboy_printer::print_image_to_BMP()
 
 
 
+
 	//Lock source surface
 	//if (SDL_MUSTLOCK(print_screen)) { SDL_LockSurface(print_screen); }
 	//unsigned int* out_pixel_data = (unsigned int*)print_screen->pixels;
@@ -555,6 +561,55 @@ void gameboy_printer::print_image_to_BMP()
 	}
 
 	*/
+
+	BMPHeader bmpHeader;
+	BMPInfoHeader bmpInfoHeader;
+
+	unsigned int width = 160;
+	bmpInfoHeader.width = width;
+	bmpInfoHeader.height = height;
+	bmpHeader.fileSize = (uint32_t)(sizeof(BMPHeader) + sizeof(BMPInfoHeader) + (full_buffer.size() * 2));
+
+	std::ofstream file(filename, std::ios::binary);
+
+	if (!file) {
+		std::cerr << "Error: Could not open file for writing: " << filename << std::endl;
+		return;
+	}
+
+	// Write headers
+	file.write(reinterpret_cast<const char*>(&bmpHeader), sizeof(bmpHeader));
+	file.write(reinterpret_cast<const char*>(&bmpInfoHeader), sizeof(bmpInfoHeader));
+
+	/*
+	// BMP files store pixel data from bottom to top, so we need to flip the rows
+	int rowPadding = (4 - (width * 3) % 4) % 4;  // BMP rows are padded to multiples of 4 bytes
+	for (int y = height - 1; y >= 0; --y) {
+		file.write(reinterpret_cast<const char*>(&full_buffer[y * width * 3]), width * 3);
+		file.write("\0\0\0", rowPadding);  // Add padding
+	}
+	*/
+
+	/*
+	for (int y = height - 1; y >= 0; --y)
+	{
+		file.write(reinterpret_cast<const char*>(&full_buffer[y* 160]), sizeof(unsigned int) * 160 );
+	}
+	*/
+	for (size_t i = 0; i < full_buffer.size(); i++)
+	{
+		file.write(reinterpret_cast<const char*>(&full_buffer[i]), sizeof(unsigned int));
+	}
+	
+
+
+	file.close();
+
+	if (!file.good()) {
+		std::cerr << "Error: Failed to write the file correctly." << std::endl;
+	}
+
+
 
 }
 
