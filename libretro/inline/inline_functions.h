@@ -69,7 +69,7 @@ void auto_config_4p_hack()
 
 void auto_config_1p_link() {
 
-    if (!strncmp(cart_name, "POKEMON", 7 )) 
+    if (!strncmp(cart_name, "POKEMON", 7 ) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
         pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
         hotkey_target = pkbuddy;
@@ -77,17 +77,16 @@ void auto_config_1p_link() {
         v_gb[0]->set_linked_target(pkbuddy);
 
         display_message("PKMBUDDY BOY plugged in");
-        display_message("Check out the CABLE CLUB for weekly GEN1 Distributions!");
+        display_message("Check out the CABLE CLUB for weekly Distributions!");
 
         
         //Mytery Gift Maschine WIP - Not working yet
         
         //TODO IR ONLY  for GEN2
-        /*
+        
         pikachu_2_gs* pika2gs = new pikachu_2_gs(v_gb);
         v_gb[0]->set_ir_target(pika2gs);
         v_gb[0]->set_ir_master_device(pika2gs);
-        */
         
        
         return; 
@@ -155,7 +154,7 @@ void auto_config_1p_link() {
     if (!strncmp(cart_name, "ZOKZOK", 6))
     {
 
-        /*
+        
         //WIP not working yet
 
         display_message("Game features the Full Changer Accessory");
@@ -166,14 +165,15 @@ void auto_config_1p_link() {
         v_gb[0]->set_ir_master_device(fullchanger);
 
         return;
-        */
+        
     }
 
     //Game and Watch Gallery Unlocker
     if (!strncmp(cart_name, "G&W GALLERY2", 12))
     {
-        /*
 
+        /*
+        
         //WIP - not working yet
         v_gb[0]->set_linked_target(new game_and_watch_gallery_unlocker(v_gb));
 
@@ -191,7 +191,7 @@ void auto_config_1p_link() {
         !strncmp(cart_name, "FLIPPER", 7)
         )
     {
-        /*
+        
 
         //WIP not working yet
 
@@ -200,7 +200,7 @@ void auto_config_1p_link() {
         ubikey_unlocker* ubi_unlocker = new ubikey_unlocker(v_gb);
         v_gb[0]->set_ir_target(ubi_unlocker);
         v_gb[0]->set_ir_master_device(ubi_unlocker);
-        */
+        
 
         return;
     }

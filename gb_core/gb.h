@@ -735,6 +735,7 @@ private:
 
 	int clocks_since_last_serial;
 	
+	byte last_rp_write = 0xC0;
 
 
 };

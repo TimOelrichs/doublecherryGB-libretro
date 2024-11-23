@@ -15,6 +15,7 @@ enum pikachu_2_gs_state {
 	RECEICE_DATA_EMPTY,
 	WAIT_FOR_HELLO,
 	WAIT_FOR_ACK,
+	SEND_EMPTY_PACKETS,
 
 };
 

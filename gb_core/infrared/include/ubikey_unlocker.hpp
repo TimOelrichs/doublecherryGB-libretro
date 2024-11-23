@@ -9,7 +9,11 @@
 
 enum ubikey_unlocker_state {
 
+	UBIKEY_WAIT_FOR_HELLO,
+	UBIKEY_SEND_DATAPACKET,
 	UNLOCKER_RECEIVE_DATA,
+	UNLOCKER_RECEIVE_DATA_LENGTH
+
 	
 };
 
@@ -35,7 +39,7 @@ private:
 	void check_hello_msg();
 	void build_hello_msg();
 	void build_ack_msg();
-	void build_data_msg(std::vector<byte> bytes);
+	void build_data_packet();
 	int micro_seconds_to_clocks(int micro_seconds) { return (int)(4194304.0 / 1000000.0 * micro_seconds); };
 	int clocks_to_micro_seconds(int clocks) { return (int)(1000000.0 / 4194304.0 * clocks); };
 
