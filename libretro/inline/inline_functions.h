@@ -247,17 +247,44 @@ void add_new_player() {
     // v_gb.push_back(new gb)
 }
 
+static inline bool get_monotonic_time(struct timespec* ts)
+{
+#if defined(CLOCK_MONOTONIC) && !defined(__PSP__) && !defined(__WIIU__)
+    return clock_gettime(CLOCK_MONOTONIC, ts) == 0;
+
+#elif defined(__PSP__)
+    u64 tick = sceKernelGetSystemTimeWide();
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#elif defined(__WIIU__)
+    u64 tick = OSGetTime(); // Returns microseconds since start
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#else
+    ts->tv_sec = 0;
+    ts->tv_nsec = 0;
+    return false;
+#endif
+}
+
 
 //try to avoid missed frames, see https://bsnes.org/articles/input-latency
 void performExtraInputPoll() {
     struct timespec current_time;
-    clock_gettime(CLOCK_MONOTONIC, &current_time);
+    get_monotonic_time(&current_time);
+
+    //clock_gettime(CLOCK_MONOTONIC, &current_time);
 
     long elapsed_ms = (current_time.tv_sec - inputpoll_start_time.tv_sec) * 1000 +
         (current_time.tv_nsec - inputpoll_start_time.tv_nsec) / 1000000;
 
     if (elapsed_ms >= extra_inputpolling_interval) {
-        clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+        get_monotonic_time(&inputpoll_start_time);
+        //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
         input_poll_cb();
     }
 }
