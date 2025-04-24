@@ -468,7 +468,8 @@ void retro_run(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
         check_variables();
 
-    clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+    get_monotonic_time(&inputpoll_start_time);
+    //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
     input_poll_cb();
 
     hotkey_handle();

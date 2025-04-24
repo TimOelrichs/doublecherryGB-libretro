@@ -1,6 +1,14 @@
 #pragma once
 #include "libretro.h"
 
+#if defined(__PSP__)
+extern "C" uint64_t sceKernelGetSystemTimeWide(void);
+#elif defined(__WIIU__)
+extern "C" uint64_t OSGetTime(void);
+#else
+#include <sys/time.h>
+#endif
+
 void set_cart_name(byte* rombuf)
 {
     memcpy(cart_name, rombuf + 0x134, 16);
@@ -248,16 +256,50 @@ void add_new_player() {
 }
 
 
+static inline bool get_monotonic_time(struct timespec* ts)
+{
+#if defined(CLOCK_MONOTONIC) && !defined(__PSP__) && !defined(__WIIU__)
+    return clock_gettime(CLOCK_MONOTONIC, ts) == 0;
+
+#elif defined(__PSP__)
+    // PSP: use sceKernelGetSystemTimeWide (microseconds since boot)
+    uint64_t tick = sceKernelGetSystemTimeWide();
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#elif defined(__WIIU__)
+    // Wii U: OSGetTime also returns microseconds since boot
+    uint64_t tick = OSGetTime();
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#else
+    // Fallback: use gettimeofday (less accurate, not monotonic)
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL) != 0)
+        return false;
+
+    ts->tv_sec = tv.tv_sec;
+    ts->tv_nsec = tv.tv_usec * 1000;
+    return true;
+#endif
+}
+
+
 //try to avoid missed frames, see https://bsnes.org/articles/input-latency
 void performExtraInputPoll() {
     struct timespec current_time;
-    clock_gettime(CLOCK_MONOTONIC, &current_time);
+    get_monotonic_time(&current_time);
+    //clock_gettime(CLOCK_MONOTONIC, &current_time);
 
     long elapsed_ms = (current_time.tv_sec - inputpoll_start_time.tv_sec) * 1000 +
         (current_time.tv_nsec - inputpoll_start_time.tv_nsec) / 1000000;
 
     if (elapsed_ms >= extra_inputpolling_interval) {
-        clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+        get_monotonic_time(&inputpoll_start_time);
+        //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
         input_poll_cb();
     }
 }
