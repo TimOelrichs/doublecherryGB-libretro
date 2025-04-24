@@ -13,6 +13,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#ifdef __PSP__
+#include <pspkernel.h>
+#include <psprtc.h>
+#elif defined(__WIIU__)
+#include <coreinit/time.h> 
+#endif
 #include "libretro.h"
 
 #include "../gb_core/linkcable/include/sio_devices.hpp"
@@ -468,7 +475,8 @@ void retro_run(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
         check_variables();
 
-    clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+    //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+    get_monotonic_time(&inputpoll_start_time);
     input_poll_cb();
 
     hotkey_handle();
