@@ -255,6 +255,40 @@ void add_new_player() {
     // v_gb.push_back(new gb)
 }
 
+<<<<<<< Updated upstream
+=======
+static inline bool get_monotonic_time(struct timespec* ts)
+{
+#if defined(CLOCK_MONOTONIC) && !defined(__PSP__) && !defined(__WIIU__)
+    return clock_gettime(CLOCK_MONOTONIC, ts) == 0;
+
+#elif defined(__PSP__)
+    // PSP: use sceKernelGetSystemTimeWide (microseconds since boot)
+    uint64_t tick = sceKernelGetSystemTimeWide();
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#elif defined(__WIIU__)
+    // Wii U: OSGetTime also returns microseconds since boot
+    uint64_t tick = OSGetTime();
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#else
+    // Fallback: use gettimeofday (less accurate, not monotonic)
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL) != 0)
+        return false;
+
+    ts->tv_sec = tv.tv_sec;
+    ts->tv_nsec = tv.tv_usec * 1000;
+    return true;
+#endif
+}
+
+>>>>>>> Stashed changes
 
 static inline bool get_monotonic_time(struct timespec* ts)
 {
