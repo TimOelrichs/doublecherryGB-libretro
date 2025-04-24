@@ -30,6 +30,8 @@ I_dcgb_hotkey_target* hotkey_target = NULL;
 
 
 static const struct retro_variable vars_single[] = {
+     { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+     { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
     { "dcgb_power_antenna_use_rumble", "Power Antenna/Bugsensor use rumble; Strong|Weak|Off" },
@@ -39,6 +41,8 @@ static const struct retro_variable vars_single[] = {
 };
 
 static const struct retro_variable vars_dual[] = {
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+       { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
     { "dcgb_screen_placement", "Screen layout; left-right|top-down" },
@@ -49,7 +53,9 @@ static const struct retro_variable vars_dual[] = {
     { NULL, NULL },
 };
 
-static const struct retro_variable vars_tripple[] = {
+static const struct retro_variable vars_tripple[] = {  
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+      { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
      { "dcgbt_gblink_device", "Link cable device (reload); 4-player adapter" },
@@ -62,6 +68,8 @@ static const struct retro_variable vars_tripple[] = {
 };
 
 static const struct retro_variable vars_quad[] = {
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+     { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
      { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
     { "dcgbt_gblink_device", "Link cable device (reload); 4-player adapter|2x2-player link" },
@@ -108,6 +116,12 @@ enum mode {
 
 static enum mode mode = MODE_SINGLE_GAME;
 
+static struct timespec inputpoll_start_time;
+bool extra_inputpolling_enabled = false;
+int extra_inputpolling_interval = 5;
+
+bool is_gbc_rom = false; 
+bool gbc_color_correction_enabled = true; 
 
 
 std::vector<gb*> v_gb;

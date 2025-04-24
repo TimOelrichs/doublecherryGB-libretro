@@ -32,6 +32,8 @@ extern std::vector<gb* > v_gb;
 extern int emulated_gbs;
 extern int max_gbs; 
 extern int _number_of_local_screens;
+extern bool gbc_color_correction_enabled;
+extern bool is_gbc_rom; 
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -68,6 +70,26 @@ dmy_renderer::dmy_renderer(int which)
 
 word dmy_renderer::map_color(word gb_col)
 {
+   
+    if (is_gbc_rom && gbc_color_correction_enabled)
+    {
+        const unsigned r = gb_col & 0x1F;
+        const unsigned g = gb_col >> 5 & 0x1F;
+        const unsigned b = gb_col >> 10 & 0x1F;
+
+        unsigned rFinal = 0;
+        unsigned gFinal = 0;
+        unsigned bFinal = 0;
+
+        rFinal = ((r * 13) + (g * 2) + b) >> 4;
+        gFinal = ((g * 3) + b) >> 2;
+        bFinal = ((r * 3) + (g * 2) + (b * 11)) >> 4;
+
+       
+        if (rgb565) return rFinal << 11 | gFinal << 6 | bFinal;
+        return bFinal << 10 | gFinal << 5 | rFinal;
+    }
+
 #ifndef SKIP_COLOR_CORRECTION
 #ifndef FRONTEND_SUPPORTS_RGB565
    if(rgb565)

@@ -12,6 +12,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "libretro.h"
 
 #include "../gb_core/linkcable/include/sio_devices.hpp"
@@ -216,6 +217,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     //set cart name for autoconfig
     set_cart_name(rom_data);
+    is_gbc_rom = v_gb[0]->get_rom()->get_info()->gb_type == 3;
 
     //set link connections
     switch (emulated_gbs)
@@ -466,12 +468,15 @@ void retro_run(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
         check_variables();
 
+    clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
     input_poll_cb();
 
     hotkey_handle();
 
     for (int line = 0; line < 154; line++)
     {
+        if (extra_inputpolling_enabled) performExtraInputPoll();
+
         for (int i = 0; i < emulated_gbs; i++)
         {
             v_gb[i]->run();

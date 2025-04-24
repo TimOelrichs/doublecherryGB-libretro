@@ -247,6 +247,21 @@ void add_new_player() {
     // v_gb.push_back(new gb)
 }
 
+
+//try to avoid missed frames, see https://bsnes.org/articles/input-latency
+void performExtraInputPoll() {
+    struct timespec current_time;
+    clock_gettime(CLOCK_MONOTONIC, &current_time);
+
+    long elapsed_ms = (current_time.tv_sec - inputpoll_start_time.tv_sec) * 1000 +
+        (current_time.tv_nsec - inputpoll_start_time.tv_nsec) / 1000000;
+
+    if (elapsed_ms >= extra_inputpolling_interval) {
+        clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+        input_poll_cb();
+    }
+}
+
 void check_for_new_players() {
 
     for (int i = v_gb.size(); i < 4; i++)
@@ -310,6 +325,30 @@ static void check_variables(void)
 
     struct retro_variable var;
 
+    var.key = "dcgb_gbc_color_correction";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strcmp(var.value, "Off"))
+            gbc_color_correction_enabled = false;
+        else gbc_color_correction_enabled = true;
+
+           
+   
+    }
+
+
+     var.key = "dcgb_input_polling_rate";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        extra_inputpolling_enabled = value > 60;
+        if (extra_inputpolling_enabled) extra_inputpolling_interval = value == 200 ? 5 : 8;
+      
+    }
+
+
     var.key = "dcgb_power_antenna_use_rumble";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -332,49 +371,16 @@ static void check_variables(void)
             auto_random_tv_remote = true;
     }
 
+    
     var.key = "dcgb_emulated_gameboys";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-       
         if (!already_checked_options) 
-        { // only apply this setting on init
-            if (!strcmp(var.value, "1"))
-            {
-                emulated_gbs = 1;
-                mode = MODE_SINGLE_GAME;
-            }
-            else if (!strcmp(var.value, "2"))
-                emulated_gbs = 2;
-            else if (!strcmp(var.value, "3"))
-                emulated_gbs = 3;
-            else if (!strcmp(var.value, "4"))
-                emulated_gbs = 4;
-            else if (!strcmp(var.value, "5"))
-                emulated_gbs = 5;
-            else if (!strcmp(var.value, "6"))
-                emulated_gbs = 6;
-            else if (!strcmp(var.value, "7"))
-                emulated_gbs = 7;
-            else if (!strcmp(var.value, "8"))
-                emulated_gbs = 8;
-            else if (!strcmp(var.value, "9"))
-                emulated_gbs = 9;
-            else if (!strcmp(var.value, "10"))
-                emulated_gbs = 10;
-            else if (!strcmp(var.value, "11"))
-                emulated_gbs = 11;
-            else if (!strcmp(var.value, "12"))
-                emulated_gbs = 12;
-            else if (!strcmp(var.value, "13"))
-                emulated_gbs = 13;
-            else if (!strcmp(var.value, "14"))
-                emulated_gbs = 14;
-            else if (!strcmp(var.value, "15"))
-                emulated_gbs = 15;
-            else if (!strcmp(var.value, "16"))
-                emulated_gbs = 16;
-
+        { 
+            int value = atoi(var.value);
+            emulated_gbs = value;
+            mode = (value == 1) ? MODE_SINGLE_GAME : mode;
         }
     }
 
@@ -485,46 +491,19 @@ static void check_variables(void)
         else
             _screen_switched = false;
 
-        // check whether to show both players' screens, p1 only, or p2 only
+        // check whether to show all players' screens, or player only
         var.key = "dcgb_single_screen_mp";
         var.value = NULL;
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
         {
-            //TODO make this cleaner and shorter
+
             if (!strcmp(var.value, "all players"))
                 _show_player_screen = emulated_gbs;
-            else if (!strcmp(var.value, "player 1 only"))
-                _show_player_screen = 0;
-            else if (!strcmp(var.value, "player 2 only"))
-                _show_player_screen = 1;
-            else if (!strcmp(var.value, "player 3 only"))
-                _show_player_screen = 2;
-            else if (!strcmp(var.value, "player 4 only"))
-                _show_player_screen = 3;
-            else if (!strcmp(var.value, "player 5 only"))
-                _show_player_screen = 4;
-            else if (!strcmp(var.value, "player 6 only"))
-                _show_player_screen = 5;
-            else if (!strcmp(var.value, "player 7 only"))
-                _show_player_screen = 6;
-            else if (!strcmp(var.value, "player 8 only"))
-                _show_player_screen = 7;
-            else if (!strcmp(var.value, "player 9 only"))
-                _show_player_screen = 8;
-            else if (!strcmp(var.value, "player 10 only"))
-                _show_player_screen = 9;
-            else if (!strcmp(var.value, "player 11 only"))
-                _show_player_screen = 10;
-            else if (!strcmp(var.value, "player 12 only"))
-                _show_player_screen = 11;
-            else if (!strcmp(var.value, "player 13 only"))
-                _show_player_screen = 12;
-            else if (!strcmp(var.value, "player 14 only"))
-                _show_player_screen = 13;
-            else if (!strcmp(var.value, "player 15 only"))
-                _show_player_screen = 14;
-            else if (!strcmp(var.value, "player 16 only"))
-                _show_player_screen = 15;
+            else {
+                int player;
+                if (sscanf(var.value, "player %d only", &player) == 1 && player >= 1 && player <= 16)
+                    _show_player_screen = player - 1;
+            }
 
             if (_show_player_screen != emulated_gbs) {
                 audio_2p_mode = _show_player_screen;
@@ -539,51 +518,25 @@ static void check_variables(void)
 
         update_multiplayer_geometry();
 
-        // check whether which audio should play
+        // check whether which GameBoys audio should play
         var.key = "dcgb_audio_output";
         var.value = NULL;
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
         {
             if (_show_player_screen != emulated_gbs) {
                 audio_2p_mode = _show_player_screen;
+                char buf[32];
+                snprintf(buf, sizeof(buf), "Game Boy #%d", audio_2p_mode + 1);
                 var.key = "dcgb_audio_output";
-                var.value = "Game Boy #" + audio_2p_mode + 1;
+                var.value = buf;
                 environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+
             }
             else {
-                //TODO make this cleaner and shorter
-                if (!strcmp(var.value, "Game Boy #1"))
-                    audio_2p_mode = 0;
-                else if (!strcmp(var.value, "Game Boy #2"))
-                    audio_2p_mode = 1;
-                else if (!strcmp(var.value, "Game Boy #3"))
-                    audio_2p_mode = 2;
-                else if (!strcmp(var.value, "Game Boy #4"))
-                    audio_2p_mode = 3;
-                else if (!strcmp(var.value, "Game Boy #5"))
-                    audio_2p_mode = 4;
-                else if (!strcmp(var.value, "Game Boy #6"))
-                    audio_2p_mode = 5;
-                else if (!strcmp(var.value, "Game Boy #7"))
-                    audio_2p_mode = 6;
-                else if (!strcmp(var.value, "Game Boy #8"))
-                    audio_2p_mode = 7;
-                else if (!strcmp(var.value, "Game Boy #9"))
-                    audio_2p_mode = 8;
-                else if (!strcmp(var.value, "Game Boy #10"))
-                    audio_2p_mode = 9;
-                else if (!strcmp(var.value, "Game Boy #11"))
-                    audio_2p_mode = 10;
-                else if (!strcmp(var.value, "Game Boy #12"))
-                    audio_2p_mode = 11;
-                else if (!strcmp(var.value, "Game Boy #13"))
-                    audio_2p_mode = 12;
-                else if (!strcmp(var.value, "Game Boy #14"))
-                    audio_2p_mode = 13;
-                else if (!strcmp(var.value, "Game Boy #15"))
-                    audio_2p_mode = 14;
-                else if (!strcmp(var.value, "Game Boy #16"))
-                    audio_2p_mode = 15;
+                int audio_player;
+                if (sscanf(var.value, "Game Boy #%d", &audio_player) == 1 && audio_player >= 1 && audio_player <= 16)
+                    audio_2p_mode = audio_player - 1;
+
             }
         }
         else
