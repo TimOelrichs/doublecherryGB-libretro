@@ -372,10 +372,17 @@ static void check_variables(void)
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        if (!strcmp(var.value, "Off"))
+        if (!strcmp(var.value, "Off")) {
             gbc_color_correction_enabled = false;
+            gbc_cc_mode = OFF;
+        }
         else gbc_color_correction_enabled = true;
+     
+        if (!strcmp(var.value, "Gambatte Simple"))
+            gbc_cc_mode = GAMBATTE_SIMPLE;
 
+        if (!strcmp(var.value, "Gambatte Accurate"))
+            gbc_cc_mode = GAMBATTE_ACCURATE;
            
    
     }

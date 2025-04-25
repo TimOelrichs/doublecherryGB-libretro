@@ -30,7 +30,7 @@ I_dcgb_hotkey_target* hotkey_target = NULL;
 
 
 static const struct retro_variable vars_single[] = {
-     { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+     { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
      { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
@@ -41,7 +41,7 @@ static const struct retro_variable vars_single[] = {
 };
 
 static const struct retro_variable vars_dual[] = {
-      { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
        { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
@@ -54,7 +54,7 @@ static const struct retro_variable vars_dual[] = {
 };
 
 static const struct retro_variable vars_tripple[] = {  
-      { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
       { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
@@ -68,7 +68,7 @@ static const struct retro_variable vars_tripple[] = {
 };
 
 static const struct retro_variable vars_quad[] = {
-      { "dcgb_gbc_color_correction", "GBC Color Correction; Simple|Off"},
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
      { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
      { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
@@ -122,6 +122,8 @@ int extra_inputpolling_interval = 5;
 
 bool is_gbc_rom = false; 
 bool gbc_color_correction_enabled = true; 
+
+enum color_correction_mode gbc_cc_mode = GAMBATTE_SIMPLE;
 
 
 std::vector<gb*> v_gb;

@@ -34,6 +34,7 @@ extern int max_gbs;
 extern int _number_of_local_screens;
 extern bool gbc_color_correction_enabled;
 extern bool is_gbc_rom; 
+extern enum color_correction_mode gbc_cc_mode;
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -81,14 +82,96 @@ word dmy_renderer::map_color(word gb_col)
         unsigned gFinal = 0;
         unsigned bFinal = 0;
 
-        rFinal = ((r * 13) + (g * 2) + b) >> 4;
-        gFinal = ((g * 3) + b) >> 2;
-        bFinal = ((r * 3) + (g * 2) + (b * 11)) >> 4;
+        switch (gbc_cc_mode)
+        {
+            case GAMBATTE_SIMPLE:
+            {
+             
+                rFinal = ((r * 13) + (g * 2) + b) >> 4;
+                gFinal = ((g * 3) + b) >> 2;
+                bFinal = ((r * 3) + (g * 2) + (b * 11)) >> 4;
 
-       
+                break; 
+            }
+            case GAMBATTE_ACCURATE:
+            {
+                /* GBC colour correction factors */
+                #define GBC_CC_LUM 0.94f
+                #define GBC_CC_R   0.82f
+                #define GBC_CC_G   0.665f
+                #define GBC_CC_B   0.73f
+                #define GBC_CC_RG  0.125f
+                #define GBC_CC_RB  0.195f
+                #define GBC_CC_GR  0.24f
+                #define GBC_CC_GB  0.075f
+                #define GBC_CC_BR  -0.06f
+                #define GBC_CC_BG  0.21f
+
+                static const float rgbMax = 31.0;
+                static const float rgbMaxInv = 1.0 / rgbMax;
+                float colorCorrectionBrightness = 0.5f; /* central */
+
+                  // Use Pokefan531's "gold standard" GBC colour correction
+                // (https://forums.libretro.com/t/real-gba-and-ds-phat-colors/1540/190)
+                // NB: The results produced by this implementation are ever so slightly
+                // different from the output of the gbc-colour shader. This is due to the
+                // fact that we have to tolerate rounding errors here that are simply not
+                // an issue when tweaking the final image with a post-processing shader.
+                // *However:* the difference is so tiny small that 99.9% of users will
+                // never notice, and the result is still 100x better than the 'fast'
+                // colour correction method.
+                //
+                // Constants
+                static const float targetGamma = 2.2;
+                static const float displayGammaInv = 1.0 / targetGamma;
+                // Perform gamma expansion
+                float adjustedGamma = targetGamma - colorCorrectionBrightness;
+                float rFloat = std::pow(static_cast<float>(r) * rgbMaxInv, adjustedGamma);
+                float gFloat = std::pow(static_cast<float>(g) * rgbMaxInv, adjustedGamma);
+                float bFloat = std::pow(static_cast<float>(b) * rgbMaxInv, adjustedGamma);
+                // Perform colour mangling
+                float rCorrect = GBC_CC_LUM * ((GBC_CC_R * rFloat) + (GBC_CC_GR * gFloat) + (GBC_CC_BR * bFloat));
+                float gCorrect = GBC_CC_LUM * ((GBC_CC_RG * rFloat) + (GBC_CC_G * gFloat) + (GBC_CC_BG * bFloat));
+                float bCorrect = GBC_CC_LUM * ((GBC_CC_RB * rFloat) + (GBC_CC_GB * gFloat) + (GBC_CC_B * bFloat));
+                // Range check...
+                rCorrect = rCorrect > 0.0f ? rCorrect : 0.0f;
+                gCorrect = gCorrect > 0.0f ? gCorrect : 0.0f;
+                bCorrect = bCorrect > 0.0f ? bCorrect : 0.0f;
+                // Perform gamma compression
+                rCorrect = std::pow(rCorrect, displayGammaInv);
+                gCorrect = std::pow(gCorrect, displayGammaInv);
+                bCorrect = std::pow(bCorrect, displayGammaInv);
+                // Range check...
+                rCorrect = rCorrect > 1.0f ? 1.0f : rCorrect;
+                gCorrect = gCorrect > 1.0f ? 1.0f : gCorrect;
+                bCorrect = bCorrect > 1.0f ? 1.0f : bCorrect;
+
+                /*
+                // Perform image darkening, if required
+                if (darkFilterLevel > 0)
+                {
+                    darkenRgb(rCorrect, gCorrect, bCorrect);
+                    isDark = true;
+                }
+                */
+                // Convert back to 5bit unsigned
+                rFinal = static_cast<unsigned>((rCorrect * rgbMax) + 0.5) & 0x1F;
+                gFinal = static_cast<unsigned>((gCorrect * rgbMax) + 0.5) & 0x1F;
+                bFinal = static_cast<unsigned>((bCorrect * rgbMax) + 0.5) & 0x1F;
+                break;
+            }
+
+
+        default:
+            break;
+        }
+      
+
         if (rgb565) return rFinal << 11 | gFinal << 6 | bFinal;
         return bFinal << 10 | gFinal << 5 | rFinal;
     }
+
+    
 
 #ifndef SKIP_COLOR_CORRECTION
 #ifndef FRONTEND_SUPPORTS_RGB565
