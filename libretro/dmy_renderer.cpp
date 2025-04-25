@@ -20,7 +20,8 @@
 // libretro implementation of the renderer, should probably be renamed from dmy.
 
 #include <string.h>
-#include <math.h>
+//#include <math.h>
+#include <cmath>
 #include <time.h>
 #include <vector>
 
