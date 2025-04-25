@@ -31,6 +31,8 @@ I_dcgb_hotkey_target* hotkey_target = NULL;
 
 static const struct retro_variable vars_single[] = {
      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
+     { "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear"},
+     { "dcgb_gbc_lcd_interlacing_brightnesss", "GBC LCD Interlacing Brightnesss difference; 5|10|15|20|25|30|35|40|45|50"},
      { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
@@ -122,6 +124,9 @@ int extra_inputpolling_interval = 5;
 
 bool is_gbc_rom = false; 
 bool gbc_color_correction_enabled = true; 
+bool gbc_lcd_interlacing_enabled = false; 
+bool gbc_lcd_interfacing_fast = true; 
+float gbc_lcd_interlacing_brightness = 1.05f;
 
 enum color_correction_mode gbc_cc_mode = GAMBATTE_SIMPLE;
 

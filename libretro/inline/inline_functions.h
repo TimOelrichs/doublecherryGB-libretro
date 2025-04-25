@@ -368,6 +368,7 @@ static void check_variables(void)
 
     struct retro_variable var;
 
+   // { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off" },
     var.key = "dcgb_gbc_color_correction";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -384,8 +385,42 @@ static void check_variables(void)
         if (!strcmp(var.value, "Gambatte Accurate"))
             gbc_cc_mode = GAMBATTE_ACCURATE;
            
+    }
+
+    //{ "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear" },
+    var.key = "dcgb_gbc_lcd_interlacing";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strcmp(var.value, "Off")) {
+            gbc_lcd_interlacing_enabled = false;
+        }
+        else gbc_lcd_interlacing_enabled = true;
+
+        if (!strcmp(var.value, "Fast"))
+        {
+            gbc_lcd_interlacing_enabled = true;
+            gbc_lcd_interfacing_fast = true;
+        }
+
+        if (!strcmp(var.value, "Linear"))
+        {
+            gbc_lcd_interlacing_enabled = true;
+            gbc_lcd_interfacing_fast = false;
+        }
    
     }
+
+   
+    var.key = "dcgb_gbc_lcd_interlacing_brightnesss";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        gbc_lcd_interlacing_brightness = (100.0f + (float)value) / 100.0f;
+
+    }
+
 
 
      var.key = "dcgb_input_polling_rate";

@@ -37,6 +37,10 @@ extern bool gbc_color_correction_enabled;
 extern bool is_gbc_rom; 
 extern enum color_correction_mode gbc_cc_mode;
 
+extern bool gbc_lcd_interlacing_enabled;
+extern bool gbc_lcd_interfacing_fast;
+extern float gbc_lcd_interlacing_brightness;
+
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
 extern retro_audio_sample_batch_t audio_batch_cb;
@@ -294,6 +298,45 @@ int dmy_renderer::check_pad()
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))  ? 1 : 0) << 7;
 }
 
+void dmy_renderer::add_gbc_interlacing_effect(byte* buf, int width, int height, int depth) {
+
+    const float brighten_factor = gbc_lcd_interlacing_brightness;
+    int pitch = width * ((depth + 7) / 8);
+
+    for (int y = is_odd_frame; y < height; y += 2) {
+
+
+        uint16_t* line = reinterpret_cast<uint16_t*>(buf + y * pitch);
+
+
+        if (gbc_lcd_interfacing_fast)
+        {
+            for (int x = 0; x < width; ++x) {
+                uint16_t pixel = line[x];
+
+                int r = (pixel >> 11) & 0x1F;
+                int g = (pixel >> 5) & 0x3F;
+                int b = pixel & 0x1F;
+
+                r = std::min(int(r * brighten_factor), 31);
+                g = std::min(int(g * brighten_factor), 63);
+                b = std::min(int(b * brighten_factor), 31);
+
+                line[x] = (r << 11) | (g << 5) | b;
+            }
+        }
+        else {
+
+            for (int x = 0; x < width; ++x) {
+                line[x] = brighten_rgb565_hsl(line[x], (gbc_lcd_interlacing_brightness - 1.0f));
+            }
+        }
+        
+    }
+    is_odd_frame = !is_odd_frame;
+}
+
+
 void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
 {
     static byte joined_buf[160*144*2*2]; // two screens' worth of 16-bit data
@@ -315,7 +358,14 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
     {
         switch (emulated_gbs)
         {
-        case 1: video_cb(buf, width, height, pitch); break;
+        case 1: {
+
+            //experimental GBC LCD interlacing effect
+            if(is_gbc_rom && gbc_lcd_interlacing_enabled) 
+                add_gbc_interlacing_effect(buf, width, height, depth);
+
+            video_cb(buf, width, height, pitch); break;
+        }
         case 2:
         {
             // are we drawing both gb's to the screen?
