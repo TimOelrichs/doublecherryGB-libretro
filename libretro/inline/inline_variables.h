@@ -20,6 +20,7 @@ retro_set_led_state_t led_state_cb;
 
 unsigned int power_antenna_use_rumble = 0;
 bool auto_random_tv_remote; 
+bool alleyway_analog_controller_enabled = true; 
 
 int dcgb_hotkey_pressed = -1;
 int dcgb_last_hotkey_pressed = -1;
@@ -34,6 +35,7 @@ static const struct retro_variable vars_single[] = {
      { "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear"},
      { "dcgb_gbc_lcd_interlacing_brightnesss", "GBC LCD Interlacing Brightnesss difference; 5|10|15|20|25|30|35|40|45|50"},
      { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
+    // { "dcgb_alleyway_analog_enabled", "emulate Alleyway Analog controls; Off|On" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
     { "dcgb_power_antenna_use_rumble", "Power Antenna/Bugsensor use rumble; Strong|Weak|Off" },

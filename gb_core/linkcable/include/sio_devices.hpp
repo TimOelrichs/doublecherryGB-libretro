@@ -5,6 +5,7 @@
 #include "hack_4p_kwirk.hpp"
 #include "hack_4p_burger_time_deluxe.hpp"
 #pragma once
+#include "alleyway_link_controller.hpp"
 #include "barcodeboy.hpp"
 #include "barcode_taisen_bardigun.hpp"
 #include "faceball2000_cable.hpp"

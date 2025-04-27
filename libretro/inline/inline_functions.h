@@ -100,6 +100,21 @@ void auto_config_1p_link() {
         return; 
     }
 
+    //link Alleyway paddle controller
+    if (!strcmp(cart_name, "ALLEY WAY"))
+    {
+        alleyway_link_controller* alc = new alleyway_link_controller();
+        hotkey_target = alc;
+        v_gb[0]->set_linked_target(alc);
+
+        display_message("Analog Alleyway Controller plugged in");
+        display_message("Press SELECT to switch between Digital and Analog controls");
+
+
+        return;
+    }
+
+
   
     //TV REMOTE Emulation
     if (!strncmp(cart_name, "SUN",  3)      ||      //ROBONPON SUN
@@ -433,6 +448,18 @@ static void check_variables(void)
       
     }
 
+   
+    /*
+    var.key = "dcgb_alleyway_analog_enabled";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strcmp(var.value, "Off"))
+            alleyway_analog_controller_enabled = false;
+        else
+            alleyway_analog_controller_enabled = true;
+    }
+    */
 
     var.key = "dcgb_power_antenna_use_rumble";
     var.value = NULL;
@@ -705,7 +732,7 @@ void hotkey_handle() {
             hotkey_target->handle_special_hotkey(dcgb_hotkey_pressed);
             return;
         }
-        if (dcgb_hotkey_frame_counter++ >= 55) {
+        if (dcgb_hotkey_frame_counter++ >= 60) {
             dcgb_hotkey_frame_counter = 0;
             dcgb_last_hotkey_pressed = -1;
         }

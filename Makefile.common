@@ -16,6 +16,7 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/rom.cpp \
 	$(CORE_DIR)/libretro/dmy_renderer.cpp \
 	$(CORE_DIR)/libretro/libretro.cpp \
+	$(CORE_DIR)/gb_core/linkcable/alleyway_link_controller.cpp \
 	$(CORE_DIR)/gb_core/linkcable/link_master_device.cpp \
 	$(CORE_DIR)/gb_core/linkcable/dmg07.cpp \
 	$(CORE_DIR)/gb_core/linkcable/dmg07x4.cpp \
