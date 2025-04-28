@@ -17,7 +17,6 @@ extern void display_message(std::string msg_str);
 byte alleyway_link_controller::get_paddle_value(unsigned port)
 {
  
-
     // Read analog stick X-axis
     int16_t analog_x = input_state_cb(port, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X);
 

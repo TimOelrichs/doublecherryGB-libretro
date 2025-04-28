@@ -18,8 +18,25 @@
 */
 
 #include <algorithm>
+#include <cstdint>
 #include <cmath>
+#include <array>
 #include "../gb_core/renderer.h"
+
+constexpr std::array<uint32_t, 4> DMG_PALETTE = {
+0xFFFFFFFF, // Weiß
+0xAAAAAAFF, // Hellgrau
+0x555555FF, // Dunkelgrau
+0x000000FF  // Schwarz
+};
+
+constexpr int GRADIENT_STEPS = 64;
+extern std::array<uint16_t, GRADIENT_STEPS> blended_palette;
+
+enum class GhostingMode {
+	RGB565_BLEND,
+	PALETTE_BLEND
+};
 
 
 class dmy_renderer : public renderer
@@ -119,6 +136,68 @@ public:
 		return (r5 << 11) | (g6 << 5) | b5;
 	}
 
+	uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b) {
+		return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+	}
+
+	void generateGradient() {
+		for (int i = 0; i < GRADIENT_STEPS; ++i) {
+			float t = static_cast<float>(i) / (GRADIENT_STEPS - 1);
+			int lower = static_cast<int>(t * 3.0f);
+			int upper = std::min(lower + 1, 3);
+			float local_t = (t * 3.0f) - lower;
+
+			uint32_t c1 = DMG_PALETTE[lower];
+			uint32_t c2 = DMG_PALETTE[upper];
+
+			uint8_t r = static_cast<uint8_t>(((1.0f - local_t) * ((c1 >> 24) & 0xFF)) + (local_t * ((c2 >> 24) & 0xFF)));
+			uint8_t g = static_cast<uint8_t>(((1.0f - local_t) * ((c1 >> 16) & 0xFF)) + (local_t * ((c2 >> 16) & 0xFF)));
+			uint8_t b = static_cast<uint8_t>(((1.0f - local_t) * ((c1 >> 8) & 0xFF)) + (local_t * ((c2 >> 8) & 0xFF)));
+
+			blended_palette[i] = rgb888_to_rgb565(r, g, b);
+		}
+	}
+
+	uint16_t blendPixels(uint16_t pixel1, uint16_t pixel2) {
+		if (ghosting_mode == GhostingMode::RGB565_BLEND) {
+			// Direktes RGB565-Mischen
+			uint8_t r1 = (pixel1 >> 11) & 0x1F;
+			uint8_t g1 = (pixel1 >> 5) & 0x3F;
+			uint8_t b1 = pixel1 & 0x1F;
+
+			uint8_t r2 = (pixel2 >> 11) & 0x1F;
+			uint8_t g2 = (pixel2 >> 5) & 0x3F;
+			uint8_t b2 = pixel2 & 0x1F;
+
+			uint8_t r = (r1 + r2) >> 1;
+			uint8_t g = (g1 + g2) >> 1;
+			uint8_t b = (b1 + b2) >> 1;
+
+			return (r << 11) | (g << 5) | b;
+		}
+		else {
+			// Blended Palette verwenden
+			// 16bit Pixel -> Grauwert -> blended_palette
+			uint8_t r = ((pixel1 >> 11) & 0x1F) << 3;
+			uint8_t g = ((pixel1 >> 5) & 0x3F) << 2;
+			uint8_t b = (pixel1 & 0x1F) << 3;
+			uint8_t grayscale1 = static_cast<uint8_t>((0.299f * r) + (0.587f * g) + (0.114f * b));
+
+			r = ((pixel2 >> 11) & 0x1F) << 3;
+			g = ((pixel2 >> 5) & 0x3F) << 2;
+			b = (pixel2 & 0x1F) << 3;
+			uint8_t grayscale2 = static_cast<uint8_t>((0.299f * r) + (0.587f * g) + (0.114f * b));
+
+			int index1 = (255 - grayscale1) * (GRADIENT_STEPS - 1) / 255;
+			int index2 = (255 - grayscale2) * (GRADIENT_STEPS - 1) / 255;
+
+			int blended_index = (index1 + index2) / 2;
+
+			return blended_palette[blended_index];
+		}
+	}
+
+
 	dword fixed_time;
 private:
 	float clampf(float v, float min, float max) {
@@ -128,4 +207,11 @@ private:
 	int which_gb;
 	bool rgb565;
 	byte is_odd_frame = 0;
+
+	word last_frame[160*144];
+	word current_frame[160*144];
+
+	GhostingMode ghosting_mode = GhostingMode::PALETTE_BLEND;
+
+
 };

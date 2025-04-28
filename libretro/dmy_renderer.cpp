@@ -61,6 +61,9 @@ extern bool _screen_switched; // set to draw player 2 on the left/top
 extern bool libretro_supports_bitmasks;
 extern int _show_player_screen; // 0 = p1 only, 1 = p2 only, 2 = both players
 
+std::array<word, GRADIENT_STEPS> blended_palette;
+
+
 dmy_renderer::dmy_renderer(int which)
 {
    which_gb = which;
@@ -72,6 +75,10 @@ dmy_renderer::dmy_renderer(int which)
    if (rgb565 && log_cb)
       log_cb(RETRO_LOG_INFO, "Frontend supports RGB565; will use that instead of XRGB1555.\n");
 #endif
+
+   //gradient for DMG LCD Ghosting effect
+   generateGradient();
+   std::fill_n(last_frame, 160 * 144, 0xFFFF);
 }
 
 word dmy_renderer::map_color(word gb_col)
@@ -364,7 +371,18 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
             if(is_gbc_rom && gbc_lcd_interlacing_enabled) 
                 add_gbc_interlacing_effect(buf, width, height, depth);
 
-            video_cb(buf, width, height, pitch); break;
+            //if DMG GHOSTING
+            // Cast buf to 16-bit to work with 16-bit color values
+            word* frame_buffer = reinterpret_cast<word*>(buf);
+
+            for (int i = 0; i < width * height; ++i) {
+                word blended = blendPixels(last_frame[i], frame_buffer[i]);
+                last_frame[i] = frame_buffer[i]; // Update last_frame direkt
+                frame_buffer[i] = blended;        // Überschreibe buf sofort
+            }
+
+            video_cb(reinterpret_cast<byte*>(frame_buffer), width, height, pitch);
+            //video_cb(buf, width, height, pitch); break;
         }
         case 2:
         {
