@@ -37,11 +37,19 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
   <br>
   
-### Gameboy Addon Emulation
+### Gameboy Peripherals Emulation
 - [TV REMOTE](#TV-REMOTE) Emulation
 - [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection)
 - [BARCODE TAISEN BARDIGUN](#BARCODE-TAISEN-BARDIGUN) Emulation full Support (all barcodes are hardcoded, use the numkeys 0-8 for selection)
 - [POWER ANTENNA/BUGSENSOR](#power-antenna-and-bugsensor) Emulation (LED via led driver overlay & controller rumble on led flash)
+
+<br>
+
+### unreleased Gameboy Peripherals Emulation
+- unreleased Faceball 2000 16 Player RingLink-Cable
+- unreleased Alleyway Analog Controller
+
+<br>
 
 ### Retroarch-Features
 - Retroarchivments support
