@@ -23,6 +23,8 @@
 #include <array>
 #include "../gb_core/renderer.h"
 
+#define clampf(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
+
 constexpr std::array<uint32_t, 4> DMG_PALETTE = {
 0xFFFFFFFF, // Weiß
 0xAAAAAAFF, // Hellgrau
@@ -58,43 +60,74 @@ public:
 	virtual byte get_time(int type);
 	virtual void set_time(int type,byte dat);
 
-	void rgb_to_hsl(int r, int g, int b, float& h, float& s, float& l) {
+	float hue2rgb(float p, float q, float t) {
+		if (t < 0.0f) t += 1.0f;
+		if (t > 1.0f) t -= 1.0f;
+		if (t < 1.0f / 6.0f) return p + (q - p) * 6.0f * t;
+		if (t < 1.0f / 2.0f) return q;
+		if (t < 2.0f / 3.0f) return p + (q - p) * (2.0f / 3.0f - t) * 6.0f;
+		return p;
+	}
+
+	void rgb_to_hsl(int r, int g, int b, float* h, float* s, float* l) {
 		float rf = r / 255.0f;
 		float gf = g / 255.0f;
 		float bf = b / 255.0f;
 
-		float max = std::max({ rf, gf, bf });
-		float min = std::min({ rf, gf, bf });
-		l = (max + min) * 0.5f;
+		float max_val, min_val, d;
 
-		if (max == min) {
-			h = s = 0.0f;
+		if (rf > gf) {
+			if (rf > bf)
+				max_val = rf;
+			else
+				max_val = bf;
 		}
 		else {
-			float d = max - min;
-			s = l > 0.5f ? d / (2.0f - max - min) : d / (max + min);
-
-			if (max == rf)
-				h = (gf - bf) / d + (gf < bf ? 6.0f : 0.0f);
-			else if (max == gf)
-				h = (bf - rf) / d + 2.0f;
+			if (gf > bf)
+				max_val = gf;
 			else
-				h = (rf - gf) / d + 4.0f;
-			h /= 6.0f;
+				max_val = bf;
+		}
+
+		if (rf < gf) {
+			if (rf < bf)
+				min_val = rf;
+			else
+				min_val = bf;
+		}
+		else {
+			if (gf < bf)
+				min_val = gf;
+			else
+				min_val = bf;
+		}
+
+		*l = (max_val + min_val) * 0.5f;
+
+		if (max_val == min_val) {
+			*h = 0.0f;
+			*s = 0.0f;
+		}
+		else {
+			d = max_val - min_val;
+			if (*l > 0.5f)
+				*s = d / (2.0f - max_val - min_val);
+			else
+				*s = d / (max_val + min_val);
+
+			if (max_val == rf)
+				*h = (gf - bf) / d + (gf < bf ? 6.0f : 0.0f);
+			else if (max_val == gf)
+				*h = (bf - rf) / d + 2.0f;
+			else
+				*h = (rf - gf) / d + 4.0f;
+
+			*h /= 6.0f;
 		}
 	}
 
 	// HSL → RGB888
-	void hsl_to_rgb(float h, float s, float l, int& r, int& g, int& b) {
-		auto hue2rgb = [](float p, float q, float t) -> float {
-			if (t < 0.0f) t += 1.0f;
-			if (t > 1.0f) t -= 1.0f;
-			if (t < 1.0f / 6.0f) return p + (q - p) * 6.0f * t;
-			if (t < 1.0f / 2.0f) return q;
-			if (t < 2.0f / 3.0f) return p + (q - p) * (2.0f / 3.0f - t) * 6.0f;
-			return p;
-			};
-
+	void hsl_to_rgb(float h, float s, float l, int* r, int* g, int* b) {
 		float r_f, g_f, b_f;
 		if (s == 0.0f) {
 			r_f = g_f = b_f = l;
@@ -107,12 +140,12 @@ public:
 			b_f = hue2rgb(p, q, h - 1.0f / 3.0f);
 		}
 
-		r = int(clampf(r_f, 0.0f, 1.0f) * 255);
-		g = int(clampf(g_f, 0.0f, 1.0f) * 255);
-		b = int(clampf(b_f, 0.0f, 1.0f) * 255);
+		*r = (int)(clampf(r_f, 0.0f, 1.0f) * 255);
+		*g = (int)(clampf(g_f, 0.0f, 1.0f) * 255);
+		*b = (int)(clampf(b_f, 0.0f, 1.0f) * 255);
 	}
 
-	word brighten_rgb565_hsl(word pixel, float brighten_step = 0.05f) {
+	uint16_t brighten_rgb565_hsl(uint16_t pixel, float brighten_step) {
 		int r5 = (pixel >> 11) & 0x1F;
 		int g6 = (pixel >> 5) & 0x3F;
 		int b5 = pixel & 0x1F;
@@ -124,9 +157,9 @@ public:
 
 		// HSL conversion + brighten
 		float h, s, l;
-		rgb_to_hsl(r8, g8, b8, h, s, l);
+		rgb_to_hsl(r8, g8, b8, &h, &s, &l);
 		l = clampf(l + brighten_step, 0.0f, 1.0f);
-		hsl_to_rgb(h, s, l, r8, g8, b8);
+		hsl_to_rgb(h, s, l, &r8, &g8, &b8);
 
 		// Downscale back to RGB565
 		r5 = r8 >> 3;
@@ -135,11 +168,9 @@ public:
 
 		return (r5 << 11) | (g6 << 5) | b5;
 	}
-
 	uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b) {
 		return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 	}
-
 	void generateGradient() {
 		for (int i = 0; i < GRADIENT_STEPS; ++i) {
 			float t = static_cast<float>(i) / (GRADIENT_STEPS - 1);
@@ -200,9 +231,7 @@ public:
 
 	dword fixed_time;
 private:
-	float clampf(float v, float min, float max) {
-		return std::max(min, std::min(max, v));
-	}
+	
 	int cur_time;
 	int which_gb;
 	bool rgb565;

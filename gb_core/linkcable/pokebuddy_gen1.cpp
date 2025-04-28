@@ -61,6 +61,7 @@ void pokebuddy_gen1::reset() {
 
 void pokebuddy_gen1::handle_special_hotkey(int key) {
 
+	if (current_state == OPEN_LINK) return;
 	if (generation == GEN_1)
 	{
 		switch (key)

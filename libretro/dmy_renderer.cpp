@@ -368,21 +368,30 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
         case 1: {
 
             //experimental GBC LCD interlacing effect
-            if(is_gbc_rom && gbc_lcd_interlacing_enabled) 
-                add_gbc_interlacing_effect(buf, width, height, depth);
-
-            //if DMG GHOSTING
-            // Cast buf to 16-bit to work with 16-bit color values
-            word* frame_buffer = reinterpret_cast<word*>(buf);
-
-            for (int i = 0; i < width * height; ++i) {
-                word blended = blendPixels(last_frame[i], frame_buffer[i]);
-                last_frame[i] = frame_buffer[i]; // Update last_frame direkt
-                frame_buffer[i] = blended;        // Überschreibe buf sofort
+            if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+            {
+                add_gbc_interlacing_effect(buf, width, height, depth); 
             }
 
-            video_cb(reinterpret_cast<byte*>(frame_buffer), width, height, pitch);
-            //video_cb(buf, width, height, pitch); break;
+            if (!is_gbc_rom)
+            {
+                //DMG Ghosting Effect
+                // Cast buf to 16-bit to work with 16-bit color values
+                word* frame_buffer = reinterpret_cast<word*>(buf);
+
+                for (int i = 0; i < width * height; ++i) {
+                    word blended = blendPixels(last_frame[i], frame_buffer[i]);
+                    last_frame[i] = frame_buffer[i]; // Update last_frame direkt
+                    frame_buffer[i] = blended;        // Überschreibe buf sofort
+                }
+
+                video_cb(reinterpret_cast<byte*>(frame_buffer), width, height, pitch);
+                break; 
+            }
+
+            video_cb(buf, width, height, pitch);
+            break;
+      
         }
         case 2:
         {
