@@ -138,6 +138,7 @@ endif
    endif
    
    fpic += $(MINVERSION) -stdlib=libc++
+   CXXFLAGS += -std=c++17
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
@@ -182,6 +183,7 @@ else ifeq ($(platform), tvos-arm64)
    SHARED += $(MINVERSION)
    CFLAGS += $(MINVERSION)
    CXXFLAGS += $(MINVERSION)
+   CXXFLAGS += -std=c++17
 # Theos
 else ifeq ($(platform), theos_ios)
 DEPLOYMENT_IOSVERSION = 5.0
