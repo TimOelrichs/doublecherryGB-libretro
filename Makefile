@@ -164,6 +164,7 @@ endif
    SHARED += $(MINVERSION)
    CFLAGS += $(MINVERSION)
    CXXFLAGS += $(MINVERSION)
+   CXXFLAGS += -std=c++17
 
 else ifeq ($(platform), tvos-arm64)
    TARGET := $(TARGET_NAME)_libretro_tvos.dylib
