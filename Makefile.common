@@ -16,6 +16,7 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/rom.cpp \
 	$(CORE_DIR)/libretro/dmy_renderer.cpp \
 	$(CORE_DIR)/libretro/libretro.cpp \
+	$(CORE_DIR)/gb_core/linkcable/alleyway_link_controller.cpp \
 	$(CORE_DIR)/gb_core/linkcable/link_master_device.cpp \
 	$(CORE_DIR)/gb_core/linkcable/dmg07.cpp \
 	$(CORE_DIR)/gb_core/linkcable/dmg07x4.cpp \
@@ -23,6 +24,7 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/linkcable/hack_4p_kwirk.cpp \
 	$(CORE_DIR)/gb_core/linkcable/hack_4p_burger_time_deluxe.cpp \
 	$(CORE_DIR)/gb_core/linkcable/barcodeboy.cpp \
+	$(CORE_DIR)/gb_core/linkcable/barcode_taisen_bardigun.cpp \
 	$(CORE_DIR)/gb_core/linkcable/faceball2000_cable.cpp \
 	$(CORE_DIR)/gb_core/linkcable/gameboy_printer.cpp \
 	$(CORE_DIR)/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp \
@@ -31,4 +33,4 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/infrared/pikachu_2_gs.cpp \
 	$(CORE_DIR)/gb_core/infrared/ubikey_unlocker.cpp \
 	$(CORE_DIR)/gb_core/infrared/tv_remote.cpp \
-	$(CORE_DIR)/gb_core/infrared/full_changer.cpp \
+	$(CORE_DIR)/gb_core/infrared/full_changer.cpp

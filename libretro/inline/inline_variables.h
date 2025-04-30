@@ -20,6 +20,7 @@ retro_set_led_state_t led_state_cb;
 
 unsigned int power_antenna_use_rumble = 0;
 bool auto_random_tv_remote; 
+bool alleyway_analog_controller_enabled = true; 
 
 int dcgb_hotkey_pressed = -1;
 int dcgb_last_hotkey_pressed = -1;
@@ -30,6 +31,11 @@ I_dcgb_hotkey_target* hotkey_target = NULL;
 
 
 static const struct retro_variable vars_single[] = {
+     { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
+     { "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear"},
+     { "dcgb_gbc_lcd_interlacing_brightnesss", "GBC LCD Interlacing Brightnesss difference; 5|10|15|20|25|30|35|40|45|50"},
+     { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
+    // { "dcgb_alleyway_analog_enabled", "emulate Alleyway Analog controls; Off|On" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
     { "dcgb_power_antenna_use_rumble", "Power Antenna/Bugsensor use rumble; Strong|Weak|Off" },
@@ -39,6 +45,8 @@ static const struct retro_variable vars_single[] = {
 };
 
 static const struct retro_variable vars_dual[] = {
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
+       { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
     { "dcgb_screen_placement", "Screen layout; left-right|top-down" },
@@ -49,7 +57,9 @@ static const struct retro_variable vars_dual[] = {
     { NULL, NULL },
 };
 
-static const struct retro_variable vars_tripple[] = {
+static const struct retro_variable vars_tripple[] = {  
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
+      { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
      { "dcgbt_gblink_device", "Link cable device (reload); 4-player adapter" },
@@ -62,6 +72,8 @@ static const struct retro_variable vars_tripple[] = {
 };
 
 static const struct retro_variable vars_quad[] = {
+      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
+     { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
      { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
     { "dcgbt_gblink_device", "Link cable device (reload); 4-player adapter|2x2-player link" },
@@ -92,9 +104,9 @@ static const struct retro_subsystem_rom_info gb_roms[] = {
 
  //subsystem not working, for now disable
 static const struct retro_subsystem_info subsystems[] = {
-  // { "2 Player Game Boy Link", "gb_link_2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-   //{ "3 Player Game Boy with 4-Player Adapter", "gb_3p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-   //{ "4 Player Game Boy with 4-Player Adapter", "gb_4p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
+  { "2 Player Game Boy Link", "gb_link_2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
+  { "3 Player Game Boy with 4-Player Adapter", "gb_3p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
+  { "4 Player Game Boy with 4-Player Adapter", "gb_4p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
    //{ "4 Player Game Boy 2x 2-Player Link", "gb_2x2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
    { NULL },
 };
@@ -108,6 +120,17 @@ enum mode {
 
 static enum mode mode = MODE_SINGLE_GAME;
 
+static struct timespec inputpoll_start_time;
+bool extra_inputpolling_enabled = false;
+int extra_inputpolling_interval = 5;
+
+bool is_gbc_rom = false; 
+bool gbc_color_correction_enabled = true; 
+bool gbc_lcd_interlacing_enabled = false; 
+bool gbc_lcd_interfacing_fast = true; 
+float gbc_lcd_interlacing_brightness = 1.05f;
+
+enum color_correction_mode gbc_cc_mode = GAMBATTE_SIMPLE;
 
 
 std::vector<gb*> v_gb;

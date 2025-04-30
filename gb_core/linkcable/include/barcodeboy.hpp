@@ -37,6 +37,7 @@ private:
 	char cart_name[18];
 	std::string current_barcode; 
 	std::vector<std::string> barcodes; 
+	byte current_barcode_index = 0;
 };
 
 

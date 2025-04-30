@@ -1,8 +1,8 @@
 /*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
-   IR TV REMOTE Emulation
-   Copyright (C) 2023  Tim Oelrichs
+   UBIKEY UNLOCKER
+   Copyright (C) 2024  Tim Oelrichs
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License
@@ -37,52 +37,55 @@ ubikey_unlocker::ubikey_unlocker(std::vector<gb*> gbs)
 	v_gb.insert(v_gb.begin(), std::begin(gbs), std::end(gbs));
 	reset();
 
-	if (is_master)
-	{
-		for (int i = 0; i < 4; i++)
-		{
-			build_hello_msg();
-		}
-
-		out_ir_signals.push_back(new ir_signal(1, 472));
-		out_ir_signals.push_back(new ir_signal(0, 472));
-		out_ir_signals.push_back(new ir_signal(1, 472));
-		out_ir_signals.push_back(new ir_signal(0, 1064024));
-		
+	if (is_master) {
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
+		build_hello_msg();
 	}
-	   
+ 
 }
 
 void ubikey_unlocker::receive_ir_signal(ir_signal* signal)
 {
 
-	out_ir_signals.push_back(signal);
+	in_ir_signals.push_back(signal);
+	
 	log_ir_traffic(signal, true);
 	if (log_answer_delay) log_ir_answer_delay();
 
 	if (is_master)
 	{
-		is_master = false; 
+		
 		switch (current_state)
 		{
-		case UNLOCKER_RECEIVE_DATA:
+		case UBIKEY_WAIT_FOR_HELLO:
 		{
-			/*
-			if (in_ir_signals.size() == 100)
+			
+			if (in_ir_signals.size() == 6)
 			{
 				if (got_hello_msg())
 				{
-					//ignore hello and send delayed hello, this will set the GBC in slave mode
-					build_hello_msg();
-					//current_state = WAIT_FOR_HELLO;
-					sending_delay = v_gb[0]->get_cpu()->get_clock() + micro_seconds_to_clocks(10000);
+					out_ir_signals.clear();
+					build_data_packet();
 
 				}
 
 				in_ir_signals.clear();
 			}
 			break;
-			*/
+			
+		}
+		case UBIKEY_SEND_DATAPACKET: {
+
 		}
 		/*
 		case WAIT_FOR_HELLO:
@@ -146,64 +149,29 @@ void ubikey_unlocker::receive_ir_signal(ir_signal* signal)
 		{
 		case UNLOCKER_RECEIVE_DATA:
 		{
-			/*
-			if (in_ir_signals.size() == 100)
+			
+			if (in_ir_signals.size() == 3)
 			{
 				if (got_hello_msg())
 				{
 					build_hello_msg();
-					//current_state = RECEIVE_DATA_LENGTH;
-					sending_delay = v_gb[0]->get_cpu()->get_clock() + micro_seconds_to_clocks(1000);
+					current_state = UNLOCKER_RECEIVE_DATA_LENGTH;
+					sending_delay = v_gb[0]->get_cpu()->get_clock() + 3384;
 
 				}
 
 				in_ir_signals.clear();
 			}
-			*/
+			
 			break;
 		}
-		/*
-		case RECEIVE_DATA_LENGTH:
+		
+		case UNLOCKER_RECEIVE_DATA_LENGTH:
 		{
-			//2 Byte -> (16 Bits * 2 Signals each) + 2 PRE AND 2 POSTAMBLE = 36
-			if (in_ir_signals.size() == 36)
-			{
-				//translate_signals_to_bytes();
-				//in_data_length = in_bytes[1];
-				in_data_length = 1;
-				//current_state = RECEIVE_DATA;
-				in_ir_signals.clear();
-			};
+			
 
 			break;
 		}
-		case RECEIVE_DATA:
-		{
-			//DATA LENGTH * 8 Bits * 2 +  2 PRE AND 2 POSTAMBLE
-			if (in_ir_signals.size() == ((in_data_length * 8 * 2) + 4))
-			{
-				//translate_signals_to_bytes();
-				//current_state = RECEIVE_DATA_CHECKSUM;
-				in_ir_signals.clear();
-			}
-			break;
-		}
-		case RECEIVE_DATA_CHECKSUM:
-		{
-			//DATA LENGTH * 8 Bits * 2 +  2 PRE AND 1 POSTAMBLE (0 not send) = 35
-			if (in_ir_signals.size() == 35)
-			{
-				//translate_signals_to_bytes();
-				//current_state = RECEICE_DATA_EMPTY;
-				in_ir_signals.clear();
-
-				build_ack_msg();
-
-			}
-			break;
-		}
-		case RECEICE_DATA_EMPTY:
-		*/
 		default:
 			break;
 		}
@@ -220,7 +188,7 @@ void ubikey_unlocker::send_ir_signal(ir_signal* signal)
 
 void ubikey_unlocker::process_ir()
 {
-	if (!is_master) return;
+	
 
 	if (out_ir_signals.empty()) return;
 	//if (v_gb[0]->get_cpu()->get_clock() < sending_delay) return;
@@ -230,20 +198,15 @@ void ubikey_unlocker::process_ir()
 	out_ir_signals.erase(out_ir_signals.begin());
 
 
-	//log answer delay for reseach purpose
-	if (out_ir_signals.empty())
-	{
-		if(hello_counter++ < 195)	build_hello_msg();
-	}
 
 
 }
 
 void ubikey_unlocker::build_hello_msg()
 {
-	out_ir_signals.push_back(new ir_signal(1, 550));
+	out_ir_signals.push_back(new ir_signal(1, 472));
 	out_ir_signals.push_back(new ir_signal(0, 472));
-	out_ir_signals.push_back(new ir_signal(1, 550));
+	out_ir_signals.push_back(new ir_signal(1, 472));
 	out_ir_signals.push_back(new ir_signal(0, 11540));
 
 }
@@ -254,7 +217,7 @@ void ubikey_unlocker::reset()
 	sending_delay = 0;
 	sending_delay = 0;
 	in_data_length = 0;
-	//current_state = RECEIVE_HELLO;
+	current_state = UBIKEY_WAIT_FOR_HELLO;
 	in_ir_signals.clear();
 	out_ir_signals.clear();
 	in_bytes.clear();
@@ -335,7 +298,7 @@ bool ubikey_unlocker::got_hello_msg()
 		!in_ir_signals[1]->light_on &&
 		in_ir_signals[2]->light_on &&
 		in_ir_signals[0]->duration < 650 &&
-		in_ir_signals[1]->duration > 1600 &&
+		in_ir_signals[1]->duration < 650 &&
 		in_ir_signals[2]->duration < 650
 		);
 }
@@ -368,16 +331,31 @@ void ubikey_unlocker::build_ack_msg()
 	sending_delay = v_gb[0]->get_cpu()->get_clock() + micro_seconds_to_clocks(23000);
 }
 
-void ubikey_unlocker::build_data_msg(std::vector<byte> bytes)
+void ubikey_unlocker::build_data_packet()
 {
 	add_preamble_to_out_signals();
-	for (int i = 0; i < bytes.size(); i++)
-	{
-		add_byte_to_out_ir_signals(bytes[i]);
-	}
+	add_byte_to_out_ir_signals(0x5A);
+	add_byte_to_out_ir_signals(0x08);
 	add_postamble_to_out_signals();
 
-	sending_delay = v_gb[0]->get_cpu()->get_clock() + micro_seconds_to_clocks(3500);
+	add_preamble_to_out_signals();
+	add_byte_to_out_ir_signals(0x45);
+	add_byte_to_out_ir_signals(0x5A);
+	add_byte_to_out_ir_signals(0x00);
+	add_byte_to_out_ir_signals(0x80);
+	add_byte_to_out_ir_signals(0x48);
+	add_byte_to_out_ir_signals(0x57);
+	add_byte_to_out_ir_signals(0x02);
+	add_byte_to_out_ir_signals(0x00);
+	add_postamble_to_out_signals();
+
+	add_preamble_to_out_signals();
+	add_byte_to_out_ir_signals(0x44);
+	add_byte_to_out_ir_signals(0xFB);
+	add_postamble_to_out_signals();
+
+
+	sending_delay = v_gb[0]->get_cpu()->get_clock() + 3384;
 }
 
 //TODO REMOVE from INTERFACE
@@ -422,23 +400,24 @@ void ubikey_unlocker::add_byte_to_out_ir_signals(byte data) {
 	byte out_bit = data;
 	for (int i = 7; i >= 0; i--)
 	{
-		out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(57)));
-
 		out_bit = ((data >> i) & 0x01);
-		int duration = out_bit ? micro_seconds_to_clocks(299) : micro_seconds_to_clocks(120);
-		out_ir_signals.push_back(new ir_signal(0, duration));
+		int duration = out_bit ? 292 : 196;
+		out_ir_signals.push_back(new ir_signal(1, duration));
+
+		out_ir_signals.push_back(new ir_signal(0, 560));
+
 
 	}
 }
 
 void ubikey_unlocker::add_preamble_to_out_signals() {
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(125)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(660)));
+	out_ir_signals.push_back(new ir_signal(1, 412));
+	out_ir_signals.push_back(new ir_signal(0,560));
 }
 
 void ubikey_unlocker::add_postamble_to_out_signals() {
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(102)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(545)));
+	out_ir_signals.push_back(new ir_signal(1,412));
+	out_ir_signals.push_back(new ir_signal(0,524));
 }
 
 word ubikey_unlocker::calc_checksum()

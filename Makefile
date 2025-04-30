@@ -138,6 +138,7 @@ endif
    endif
    
    fpic += $(MINVERSION) -stdlib=libc++
+   CXXFLAGS += -std=c++17
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
@@ -163,6 +164,7 @@ endif
    SHARED += $(MINVERSION)
    CFLAGS += $(MINVERSION)
    CXXFLAGS += $(MINVERSION)
+   CXXFLAGS += -std=c++17
 
 else ifeq ($(platform), tvos-arm64)
    TARGET := $(TARGET_NAME)_libretro_tvos.dylib
@@ -178,6 +180,11 @@ else ifeq ($(platform), tvos-arm64)
    CC = cc -arch arm64 -isysroot $(IOSSDK)
    CXX = clang++ -arch arm64 -isysroot $(IOSSDK)
 
+   MINVERSION = -mappletvos-version-min=11.0
+   SHARED += $(MINVERSION)
+   CFLAGS += $(MINVERSION)
+   CXXFLAGS += $(MINVERSION)
+   CXXFLAGS += -std=c++17
 # Theos
 else ifeq ($(platform), theos_ios)
 DEPLOYMENT_IOSVERSION = 5.0

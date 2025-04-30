@@ -1,6 +1,14 @@
 #pragma once
 #include "libretro.h"
 
+#if defined(__PSP__)
+extern "C" uint64_t sceKernelGetSystemTimeWide(void);
+#elif defined(__WIIU__)
+extern "C" uint64_t OSGetTime(void);
+#else
+#include <sys/time.h>
+#endif
+
 void set_cart_name(byte* rombuf)
 {
     memcpy(cart_name, rombuf + 0x134, 16);
@@ -86,29 +94,45 @@ void auto_config_1p_link() {
 
     //Pokemon Stuff
     if (!strncmp(cart_name, "POKEMON", 7 )) 
+    if (!strncmp(cart_name, "POKEMON", 7 ) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
+        
         pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
         hotkey_target = pkbuddy;
         v_serializable_devices.push_back(pkbuddy);
         v_gb[0]->set_linked_target(pkbuddy);
 
         display_message("PKMBUDDY BOY plugged in");
-        display_message("Check out the CABLE CLUB for weekly GEN1 Distributions!");
-
+        display_message("Check out the CABLE CLUB for weekly Distributions!");
         
         //Mytery Gift Maschine WIP - Not working yet
         
         //TODO IR ONLY  for GEN2
+        /*
         pikachu_2_gs* pika2gs = new pikachu_2_gs(v_gb);
         v_gb[0]->set_ir_target(pika2gs);
         v_gb[0]->set_ir_master_device(pika2gs);
+        */
         
-        
-      
         return; 
     }
 
  
+    //link Alleyway paddle controller
+    if (!strcmp(cart_name, "ALLEY WAY"))
+    {
+        alleyway_link_controller* alc = new alleyway_link_controller();
+        hotkey_target = alc;
+        v_gb[0]->set_linked_target(alc);
+
+        display_message("Analog Alleyway Controller plugged in");
+        display_message("Press SELECT to switch between Digital and Analog controls");
+
+
+        return;
+    }
+
+
   
     //TV REMOTE Emulation
     if (!strncmp(cart_name, "SUN",  3)      ||      //ROBONPON SUN
@@ -138,12 +162,23 @@ void auto_config_1p_link() {
         !strcmp(cart_name, "FAMISTA3")
         )
     {
+        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
         barcodeboy* bcb = new barcodeboy(v_gb, cart_name);
         master_link = bcb; 
         hotkey_target = bcb;
-        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
         return; 
     }
+
+    //link barcode taisen bardigun
+    if (!strcmp(cart_name, "BARDIGUN") )
+    {
+        display_message("Game supports BARCODE TAISEN BARDIGUN! BARDIGUN plugged in");
+        barcode_taisen_bardigun* btb = new barcode_taisen_bardigun();
+        hotkey_target = btb;
+        v_gb[0]->set_linked_target(btb); 
+        return;
+    }
+
 
     //link power_antenna/bugsensor
     if (!strncmp(cart_name, "TELEFANG", 8) ||
@@ -160,7 +195,7 @@ void auto_config_1p_link() {
     if (!strncmp(cart_name, "ZOKZOK", 6))
     {
 
-        /*
+        
         //WIP not working yet
 
         display_message("Game features the Full Changer Accessory");
@@ -171,14 +206,15 @@ void auto_config_1p_link() {
         v_gb[0]->set_ir_master_device(fullchanger);
 
         return;
-        */
+        
     }
 
     //Game and Watch Gallery Unlocker
     if (!strncmp(cart_name, "G&W GALLERY2", 12))
     {
-        /*
 
+        /*
+        
         //WIP - not working yet
         v_gb[0]->set_linked_target(new game_and_watch_gallery_unlocker(v_gb));
 
@@ -196,7 +232,7 @@ void auto_config_1p_link() {
         !strncmp(cart_name, "FLIPPER", 7)
         )
     {
-        /*
+        
 
         //WIP not working yet
 
@@ -205,7 +241,7 @@ void auto_config_1p_link() {
         ubikey_unlocker* ubi_unlocker = new ubikey_unlocker(v_gb);
         v_gb[0]->set_ir_target(ubi_unlocker);
         v_gb[0]->set_ir_master_device(ubi_unlocker);
-        */
+        
 
         return;
     }
@@ -252,6 +288,56 @@ void add_new_player() {
     // v_gb.push_back(new gb)
 }
 
+
+static inline bool get_monotonic_time(struct timespec* ts)
+{
+#if defined(CLOCK_MONOTONIC) && !defined(__PSP__) && !defined(__WIIU__)
+    return clock_gettime(CLOCK_MONOTONIC, ts) == 0;
+
+#elif defined(__PSP__)
+    // PSP: use sceKernelGetSystemTimeWide (microseconds since boot)
+    uint64_t tick = sceKernelGetSystemTimeWide();
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#elif defined(__WIIU__)
+    // Wii U: OSGetTime also returns microseconds since boot
+    uint64_t tick = OSGetTime();
+    ts->tv_sec = tick / 1000000;
+    ts->tv_nsec = (tick % 1000000) * 1000;
+    return true;
+
+#else
+    // Fallback: use gettimeofday (less accurate, not monotonic)
+    struct timeval tv;
+    if (gettimeofday(&tv, NULL) != 0)
+        return false;
+
+    ts->tv_sec = tv.tv_sec;
+    ts->tv_nsec = tv.tv_usec * 1000;
+    return true;
+#endif
+}
+
+
+
+//try to avoid missed frames, see https://bsnes.org/articles/input-latency
+void performExtraInputPoll() {
+    struct timespec current_time;
+    get_monotonic_time(&current_time);
+    //clock_gettime(CLOCK_MONOTONIC, &current_time);
+
+    long elapsed_ms = (current_time.tv_sec - inputpoll_start_time.tv_sec) * 1000 +
+        (current_time.tv_nsec - inputpoll_start_time.tv_nsec) / 1000000;
+
+    if (elapsed_ms >= extra_inputpolling_interval) {
+        get_monotonic_time(&inputpoll_start_time);
+        //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+        input_poll_cb();
+    }
+}
+
 void check_for_new_players() {
 
     for (int i = v_gb.size(); i < 4; i++)
@@ -262,6 +348,51 @@ void check_for_new_players() {
 
 }
 
+static void update_multiplayer_geometry() {
+
+    int screenw = 160, screenh = 144;
+
+    if (_screen_4p_split && (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)) {
+
+        if (emulated_gbs < 5) {
+            screenw *= 2;
+            screenh *= 2;
+        }
+        else if (emulated_gbs < 10) {
+            screenw *= 3;
+            screenh *= 3;
+        }
+        else {
+            screenw *= 4;
+            screenh *= 4;
+        }
+
+    }
+    else if (emulated_gbs > 1 && _show_player_screen == 2 && _number_of_local_screens == 1)
+    {
+        if (_screen_vertical)
+            screenh *= emulated_gbs;
+        else
+            screenw *= emulated_gbs;
+    }
+    else if (_number_of_local_screens > 1)
+    {
+        if (_screen_vertical)
+            screenh *= _number_of_local_screens;
+        else
+            screenw *= _number_of_local_screens;
+    }
+
+
+    my_av_info->geometry.base_width = screenw;
+    my_av_info->geometry.base_height = screenh;
+    my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+
+    already_checked_options = true;
+    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+
+}
+
 static void check_variables(void)
 {
     libretro_msg_interface_version = 0;
@@ -269,6 +400,84 @@ static void check_variables(void)
         &libretro_msg_interface_version);
 
     struct retro_variable var;
+
+   // { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off" },
+    var.key = "dcgb_gbc_color_correction";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strcmp(var.value, "Off")) {
+            gbc_color_correction_enabled = false;
+            gbc_cc_mode = OFF;
+        }
+        else gbc_color_correction_enabled = true;
+     
+        if (!strcmp(var.value, "Gambatte Simple"))
+            gbc_cc_mode = GAMBATTE_SIMPLE;
+
+        if (!strcmp(var.value, "Gambatte Accurate"))
+            gbc_cc_mode = GAMBATTE_ACCURATE;
+           
+    }
+
+    //{ "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear" },
+    var.key = "dcgb_gbc_lcd_interlacing";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strcmp(var.value, "Off")) {
+            gbc_lcd_interlacing_enabled = false;
+        }
+        else gbc_lcd_interlacing_enabled = true;
+
+        if (!strcmp(var.value, "Fast"))
+        {
+            gbc_lcd_interlacing_enabled = true;
+            gbc_lcd_interfacing_fast = true;
+        }
+
+        if (!strcmp(var.value, "Linear"))
+        {
+            gbc_lcd_interlacing_enabled = true;
+            gbc_lcd_interfacing_fast = false;
+        }
+   
+    }
+
+   
+    var.key = "dcgb_gbc_lcd_interlacing_brightnesss";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        gbc_lcd_interlacing_brightness = (100.0f + (float)value) / 100.0f;
+
+    }
+
+
+
+     var.key = "dcgb_input_polling_rate";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        extra_inputpolling_enabled = value > 60;
+        if (extra_inputpolling_enabled) extra_inputpolling_interval = value == 200 ? 5 : 8;
+      
+    }
+
+   
+    /*
+    var.key = "dcgb_alleyway_analog_enabled";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strcmp(var.value, "Off"))
+            alleyway_analog_controller_enabled = false;
+        else
+            alleyway_analog_controller_enabled = true;
+    }
+    */
 
     var.key = "dcgb_power_antenna_use_rumble";
     var.value = NULL;
@@ -292,49 +501,16 @@ static void check_variables(void)
             auto_random_tv_remote = true;
     }
 
+    
     var.key = "dcgb_emulated_gameboys";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-       
         if (!already_checked_options) 
-        { // only apply this setting on init
-            if (!strcmp(var.value, "1"))
-            {
-                emulated_gbs = 1;
-                mode = MODE_SINGLE_GAME;
-            }
-            else if (!strcmp(var.value, "2"))
-                emulated_gbs = 2;
-            else if (!strcmp(var.value, "3"))
-                emulated_gbs = 3;
-            else if (!strcmp(var.value, "4"))
-                emulated_gbs = 4;
-            else if (!strcmp(var.value, "5"))
-                emulated_gbs = 5;
-            else if (!strcmp(var.value, "6"))
-                emulated_gbs = 6;
-            else if (!strcmp(var.value, "7"))
-                emulated_gbs = 7;
-            else if (!strcmp(var.value, "8"))
-                emulated_gbs = 8;
-            else if (!strcmp(var.value, "9"))
-                emulated_gbs = 9;
-            else if (!strcmp(var.value, "10"))
-                emulated_gbs = 10;
-            else if (!strcmp(var.value, "11"))
-                emulated_gbs = 11;
-            else if (!strcmp(var.value, "12"))
-                emulated_gbs = 12;
-            else if (!strcmp(var.value, "13"))
-                emulated_gbs = 13;
-            else if (!strcmp(var.value, "14"))
-                emulated_gbs = 14;
-            else if (!strcmp(var.value, "15"))
-                emulated_gbs = 15;
-            else if (!strcmp(var.value, "16"))
-                emulated_gbs = 16;
-
+        { 
+            int value = atoi(var.value);
+            emulated_gbs = value;
+            mode = (value == 1) ? MODE_SINGLE_GAME : mode;
         }
     }
 
@@ -445,46 +621,19 @@ static void check_variables(void)
         else
             _screen_switched = false;
 
-        // check whether to show both players' screens, p1 only, or p2 only
+        // check whether to show all players' screens, or player only
         var.key = "dcgb_single_screen_mp";
         var.value = NULL;
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
         {
-            //TODO make this cleaner and shorter
+
             if (!strcmp(var.value, "all players"))
                 _show_player_screen = emulated_gbs;
-            else if (!strcmp(var.value, "player 1 only"))
-                _show_player_screen = 0;
-            else if (!strcmp(var.value, "player 2 only"))
-                _show_player_screen = 1;
-            else if (!strcmp(var.value, "player 3 only"))
-                _show_player_screen = 2;
-            else if (!strcmp(var.value, "player 4 only"))
-                _show_player_screen = 3;
-            else if (!strcmp(var.value, "player 5 only"))
-                _show_player_screen = 4;
-            else if (!strcmp(var.value, "player 6 only"))
-                _show_player_screen = 5;
-            else if (!strcmp(var.value, "player 7 only"))
-                _show_player_screen = 6;
-            else if (!strcmp(var.value, "player 8 only"))
-                _show_player_screen = 7;
-            else if (!strcmp(var.value, "player 9 only"))
-                _show_player_screen = 8;
-            else if (!strcmp(var.value, "player 10 only"))
-                _show_player_screen = 9;
-            else if (!strcmp(var.value, "player 11 only"))
-                _show_player_screen = 10;
-            else if (!strcmp(var.value, "player 12 only"))
-                _show_player_screen = 11;
-            else if (!strcmp(var.value, "player 13 only"))
-                _show_player_screen = 12;
-            else if (!strcmp(var.value, "player 14 only"))
-                _show_player_screen = 13;
-            else if (!strcmp(var.value, "player 15 only"))
-                _show_player_screen = 14;
-            else if (!strcmp(var.value, "player 16 only"))
-                _show_player_screen = 15;
+            else {
+                int player;
+                if (sscanf(var.value, "player %d only", &player) == 1 && player >= 1 && player <= 16)
+                    _show_player_screen = player - 1;
+            }
 
             if (_show_player_screen != emulated_gbs) {
                 audio_2p_mode = _show_player_screen;
@@ -497,94 +646,27 @@ static void check_variables(void)
         else
             _show_player_screen = emulated_gbs;
 
+        update_multiplayer_geometry();
 
-        int screenw = 160, screenh = 144;
-
-        if (_screen_4p_split && (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)) {
-
-            if (emulated_gbs < 5) {
-                screenw *= 2;
-                screenh *= 2;
-            }
-            else if (emulated_gbs < 10) {
-                screenw *= 3;
-                screenh *= 3;
-            }
-            else {
-                screenw *= 4;
-                screenh *= 4;
-            }
-          
-        }
-        else if (emulated_gbs > 1 && _show_player_screen == 2 && _number_of_local_screens == 1)
-        {
-            if (_screen_vertical)
-                screenh *= emulated_gbs;
-            else
-                screenw *= emulated_gbs;
-        }
-        else if (_number_of_local_screens > 1)
-        {
-            if (_screen_vertical)
-                screenh *= _number_of_local_screens;
-            else
-                screenw *= _number_of_local_screens;
-        }
-
-
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
-
-        already_checked_options = true;
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
-
-
-        // check whether which audio should play
+        // check whether which GameBoys audio should play
         var.key = "dcgb_audio_output";
         var.value = NULL;
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
         {
             if (_show_player_screen != emulated_gbs) {
                 audio_2p_mode = _show_player_screen;
+                char buf[32];
+                snprintf(buf, sizeof(buf), "Game Boy #%d", audio_2p_mode + 1);
                 var.key = "dcgb_audio_output";
-                var.value = "Game Boy #" + audio_2p_mode + 1;
+                var.value = buf;
                 environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+
             }
             else {
-                //TODO make this cleaner and shorter
-                if (!strcmp(var.value, "Game Boy #1"))
-                    audio_2p_mode = 0;
-                else if (!strcmp(var.value, "Game Boy #2"))
-                    audio_2p_mode = 1;
-                else if (!strcmp(var.value, "Game Boy #3"))
-                    audio_2p_mode = 2;
-                else if (!strcmp(var.value, "Game Boy #4"))
-                    audio_2p_mode = 3;
-                else if (!strcmp(var.value, "Game Boy #5"))
-                    audio_2p_mode = 4;
-                else if (!strcmp(var.value, "Game Boy #6"))
-                    audio_2p_mode = 5;
-                else if (!strcmp(var.value, "Game Boy #7"))
-                    audio_2p_mode = 6;
-                else if (!strcmp(var.value, "Game Boy #8"))
-                    audio_2p_mode = 7;
-                else if (!strcmp(var.value, "Game Boy #9"))
-                    audio_2p_mode = 8;
-                else if (!strcmp(var.value, "Game Boy #10"))
-                    audio_2p_mode = 9;
-                else if (!strcmp(var.value, "Game Boy #11"))
-                    audio_2p_mode = 10;
-                else if (!strcmp(var.value, "Game Boy #12"))
-                    audio_2p_mode = 11;
-                else if (!strcmp(var.value, "Game Boy #13"))
-                    audio_2p_mode = 12;
-                else if (!strcmp(var.value, "Game Boy #14"))
-                    audio_2p_mode = 13;
-                else if (!strcmp(var.value, "Game Boy #15"))
-                    audio_2p_mode = 14;
-                else if (!strcmp(var.value, "Game Boy #16"))
-                    audio_2p_mode = 15;
+                int audio_player;
+                if (sscanf(var.value, "Game Boy #%d", &audio_player) == 1 && audio_player >= 1 && audio_player <= 16)
+                    audio_2p_mode = audio_player - 1;
+
             }
         }
         else
@@ -668,7 +750,7 @@ void hotkey_handle() {
             hotkey_target->handle_special_hotkey(dcgb_hotkey_pressed);
             return;
         }
-        if (dcgb_hotkey_frame_counter++ >= 55) {
+        if (dcgb_hotkey_frame_counter++ >= 60) {
             dcgb_hotkey_frame_counter = 0;
             dcgb_last_hotkey_pressed = -1;
         }
@@ -742,7 +824,6 @@ static void netpacket_disconnected(unsigned short client_id) {
     num_clients--;
 }
 
-
 const struct retro_netpacket_callback netpacket_iface = {
   netpacket_start,          // start
   netpacket_receive,        // receive
@@ -752,6 +833,7 @@ const struct retro_netpacket_callback netpacket_iface = {
   netpacket_disconnected,   // disconnected
   "DoubleCherryGB netpack V1.0",   // core version char* 
 };
+
 
 void log_save_state(uint8_t* data, size_t size)
 {

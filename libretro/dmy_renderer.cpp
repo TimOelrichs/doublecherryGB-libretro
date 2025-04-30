@@ -20,7 +20,8 @@
 // libretro implementation of the renderer, should probably be renamed from dmy.
 
 #include <string.h>
-#include <math.h>
+//#include <math.h>
+#include <cmath>
 #include <time.h>
 #include <vector>
 
@@ -32,6 +33,13 @@ extern std::vector<gb* > v_gb;
 extern int emulated_gbs;
 extern int max_gbs; 
 extern int _number_of_local_screens;
+extern bool gbc_color_correction_enabled;
+extern bool is_gbc_rom; 
+extern enum color_correction_mode gbc_cc_mode;
+
+extern bool gbc_lcd_interlacing_enabled;
+extern bool gbc_lcd_interfacing_fast;
+extern float gbc_lcd_interlacing_brightness;
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -53,6 +61,9 @@ extern bool _screen_switched; // set to draw player 2 on the left/top
 extern bool libretro_supports_bitmasks;
 extern int _show_player_screen; // 0 = p1 only, 1 = p2 only, 2 = both players
 
+std::array<word, GRADIENT_STEPS> blended_palette;
+
+
 dmy_renderer::dmy_renderer(int which)
 {
    which_gb = which;
@@ -64,10 +75,116 @@ dmy_renderer::dmy_renderer(int which)
    if (rgb565 && log_cb)
       log_cb(RETRO_LOG_INFO, "Frontend supports RGB565; will use that instead of XRGB1555.\n");
 #endif
+
+   //gradient for DMG LCD Ghosting effect
+   generateGradient();
+   std::fill_n(last_frame, 160 * 144, 0xFFFF);
 }
 
 word dmy_renderer::map_color(word gb_col)
 {
+   
+    if (is_gbc_rom && gbc_color_correction_enabled)
+    {
+        const unsigned r = gb_col & 0x1F;
+        const unsigned g = gb_col >> 5 & 0x1F;
+        const unsigned b = gb_col >> 10 & 0x1F;
+
+        unsigned rFinal = 0;
+        unsigned gFinal = 0;
+        unsigned bFinal = 0;
+
+        switch (gbc_cc_mode)
+        {
+            case GAMBATTE_SIMPLE:
+            {
+             
+                rFinal = ((r * 13) + (g * 2) + b) >> 4;
+                gFinal = ((g * 3) + b) >> 2;
+                bFinal = ((r * 3) + (g * 2) + (b * 11)) >> 4;
+
+                break; 
+            }
+            case GAMBATTE_ACCURATE:
+            {
+                /* GBC colour correction factors */
+                #define GBC_CC_LUM 0.94f
+                #define GBC_CC_R   0.82f
+                #define GBC_CC_G   0.665f
+                #define GBC_CC_B   0.73f
+                #define GBC_CC_RG  0.125f
+                #define GBC_CC_RB  0.195f
+                #define GBC_CC_GR  0.24f
+                #define GBC_CC_GB  0.075f
+                #define GBC_CC_BR  -0.06f
+                #define GBC_CC_BG  0.21f
+
+                static const float rgbMax = 31.0;
+                static const float rgbMaxInv = 1.0 / rgbMax;
+                float colorCorrectionBrightness = 0.5f; /* central */
+
+                  // Use Pokefan531's "gold standard" GBC colour correction
+                // (https://forums.libretro.com/t/real-gba-and-ds-phat-colors/1540/190)
+                // NB: The results produced by this implementation are ever so slightly
+                // different from the output of the gbc-colour shader. This is due to the
+                // fact that we have to tolerate rounding errors here that are simply not
+                // an issue when tweaking the final image with a post-processing shader.
+                // *However:* the difference is so tiny small that 99.9% of users will
+                // never notice, and the result is still 100x better than the 'fast'
+                // colour correction method.
+                //
+                // Constants
+                static const float targetGamma = 2.2;
+                static const float displayGammaInv = 1.0 / targetGamma;
+                // Perform gamma expansion
+                float adjustedGamma = targetGamma - colorCorrectionBrightness;
+                float rFloat = std::pow(static_cast<float>(r) * rgbMaxInv, adjustedGamma);
+                float gFloat = std::pow(static_cast<float>(g) * rgbMaxInv, adjustedGamma);
+                float bFloat = std::pow(static_cast<float>(b) * rgbMaxInv, adjustedGamma);
+                // Perform colour mangling
+                float rCorrect = GBC_CC_LUM * ((GBC_CC_R * rFloat) + (GBC_CC_GR * gFloat) + (GBC_CC_BR * bFloat));
+                float gCorrect = GBC_CC_LUM * ((GBC_CC_RG * rFloat) + (GBC_CC_G * gFloat) + (GBC_CC_BG * bFloat));
+                float bCorrect = GBC_CC_LUM * ((GBC_CC_RB * rFloat) + (GBC_CC_GB * gFloat) + (GBC_CC_B * bFloat));
+                // Range check...
+                rCorrect = rCorrect > 0.0f ? rCorrect : 0.0f;
+                gCorrect = gCorrect > 0.0f ? gCorrect : 0.0f;
+                bCorrect = bCorrect > 0.0f ? bCorrect : 0.0f;
+                // Perform gamma compression
+                rCorrect = std::pow(rCorrect, displayGammaInv);
+                gCorrect = std::pow(gCorrect, displayGammaInv);
+                bCorrect = std::pow(bCorrect, displayGammaInv);
+                // Range check...
+                rCorrect = rCorrect > 1.0f ? 1.0f : rCorrect;
+                gCorrect = gCorrect > 1.0f ? 1.0f : gCorrect;
+                bCorrect = bCorrect > 1.0f ? 1.0f : bCorrect;
+
+                /*
+                // Perform image darkening, if required
+                if (darkFilterLevel > 0)
+                {
+                    darkenRgb(rCorrect, gCorrect, bCorrect);
+                    isDark = true;
+                }
+                */
+                // Convert back to 5bit unsigned
+                rFinal = static_cast<unsigned>((rCorrect * rgbMax) + 0.5) & 0x1F;
+                gFinal = static_cast<unsigned>((gCorrect * rgbMax) + 0.5) & 0x1F;
+                bFinal = static_cast<unsigned>((bCorrect * rgbMax) + 0.5) & 0x1F;
+                break;
+            }
+
+
+        default:
+            break;
+        }
+      
+
+        if (rgb565) return rFinal << 11 | gFinal << 6 | bFinal;
+        return bFinal << 10 | gFinal << 5 | rFinal;
+    }
+
+    
+
 #ifndef SKIP_COLOR_CORRECTION
 #ifndef FRONTEND_SUPPORTS_RGB565
    if(rgb565)
@@ -188,6 +305,45 @@ int dmy_renderer::check_pad()
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))  ? 1 : 0) << 7;
 }
 
+void dmy_renderer::add_gbc_interlacing_effect(byte* buf, int width, int height, int depth) {
+
+    const float brighten_factor = gbc_lcd_interlacing_brightness;
+    int pitch = width * ((depth + 7) / 8);
+
+    for (int y = is_odd_frame; y < height; y += 2) {
+
+
+        uint16_t* line = reinterpret_cast<uint16_t*>(buf + y * pitch);
+
+
+        if (gbc_lcd_interfacing_fast)
+        {
+            for (int x = 0; x < width; ++x) {
+                uint16_t pixel = line[x];
+
+                int r = (pixel >> 11) & 0x1F;
+                int g = (pixel >> 5) & 0x3F;
+                int b = pixel & 0x1F;
+
+                r = std::min(int(r * brighten_factor), 31);
+                g = std::min(int(g * brighten_factor), 63);
+                b = std::min(int(b * brighten_factor), 31);
+
+                line[x] = (r << 11) | (g << 5) | b;
+            }
+        }
+        else {
+
+            for (int x = 0; x < width; ++x) {
+                line[x] = brighten_rgb565_hsl(line[x], (gbc_lcd_interlacing_brightness - 1.0f));
+            }
+        }
+        
+    }
+    is_odd_frame = !is_odd_frame;
+}
+
+
 void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
 {
     static byte joined_buf[160*144*2*2]; // two screens' worth of 16-bit data
@@ -209,7 +365,34 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
     {
         switch (emulated_gbs)
         {
-        case 1: video_cb(buf, width, height, pitch); break;
+        case 1: {
+
+            //experimental GBC LCD interlacing effect
+            if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+            {
+                add_gbc_interlacing_effect(buf, width, height, depth); 
+            }
+
+            if (!is_gbc_rom)
+            {
+                //DMG Ghosting Effect
+                // Cast buf to 16-bit to work with 16-bit color values
+                word* frame_buffer = reinterpret_cast<word*>(buf);
+
+                for (int i = 0; i < width * height; ++i) {
+                    word blended = blendPixels(last_frame[i], frame_buffer[i]);
+                    last_frame[i] = frame_buffer[i]; // Update last_frame direkt
+                    frame_buffer[i] = blended;        // Überschreibe buf sofort
+                }
+
+                video_cb(reinterpret_cast<byte*>(frame_buffer), width, height, pitch);
+                break; 
+            }
+
+            video_cb(buf, width, height, pitch);
+            break;
+      
+        }
         case 2:
         {
             // are we drawing both gb's to the screen?

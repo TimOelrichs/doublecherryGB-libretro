@@ -331,14 +331,14 @@ byte cpu::io_read(word adr)
 				rp_bitfield ir_state;
 				ir_state.byte = ref_gb->get_cregs()->RP;
 
-				if (ir_state.bits.read_enabled == 3 && total_clock >= next_ir_clock)
+				if (total_clock >= next_ir_clock)
 				{
 					if (ref_gb->ir_master_device) ref_gb->ir_master_device->process_ir();
 
 					if (!ref_gb->received_ir_signals.empty())
 					{
 						
-						ir_state.bits.received_signal = ref_gb->received_ir_signals[0]->light_on;
+						ir_state.bits.received_signal = !ref_gb->received_ir_signals[0]->light_on;
 						ref_gb->get_cregs()->RP = ir_state.byte;
 
 						next_ir_clock = total_clock + ref_gb->received_ir_signals[0]->duration;
@@ -349,7 +349,7 @@ byte cpu::io_read(word adr)
 
 				}
 
-				return ref_gb->get_cregs()->RP;
+				return ref_gb->get_cregs()->RP | 0x3C;  //unused bits 2-5 are always 1
 				//return (ref_gb->get_cregs()->RP&1)|((cur&1)<<1)|0xC0;
 
 //				fprintf(file,"read RP %02X\n",(ref_gb->get_cregs()->RP&1)|((ref_gb->get_target()->get_cregs()->RP&1)<<1)|0xC0);
@@ -357,7 +357,7 @@ byte cpu::io_read(word adr)
 			}
 			else{
 //				fprintf(file,"read RP %02X\n",(ref_gb->get_cregs()->RP&1));
-				return (ref_gb->get_cregs()->RP&1);
+				return (ref_gb->get_cregs()->RP | 0x3E ); //unused bits 2-5 are always 1
 			}
 		}
 		/*
@@ -677,6 +677,15 @@ void cpu::io_write(word adr,byte dat)
 			old_ir_state.byte = ref_gb->get_cregs()->RP;
 			new_ir_state.byte = dat; 
 			new_ir_state.bits.received_signal = old_ir_state.bits.received_signal; //is READ-ONLY
+
+			/*
+			//emulate obscure behavior RP quirk
+			if (last_rp_write == 0x00 && dat == 0xC0) {
+				if (!new_ir_state.bits.received_signal) new_ir_state.bits.received_signal = 1;
+			}
+			last_rp_write = dat;
+			*/
+			
 			ref_gb->get_cregs()->RP = new_ir_state.byte;
 
 			if (old_ir_state.bits.ir_light_on != new_ir_state.bits.ir_light_on)
@@ -1130,10 +1139,10 @@ void cpu::exec(int clocks)
 
 			else if (ref_gb->get_linked_target()){
 
-				byte linkcable_data = ref_gb->get_regs()->SB;
-				byte ret = ref_gb->send_over_linkcable(linkcable_data);
-				log_link_traffic(ref_gb->get_regs()->SB, ret);
-				ref_gb->get_regs()->SB=ret;
+				byte send_data = ref_gb->get_regs()->SB;
+				byte received_data = ref_gb->send_over_linkcable(send_data);
+				log_link_traffic(send_data, received_data);
+				ref_gb->get_regs()->SB = received_data;
 				ref_gb->get_regs()->SC&=3;
 			}
 			else{

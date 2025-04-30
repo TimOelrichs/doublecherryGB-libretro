@@ -18,70 +18,7 @@ struct dmg07_speed_values {
 	int transmission_speed;
 };
 
-/*
-struct dmg07_mem_state {
 
-
-	dmg07_state current_state = PING_PHASE;
-
-	int transfer_speed = 512 * 8;
-	int seri_occer = 2048 * 2048 * 2048;
-
-	int transfer_count = 0;
-	int phase_byte_count = 0;
-
-	int last_trans_nr[4];
-	int restart_in = 0;
-	byte enter_status = 0x00;
-
-	byte packet_size = 0;
-	byte transfer_rate = 0x00;
-
-	int first_aa_trans_nr = 0;
-	int sync_trans_nr = 0;
-
-	int delay = 0;
-	bool ready_to_sync_master = false;
-	bool master_is_synced = false;
-
-	//byte in_data_buffer[4];
-
-	std::vector<byte> trans_buffer[4];
-	std::vector<byte> ans_buffer[4];
-	std::queue<byte> bytes_to_send;
-
-
-
-	// This method lets cereal know which data members to serialize
-	template<class Archive>
-	void serialize(Archive& archive)
-	{
-		archive(
-			current_state,
-			transfer_speed,
-			seri_occer,
-			transfer_count,
-			phase_byte_count,
-			restart_in,
-			enter_status,
-			packet_size,
-			transfer_rate,
-			first_aa_trans_nr,
-			sync_trans_nr,
-			delay,
-			ready_to_sync_master,
-			master_is_synced,
-			in_data_buffer,
-			trans_buffer,
-			ans_buffer,
-			bytes_to_send
-		); // serialize things by passing them to the archive
-	}
-
-
-
-};
-*/
 
 struct dmg07_mem_state_size {
 	size_t size;

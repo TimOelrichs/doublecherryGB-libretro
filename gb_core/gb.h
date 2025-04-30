@@ -57,6 +57,12 @@ class rom;
 class mbc;
 class cheat;
 
+enum color_correction_mode {
+	OFF,
+	GAMBATTE_SIMPLE,
+	GAMBATTE_ACCURATE
+};
+
 
 union rp_bitfield {
 	unsigned char byte;
@@ -735,6 +741,7 @@ private:
 
 	int clocks_since_last_serial;
 	
+	byte last_rp_write = 0xC0;
 
 
 };
