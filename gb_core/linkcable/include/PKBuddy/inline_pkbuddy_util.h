@@ -81,7 +81,7 @@ std::string pokebuddy_gen1::convert_string_to_name(std::string str, bool toUpper
 		name[i] = 0x50;
 	}
 
-	return std::string(name);
+	return std::string(name, 11);
 }
 
 unsigned char pokebuddy_gen1::convert_TABLE2ASCII(unsigned char c) {

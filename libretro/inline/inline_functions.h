@@ -80,17 +80,13 @@ void auto_config_1p_link() {
     if (!strncmp(cart_name, "POKEMON", 7 ) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
         
-        /*
         pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
-       /hotkey_target = pkbuddy;
+        hotkey_target = pkbuddy;
         v_serializable_devices.push_back(pkbuddy);
         v_gb[0]->set_linked_target(pkbuddy);
 
-        
         display_message("PKMBUDDY BOY plugged in");
         display_message("Check out the CABLE CLUB for weekly Distributions!");
-        */
-
         
         //Mytery Gift Maschine WIP - Not working yet
         
@@ -101,7 +97,6 @@ void auto_config_1p_link() {
         v_gb[0]->set_ir_master_device(pika2gs);
         */
         
-       
         return; 
     }
 

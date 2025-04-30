@@ -54,9 +54,6 @@ void pokebuddy_gen1::reset() {
 	std::string trainer_name = convert_string_to_name("PKBUDDY");
 	memcpy(DATA_BLOCK.trainer_name, trainer_name.data(), 11);
 
-	
-
-	
 }
 
 void pokebuddy_gen1::handle_special_hotkey(int key) {
