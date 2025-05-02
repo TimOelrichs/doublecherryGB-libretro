@@ -1,4 +1,4 @@
-
+﻿
 // DoubleCherryGB Gameboy Printer ported from GBE+ 
 // Ported by Tim Oelrichs
 
@@ -15,14 +15,13 @@
 // Emulates various SIO devices like GB Printer and more
 
 
-
 #include "./include/gameboy_printer.hpp"
 #include <iostream>
 #include <fstream>
 #include <vector>
 
-
-
+extern ScaleTarget gb_printer_png_scale_mode;
+extern Alignment gb_printer_png_alignment;
 
 
 gameboy_printer::gameboy_printer()
@@ -254,7 +253,7 @@ void gameboy_printer::execute_command()
 
 		//Print command
 	case 0x2:
-		print_image_to_BMP();
+		print_image();
 		status = 0x4;
 
 		break;
@@ -425,7 +424,7 @@ void gameboy_printer::data_process()
 	if (data_length != 0) { strip_count++; }
 }
 
-void gameboy_printer::print_image_to_BMP()
+void gameboy_printer::print_image()
 {
 	unsigned int height = (16 * strip_count);
 	unsigned int img_size = 160 * height;
@@ -475,24 +474,6 @@ void gameboy_printer::print_image_to_BMP()
 	else { print_color_3 *= diff; }
 	print_color_3 = 0xFF000000 | (print_color_3 << 16) | (print_color_3 << 8) | print_color_3;
 
-	//srand(SDL_GetTicks());
-
-	//std::string filename = config::ss_path + "gb_print_";
-	std::string filename =  "gb_print_";
-	//filename += util::to_str(rand() % 1024);
-	//filename += util::to_str(rand() % 1024);
-	//filename += util::to_str(rand() % 1024);
-	filename += ".bmp";
-
-	//Create a 160x144 image from the buffer, save as BMP
-	//SDL_Surface* print_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, height, 32, 0, 0, 0, 0);
-
-
-
-
-	//Lock source surface
-	//if (SDL_MUSTLOCK(print_screen)) { SDL_LockSurface(print_screen); }
-	//unsigned int* out_pixel_data = (unsigned int*)print_screen->pixels;
 
 	for (unsigned int x = 0; x < img_size; x++)
 	{
@@ -523,17 +504,11 @@ void gameboy_printer::print_image_to_BMP()
 			break;
 		}
 
-		//out_pixel_data[x] = scanline_buffer[x];
-
 		//Fill full print buffer continuously
 		full_buffer.push_back(scanline_buffer[x]);
 	}
 
-	//Unlock source surface
-	//if (SDL_MUSTLOCK(print_screen)) { SDL_UnlockSurface(print_screen); }
-
-	//SDL_SaveBMP(print_screen, filename.c_str());
-	//SDL_FreeSurface(print_screen);
+	
 
 	strip_count = 0;
 
@@ -562,53 +537,17 @@ void gameboy_printer::print_image_to_BMP()
 
 	*/
 
-	BMPHeader bmpHeader;
-	BMPInfoHeader bmpInfoHeader;
 
 	unsigned int width = 160;
-	bmpInfoHeader.width = width;
-	bmpInfoHeader.height = height;
-	bmpHeader.fileSize = (uint32_t)(sizeof(BMPHeader) + sizeof(BMPInfoHeader) + (full_buffer.size() * 2));
-
-	std::ofstream file(filename, std::ios::binary);
-
-	if (!file) {
-		std::cerr << "Error: Could not open file for writing: " << filename << std::endl;
-		return;
-	}
-
-	// Write headers
-	file.write(reinterpret_cast<const char*>(&bmpHeader), sizeof(bmpHeader));
-	file.write(reinterpret_cast<const char*>(&bmpInfoHeader), sizeof(bmpInfoHeader));
-
-	/*
-	// BMP files store pixel data from bottom to top, so we need to flip the rows
-	int rowPadding = (4 - (width * 3) % 4) % 4;  // BMP rows are padded to multiples of 4 bytes
-	for (int y = height - 1; y >= 0; --y) {
-		file.write(reinterpret_cast<const char*>(&full_buffer[y * width * 3]), width * 3);
-		file.write("\0\0\0", rowPadding);  // Add padding
-	}
-	*/
-
-	/*
-	for (int y = height - 1; y >= 0; --y)
-	{
-		file.write(reinterpret_cast<const char*>(&full_buffer[y* 160]), sizeof(unsigned int) * 160 );
-	}
-	*/
-	for (size_t i = 0; i < full_buffer.size(); i++)
-	{
-		file.write(reinterpret_cast<const char*>(&full_buffer[i]), sizeof(unsigned int));
-	}
-	
+	unsigned int gb_height = full_buffer.size() / width;
 
 
-	file.close();
-
-	if (!file.good()) {
-		std::cerr << "Error: Failed to write the file correctly." << std::endl;
-	}
-
+	if (
+		PrinterRegistry::current()->print(full_buffer.data(), width, height, gb_printer_png_scale_mode, gb_printer_png_alignment)
+		)
+		display_message("Printed successfull to ./Screenshots");
+	else
+		display_message("Something went wrong.");
 
 
 }

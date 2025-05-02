@@ -139,6 +139,8 @@ void retro_init(void)
     environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
 
     check_variables();
+
+    init_printer_registry();
 }
 
 void retro_deinit(void)

@@ -18,6 +18,7 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/libretro/libretro.cpp \
 	$(CORE_DIR)/gb_core/linkcable/alleyway_link_controller.cpp \
 	$(CORE_DIR)/gb_core/linkcable/link_master_device.cpp \
+	$(CORE_DIR)/gb_core/linkcable/linkcable_hub.cpp\
 	$(CORE_DIR)/gb_core/linkcable/dmg07.cpp \
 	$(CORE_DIR)/gb_core/linkcable/dmg07x4.cpp \
 	$(CORE_DIR)/gb_core/linkcable/hack_4p_tetris.cpp \
@@ -33,4 +34,8 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/infrared/pikachu_2_gs.cpp \
 	$(CORE_DIR)/gb_core/infrared/ubikey_unlocker.cpp \
 	$(CORE_DIR)/gb_core/infrared/tv_remote.cpp \
-	$(CORE_DIR)/gb_core/infrared/full_changer.cpp
+	$(CORE_DIR)/gb_core/infrared/full_changer.cpp \
+	$(CORE_DIR)/services/printer/bmp_printer.cpp \
+	$(CORE_DIR)/services/printer/png_printer.cpp \
+	$(CORE_DIR)/services/printer/image_scaler.cpp \
+	$(CORE_DIR)/services/printer/printer_registry.cpp 
