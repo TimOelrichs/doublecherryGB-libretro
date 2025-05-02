@@ -38,6 +38,7 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
   <br>
   
 ### Gameboy Peripherals Emulation
+- Gameboy Printer Emulation with DIN A4, DIN A5, DIN A6 upscale 
 - [TV REMOTE](#TV-REMOTE) Emulation
 - [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection)
 - [BARCODE TAISEN BARDIGUN](#BARCODE-TAISEN-BARDIGUN) Emulation full Support (all barcodes are hardcoded, use the numkeys 0-8 for selection)
@@ -50,6 +51,11 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 - unreleased Alleyway Analog Controller
 
 <br>
+
+### custom Linkcable Periperals
+- Multiplayer Hacks
+- PKMBuddy Boy
+- LinkcableHub for Games that support multiple Linkcable Devices (GB Printer, Linkcable, etc.)
 
 ### Retroarch-Features
 - Retroarchivments support
