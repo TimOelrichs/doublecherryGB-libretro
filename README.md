@@ -19,7 +19,7 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 ## Features
 
 ### Pokemon Stuff
-- [Builtin Mew Maschine and weekly GEN1 Pokemon Distributions](#Builtin-Mew-Maschine-and-weekly-GEN1-Pokemon-Distributions)
+- [Builtin Mew and Celebi Maschine and weekly GEN1 Pokemon Distributions](#Builtin-Mew-and-Celebi-Maschine-and-weekly-GEN1-Pokemon-Distributions)
 - [Link Cable Trading over network](#Link-Cable-Trading-over-network), easy Pokemon Gen1 and Gen2 online trading via Lobby (Retroarch 1.17 needed)
 
   <br>
@@ -38,7 +38,8 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
   <br>
   
 ### Gameboy Peripherals Emulation
-- Gameboy Printer Emulation with DIN A4, DIN A5, DIN A6 upscale 
+- Gameboy Printer Emulation with PNG-Print and DIN A4, DIN A5, DIN A6 upscale
+- Gameboy 4 Player Adapter (DMG-07)
 - [TV REMOTE](#TV-REMOTE) Emulation
 - [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection)
 - [BARCODE TAISEN BARDIGUN](#BARCODE-TAISEN-BARDIGUN) Emulation full Support (all barcodes are hardcoded, use the numkeys 0-8 for selection)
@@ -47,15 +48,15 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 <br>
 
 ### unreleased Gameboy Peripherals Emulation
-- unreleased Faceball 2000 16 Player RingLink-Cable
-- unreleased Alleyway Analog Controller
+- Faceball 2000 16 Player RingLink-Cable
+- [Alleyway Analog Controller](#Unreleased-Alleyway-Analog-Controller)
 
 <br>
 
-### custom Linkcable Periperals
+### custom Linkcable Peripherals
 - Multiplayer Hacks
 - PKMBuddy Boy
-- LinkcableHub for Games that support multiple Linkcable Devices (GB Printer, Linkcable, etc.)
+- LinkcableHub, auto switching peripherals for Games that support multiple Linkcable Devices (GB Printer, Linkcable, etc.)
 
 ### Retroarch-Features
 - Retroarchivments support
@@ -138,6 +139,21 @@ Trading should work with other GB/GBC Games as well:
 Infrared over network is currently not supported (GBE+ does) but maybe in a future release.
 
 Have fun!
+
+<br>
+
+## Unreleased Alleyway Analog Controller
+
+This was a planned but never released peripheral, and to my knowledge, it's only known today because the game constantly polls the serial port.
+It turns out that the game can be controlled via the link port when it receives correctly formatted data.
+I've implemented several control styles — you can press SELECT to toggle between them:
+
+- Right analog stick — should even work with a steering wheel! 😄
+- Mouse control
+- Touchscreen controls
+
+Thanks to Jarhmander and lidnariq for figuring this out.
+See: https://forums.nesdev.org/viewtopic.php?t=18348
 
 <br>
 
