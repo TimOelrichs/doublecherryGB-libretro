@@ -11,4 +11,6 @@
 #include "faceball2000_cable.hpp"
 #include "power_antenna.hpp"
 #include "pokebuddy_gen1.hpp"
+#include "gameboy_printer.hpp"
 #include "game_and_watch_gallery_unlocker.hpp"
+#include "linkcable_hub.hpp"

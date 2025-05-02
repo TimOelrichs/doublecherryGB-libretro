@@ -77,13 +77,90 @@ void auto_config_4p_hack()
 
 void auto_config_1p_link() {
 
+
+
+    //link Alleyway paddle controller
+    if (!strcmp(cart_name, "ALLEY WAY"))
+    {
+        alleyway_link_controller* alc = new alleyway_link_controller();
+        hotkey_target = alc;
+        v_gb[0]->set_linked_target(alc);
+
+        display_message("Analog Alleyway Controller plugged in");
+        display_message("Press SELECT to switch between Digital and Analog controls");
+
+
+        return;
+    }
+
+
+    //link barcodeboy
+    if (!strcmp(cart_name, "BATTLE SPACE") ||
+        !strcmp(cart_name, "MONSTER MAKER") ||
+        !strcmp(cart_name, "KATTOBI ROAD") ||
+        !strcmp(cart_name, "FAMILY JOCKEY2") ||
+        !strcmp(cart_name, "FAMISTA3")
+        )
+    {
+        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
+        barcodeboy* bcb = new barcodeboy(v_gb, cart_name);
+        master_link = bcb;
+        hotkey_target = bcb;
+        return;
+    }
+
+    //link barcode taisen bardigun
+    if (!strcmp(cart_name, "BARDIGUN"))
+    {
+        display_message("Game supports BARCODE TAISEN BARDIGUN! BARDIGUN plugged in");
+        barcode_taisen_bardigun* btb = new barcode_taisen_bardigun();
+        hotkey_target = btb;
+        v_gb[0]->set_linked_target(btb);
+        return;
+    }
+
+
+    //link power_antenna/bugsensor
+    if (!strncmp(cart_name, "TELEFANG", 8) ||
+        !strncmp(cart_name, "BUGSITE", 7)
+        )
+    {
+        master_link = NULL;
+        v_gb[0]->set_linked_target(new power_antenna());
+        display_message("Game supports POWER ANTENNA/BUGSENSOR! POWER ANTENNA/BUGSENSOR plugged in");
+        return;
+    }
+
+
+    //Default Linkcable_Hub to auto enable gb_printer if needed
+    LinkCableHUB* linkHUB = new LinkCableHUB();
+    v_gb[0]->set_linked_target(linkHUB);
+
+    if (!strncmp(cart_name, "POKEMONPINB", 11) ||       //Pokemon Pinball
+        (!strncmp(cart_name, "ZELDA", 5) &&             //Zelda Link's Awakening DX 
+        (strncmp(cart_name, "ZELDA N", 7) ||            //but not the Oracle Games
+         strncmp(cart_name, "ZELDA D", 7))
+        )
+        )
+    {
+        //v_gb[0]->set_linked_target(new gameboy_printer());
+
+        display_message("Game supports Gameboy Printer");
+        display_message("Gameboy Printer plugged in");
+        return;
+    }
+
+
+    //Pokemon Stuff
     if (!strncmp(cart_name, "POKEMON", 7 ) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
         
         pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
         hotkey_target = pkbuddy;
         v_serializable_devices.push_back(pkbuddy);
-        v_gb[0]->set_linked_target(pkbuddy);
+
+        //v_gb[0]->set_linked_target(pkbuddy);
+        linkHUB->set_default_link_target(pkbuddy);
 
         display_message("PKMBUDDY BOY plugged in");
         display_message("Check out the CABLE CLUB for weekly Distributions!");
@@ -100,20 +177,7 @@ void auto_config_1p_link() {
         return; 
     }
 
-    //link Alleyway paddle controller
-    if (!strcmp(cart_name, "ALLEY WAY"))
-    {
-        alleyway_link_controller* alc = new alleyway_link_controller();
-        hotkey_target = alc;
-        v_gb[0]->set_linked_target(alc);
-
-        display_message("Analog Alleyway Controller plugged in");
-        display_message("Press SELECT to switch between Digital and Analog controls");
-
-
-        return;
-    }
-
+ 
 
   
     //TV REMOTE Emulation
@@ -136,42 +200,6 @@ void auto_config_1p_link() {
         return;
     }
 
-    //link barcodeboy
-    if (!strcmp(cart_name, "BATTLE SPACE") || 
-        !strcmp(cart_name, "MONSTER MAKER") ||
-        !strcmp(cart_name, "KATTOBI ROAD") ||
-        !strcmp(cart_name, "FAMILY JOCKEY2") ||
-        !strcmp(cart_name, "FAMISTA3")
-        )
-    {
-        display_message("Game supports BARCODE BOY! BARCODE BOY plugged in");
-        barcodeboy* bcb = new barcodeboy(v_gb, cart_name);
-        master_link = bcb; 
-        hotkey_target = bcb;
-        return; 
-    }
-
-    //link barcode taisen bardigun
-    if (!strcmp(cart_name, "BARDIGUN") )
-    {
-        display_message("Game supports BARCODE TAISEN BARDIGUN! BARDIGUN plugged in");
-        barcode_taisen_bardigun* btb = new barcode_taisen_bardigun();
-        hotkey_target = btb;
-        v_gb[0]->set_linked_target(btb); 
-        return;
-    }
-
-
-    //link power_antenna/bugsensor
-    if (!strncmp(cart_name, "TELEFANG", 8) ||
-        !strncmp(cart_name, "BUGSITE", 7)
-        )
-    {
-        master_link = NULL;
-        v_gb[0]->set_linked_target(new power_antenna());
-        display_message("Game supports POWER ANTENNA/BUGSENSOR! POWER ANTENNA/BUGSENSOR plugged in");
-        return; 
-    }
 
     //Full Changer Emulation Zok Zok Heroes
     if (!strncmp(cart_name, "ZOKZOK", 6))
@@ -218,13 +246,14 @@ void auto_config_1p_link() {
 
         //WIP not working yet
 
+        /**
         display_message("Game has UBIKEY feature");
         display_message("Ubikey Unlocker is ready");
         ubikey_unlocker* ubi_unlocker = new ubikey_unlocker(v_gb);
         v_gb[0]->set_ir_target(ubi_unlocker);
         v_gb[0]->set_ir_master_device(ubi_unlocker);
         
-
+        */
         return;
     }
    
@@ -271,7 +300,7 @@ void add_new_player() {
 }
 
 
-static inline bool get_monotonic_time(struct timespec* ts)
+bool get_monotonic_time(struct timespec* ts)
 {
 #if defined(CLOCK_MONOTONIC) && !defined(__PSP__) && !defined(__WIIU__)
     return clock_gettime(CLOCK_MONOTONIC, ts) == 0;
@@ -394,10 +423,10 @@ static void check_variables(void)
         }
         else gbc_color_correction_enabled = true;
      
-        if (!strcmp(var.value, "Gambatte Simple"))
+        if (!strcmp(var.value, "Simple"))
             gbc_cc_mode = GAMBATTE_SIMPLE;
 
-        if (!strcmp(var.value, "Gambatte Accurate"))
+        if (!strcmp(var.value, "Accurate"))
             gbc_cc_mode = GAMBATTE_ACCURATE;
            
     }
@@ -448,7 +477,36 @@ static void check_variables(void)
       
     }
 
+ 
+    var.key = "dcgb_gb_printer_png_upscale";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+
+        if (!strcmp(var.value, "DIN A4"))
+            gb_printer_png_scale_mode = ScaleTarget::DIN_A4;
+        if (!strcmp(var.value, "DIN A5"))
+            gb_printer_png_scale_mode = ScaleTarget::DIN_A5;
+        if (!strcmp(var.value, "DIN A6"))
+            gb_printer_png_scale_mode = ScaleTarget::DIN_A6;
+        if (!strcmp(var.value, "Thermalpaper"))
+            gb_printer_png_scale_mode = ScaleTarget::THERMAL_PAPER;
+        if (!strcmp(var.value, "Off"))
+            gb_printer_png_scale_mode = ScaleTarget::NONE;
+
+    }
+
    
+    var.key = "dcgb_gb_printer_png_alignment";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (!strcmp(var.value, "Center"))
+            gb_printer_png_alignment = Alignment::CENTER;
+        if (!strcmp(var.value, "Top"))
+            gb_printer_png_alignment = Alignment::TOP;
+    }
+
     /*
     var.key = "dcgb_alleyway_analog_enabled";
     var.value = NULL;
@@ -884,4 +942,13 @@ void set_memory_maps() {
     bool yes = true;
     environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &yes);
 
+}
+
+#include "./services/printer/include/printer_registry.hpp"
+#include "./services/printer/include/png_printer.hpp"
+#include "./services/printer/include/bmp_printer.hpp"
+
+void init_printer_registry() {
+    PrinterRegistry::register_printer("png", std::make_unique<PNGPrinter>());
+    PrinterRegistry::register_printer("bmp", std::make_unique<BMPPrinter>());
 }
