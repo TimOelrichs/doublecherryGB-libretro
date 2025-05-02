@@ -738,6 +738,9 @@ static void check_variables(void)
 
 void check_special_hotkey() {
 
+    mouse_x = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+    current_mouse_click = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
+
     int16_t key_state; 
     //check upper numkeys
     for (int i = 0; i < 10; i++)

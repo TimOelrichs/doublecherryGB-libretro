@@ -1,6 +1,17 @@
-#include "../../gb.h"
 #pragma once
+#include "../../gb.h"
 #include "../../../libretro/dcgb_hotkey_target.hpp"
+
+
+enum class Alleyway_Controls_Mode {
+	NORMAL,
+	ANALOG_STICK,
+	MOUSE,
+	TOUCHSCREEN,
+	COUNT
+};
+
+
 
 class alleyway_link_controller : public I_linkcable_target, public I_dcgb_hotkey_target
 {
@@ -12,7 +23,10 @@ public:
 
 private:
 	byte get_paddle_value(unsigned port);
-	bool is_even_transfer = true;
+	uint8_t get_paddle_from_mouse(unsigned port);
 
+	bool is_even_transfer = true;
+	bool use_mouse_controls = true; 
+	
 
 };

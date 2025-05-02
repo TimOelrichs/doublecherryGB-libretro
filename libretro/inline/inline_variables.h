@@ -27,9 +27,19 @@ int dcgb_last_hotkey_pressed = -1;
 int dcgb_hotkey_frame_counter = 0;
 I_dcgb_hotkey_target* hotkey_target = NULL; 
 
+//GB Printer Vars
 bool gb_printer_png_scale_enabled = true;
 ScaleTarget gb_printer_png_scale_mode = ScaleTarget::DIN_A4;
 Alignment gb_printer_png_alignment = Alignment::CENTER;
+
+
+//Alleyway Analog Controller var, TODO: to set in core options 
+#include "../gb_core/linkcable/include/alleyway_link_controller.hpp"
+
+int16_t mouse_x;
+bool current_mouse_click;
+
+Alleyway_Controls_Mode AlleywayControlsMode = Alleyway_Controls_Mode::ANALOG_STICK;
 
 
 
