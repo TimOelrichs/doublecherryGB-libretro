@@ -38,7 +38,8 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
   <br>
   
 ### Gameboy Peripherals Emulation
-- Gameboy Printer Emulation with PNG-Print and DIN A4, DIN A5, DIN A6 upscale 
+- Gameboy Printer Emulation with PNG-Print and DIN A4, DIN A5, DIN A6 upscale
+- Gameboy 4 Player Adapter (DMG-07)
 - [TV REMOTE](#TV-REMOTE) Emulation
 - [BARCODE BOY](#BARCODE-BOY) Emulation full support (all barcodes are hardcoded, use the numkeys 0-9 for selection)
 - [BARCODE TAISEN BARDIGUN](#BARCODE-TAISEN-BARDIGUN) Emulation full Support (all barcodes are hardcoded, use the numkeys 0-8 for selection)
@@ -52,10 +53,10 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
 <br>
 
-### custom Linkcable Periperals
+### custom Linkcable Peripherals
 - Multiplayer Hacks
 - PKMBuddy Boy
-- LinkcableHub for Games that support multiple Linkcable Devices (GB Printer, Linkcable, etc.)
+- LinkcableHub, auto switching peripherals for Games that support multiple Linkcable Devices (GB Printer, Linkcable, etc.)
 
 ### Retroarch-Features
 - Retroarchivments support
