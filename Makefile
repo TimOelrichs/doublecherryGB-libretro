@@ -214,7 +214,7 @@ else ifeq ($(platform), libnx)
                  -fPIE -I$(LIBNX)/include/ -ffunction-sections -fdata-sections -ftls-model=local-exec -Wl,--allow-multiple-definition -specs=$(LIBNX)/switch.specs
     CFLAGS += $(INCDIRS)
     CFLAGS	+=	-D__SWITCH__ -DHAVE_LIBNX -march=armv8-a -mtune=cortex-a57 -mtp=soft
-    CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fno-rtti -std=gnu++11
+    CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fno-rtti -std=gnu++14
     CFLAGS += -std=gnu11
     STATIC_LINKING = 1
 

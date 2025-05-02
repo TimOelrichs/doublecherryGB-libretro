@@ -543,7 +543,7 @@ void gameboy_printer::print_image()
 
 
 	if (
-		PrinterRegistry::current()->print(full_buffer.data(), width, height, gb_printer_png_scale_mode, gb_printer_png_alignment)
+		PrinterRegistry::current()->print(reinterpret_cast<const uint32_t*>(full_buffer.data()), width, height, gb_printer_png_scale_mode, gb_printer_png_alignment)
 		)
 		display_message("Printed successfull to ./Screenshots");
 	else
