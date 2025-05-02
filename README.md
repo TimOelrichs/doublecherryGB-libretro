@@ -52,6 +52,11 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 
 <br>
 
+### custom Linkcable Periperals
+- Multiplayer Hacks
+- PKMBuddy Boy
+- LinkcableHub for Games that support multiple Linkcable Devices (GB Printer, Linkcable, etc.)
+
 ### Retroarch-Features
 - Retroarchivments support
 - Netplay
