@@ -1,4 +1,4 @@
-﻿
+
 // DoubleCherryGB Gameboy Printer ported from GBE+ 
 // Ported by Tim Oelrichs
 
@@ -72,7 +72,7 @@ byte gameboy_printer::receive_from_linkcable(byte data)
 		return 0x0;
 		break;
 	}
-		//Receive command
+	//Receive command
 	case GBP_RECEIVE_COMMAND:
 
 		//Push data to packet buffer
@@ -114,7 +114,7 @@ byte gameboy_printer::receive_from_linkcable(byte data)
 		current_state = GBP_RECEIVE_LENGTH;
 
 		//Send data back to GB + IRQ
-		return 0x0;	
+		return 0x0;
 		break;
 
 		//Receive data length
@@ -217,7 +217,7 @@ byte gameboy_printer::receive_from_linkcable(byte data)
 			if (packet_size == 1)
 			{
 				return 0x81;
-				
+
 			}
 
 			//Send back current status to GB + IRQ on 2nd 0x0, begin processing command
@@ -232,12 +232,10 @@ byte gameboy_printer::receive_from_linkcable(byte data)
 			}
 		}
 		break;
-}
+	}
 	last_transfer = data;
+
 }
-
-
-
 
 void gameboy_printer::execute_command()
 {
