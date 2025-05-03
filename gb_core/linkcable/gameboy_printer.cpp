@@ -19,6 +19,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
+
 
 extern ScaleTarget gb_printer_png_scale_mode;
 extern Alignment gb_printer_png_alignment;
@@ -454,6 +456,13 @@ void gameboy_printer::print_image()
 	double diff = (0x40 - exposure) * (25.0 / 64);
 	diff = ((100 + diff) / 100);
 
+
+	print_color_0 = std::min(std::max(int(print_color_0 * diff), 0), 255);
+	print_color_1 = std::min(std::max(int(print_color_1 * diff), 0), 255);
+	print_color_2 = std::min(std::max(int(print_color_2 * diff), 0), 255);
+	print_color_3 = std::min(std::max(int(print_color_3 * diff), 0), 255);
+
+	/*
 	if ((print_color_0 * diff) > 255) { print_color_0 = 255; }
 	else if ((print_color_0 * diff) < 0) { print_color_0 = 0; }
 	else { print_color_0 *= diff; }
@@ -473,7 +482,7 @@ void gameboy_printer::print_image()
 	else if ((print_color_3 * diff) < 0) { print_color_3 = 0; }
 	else { print_color_3 *= diff; }
 	print_color_3 = 0xFF000000 | (print_color_3 << 16) | (print_color_3 << 8) | print_color_3;
-
+	*/
 
 	for (unsigned int x = 0; x < img_size; x++)
 	{

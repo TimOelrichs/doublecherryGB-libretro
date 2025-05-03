@@ -27,7 +27,8 @@ void PrinterRegistry::set_current(const std::string& name) {
 
 std::vector<std::string> PrinterRegistry::available_printers() {
     std::vector<std::string> names;
-    for (const auto& [name, _] : printers())
-        names.push_back(name);
+    for (auto it = printers().begin(); it != printers().end(); ++it) {
+        names.push_back(it->first);
+    }
     return names;
 }
