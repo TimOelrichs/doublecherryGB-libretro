@@ -231,12 +231,13 @@ byte gameboy_printer::receive_from_linkcable(byte data)
 				return status;
 			}
 		}
-
 		break;
-	}
-
+}
 	last_transfer = data;
 }
+
+
+
 
 void gameboy_printer::execute_command()
 {
