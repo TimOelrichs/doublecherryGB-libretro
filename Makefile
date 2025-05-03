@@ -237,6 +237,8 @@ else ifeq ($(platform), psp1)
    STATIC_LINKING = 1
 	FLAGS += -G0
 
+	CXXFLAGS += -O1 -DNDEBUG -ffast-math -DFRONTEND_SUPPORTS_RGB565
+
 # Vita
 else ifeq ($(platform), vita)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
