@@ -27,16 +27,26 @@
                              | (((var)<<(bits))&0xff) \
                              | ((var) >> (8-(bits))))
 
-lcd::lcd(gb *ref)
+lcd::lcd(gb* ref)
 {
-	ref_gb=ref;
+	ref_gb = ref;
 
-	byte dat[]={31,21,11,0};
+	byte dat[] = { 31,21,11,0 };
 
-	for (int i=0;i<4;i++){
-		m_pal16[i]=ref_gb->get_renderer()->map_color(dat[i]|(dat[i]<<5)|(dat[i]<<10));
-		m_pal32[i]=((dat[i]<<16)|(dat[i]<<8)|dat[i]);
+	for (int i = 0; i < 4; i++) {
+		m_pal16[i] = ref_gb->get_renderer()->map_color(dat[i] | (dat[i] << 5) | (dat[i] << 10));
+		m_pal32[i] = ((dat[i] << 16) | (dat[i] << 8) | dat[i]);
 	}
+
+	/*
+	for (int i = 0; i < 16; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			mapped_pal[i][j] = (word)0x0000;
+			col_pal[i][j] = (word)0x0000;
+		}
+	}*/
 
 	reset();
 }
@@ -375,6 +385,16 @@ void lcd::sprite_render(void *buf,int scanline)
 				if (l2&3) *(now_pos+6)=cur_p[l2&3];
 				if (l1&3) *(now_pos+7)=cur_p[l1&3];
 			}
+		}
+	}
+}
+
+void lcd::remap_all_palettes() {
+	for (int pal = 0; pal < 16; ++pal)
+	{
+		for (int col = 0; col < 4; ++col)
+		{
+			mapped_pal[pal][col] = ref_gb->get_renderer()->map_color(col_pal[pal][col]);
 		}
 	}
 }

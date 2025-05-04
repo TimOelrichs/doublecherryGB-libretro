@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "libretro.h"
+#include "libretro_core_options.h"
 #include "../gb_core/gb.h"
 #include "dmy_renderer.h"
 #include <vector>
@@ -136,7 +137,7 @@ void retro_init(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
         libretro_supports_bitmasks = true;
 
-    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
+   // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
 
     check_variables();
 
@@ -170,6 +171,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, input_desc);
 
+    /*
     switch (emulated_gbs)
     {
     case 1:
@@ -185,7 +187,7 @@ bool retro_load_game(const struct retro_game_info *info)
         environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
         break;
     }
-
+*/
     if (environ_cb(RETRO_ENVIRONMENT_GET_GAME_INFO_EXT, &info_ext) &&
         info_ext->persistent_data)
     {
@@ -221,113 +223,7 @@ bool retro_load_game(const struct retro_game_info *info)
     set_cart_name(rom_data);
     is_gbc_rom = v_gb[0]->get_rom()->get_info()->gb_type == 3;
 
-    //set link connections
-    switch (emulated_gbs)
-    {
-    case 1:
-    {
-        // set interface for netpaket api (easy pokemon trading)
-        environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void *)&netpacket_iface);
-
-        auto_config_1p_link();
-        mode = MODE_SINGLE_GAME;
-        break;
-    }
-    case 2:
-    {
-        // mode = MODE_DUAL_GAME;
-        mode = MODE_SINGLE_GAME_DUAL;
-        // for link cables and IR:
-        // if (gblink_enable) {
-        v_gb[0]->set_target(v_gb[1]);
-        v_gb[1]->set_target(v_gb[0]);
-        //}
-        break;
-    }
-    case 3:
-    {
-        mode = MODE_SINGLE_GAME_DUAL;
-
-        if (!master_link)
-        {
-            std::vector<gb *> _gbs;
-            _gbs.insert(_gbs.begin(), std::begin(v_gb), std::begin(v_gb) + 3);
-            master_link = new dmg07(_gbs);
-        }
-        auto_config_4p_hack();
-
-        break;
-    }
-
-    case 4:
-    {
-        mode = MODE_SINGLE_GAME_DUAL;
-
-        if (use_multi_adapter && !master_link)
-        {
-
-            std::vector<gb *> _gbs;
-            _gbs.insert(_gbs.begin(), std::begin(v_gb), std::begin(v_gb) + 4);
-            master_link = new dmg07(_gbs);
-        }
-
-        if (!use_multi_adapter && gblink_enable)
-        {
-            v_gb[0]->set_target(v_gb[1]);
-            v_gb[1]->set_target(v_gb[0]);
-            v_gb[2]->set_target(v_gb[3]);
-            v_gb[3]->set_target(v_gb[2]);
-        }
-        auto_config_4p_hack();
-
-        break;
-    }
-    case 5:
-    case 6:
-    case 7:
-    case 8:
-    case 9:
-    case 10:
-    case 11:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-    {
-        mode = MODE_SINGLE_GAME_DUAL;
-
-        if (!strncmp(cart_name, "FACEBALL 2000", 13))
-        {
-            
-            master_link = NULL;
-            linked_target_device = new faceball2000_cable(v_gb);
-            v_gb[0]->set_linked_target(linked_target_device);
-            display_message("RING LINK CABLE plugged in");
-            break;
-        }
-        if (!strcmp(cart_name, "KWIRK"))
-        {
-            
-            master_link = NULL;
-            linked_target_device = new hack_4p_kwirk(v_gb);
-            display_message("KWIRK Multiplayer Hack Adapter plugged in");
-            break;
-        }
-        if (!strcmp(cart_name, "TETRIS"))
-        {
-            master_link = new hack_4p_tetris(v_gb);         
-            display_message("TETRIS Battle Royal Multiplayer Hack Adapter plugged in");
-            break;
-        }
-
-        master_link = new dmg07x4(v_gb, emulated_gbs);   
-        display_message("4x FOUR PLAYER ADAPTERs are plugged in");
-
-        break;
-    }
-  
-   }
+    auto_link_multiplayer();
 
     check_variables();
     set_memory_maps();
@@ -354,7 +250,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
 
         emulated_gbs = 2;
 
-        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars_dual);
+        //environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars_dual);
         unsigned i;
 
         struct retro_input_descriptor input_desc[] = {
@@ -476,6 +372,28 @@ void retro_run(void)
 
     hotkey_handle();
 
+
+
+    //check Multiplayer new player
+    int16_t key_state;
+    //check if also the start button is pressed
+    if (emulated_gbs <= 16) {
+        key_state = input_state_cb(emulated_gbs, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
+        if (key_state)
+        {
+           // struct retro_variable var;
+            //var.key = "dcgb_emulated_gameboys";
+            //var.value = "3";
+           // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+            ++emulated_gbs;
+            check_variables();
+            auto_link_multiplayer();
+            display_message("Player Joined");
+            update_multiplayer_geometry();
+        }
+    }
+
+
     for (int line = 0; line < 154; line++)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
@@ -487,6 +405,7 @@ void retro_run(void)
         if (master_link)
             master_link->process();
     }   
+
 }
 
 void *retro_get_memory_data(unsigned id)
@@ -605,7 +524,7 @@ bool retro_serialize(void *data, size_t size)
 
         for (int i = 0; i < max_gbs; ++i)
         {
-            if (v_gb[i])
+            //if (v_gb[i])
             {
                 v_gb[i]->save_state_mem(ptr);
                 ptr += _serialize_size[i];
@@ -633,7 +552,7 @@ bool retro_unserialize(const void *data, size_t size)
 
         for (i = 0; i < max_gbs; ++i)
         {
-            if (v_gb[i])
+            //if (v_gb[i])
             {
                 v_gb[i]->restore_state_mem(ptr);
                 ptr += _serialize_size[i];
@@ -746,9 +665,30 @@ void retro_set_environment(retro_environment_t cb)
             true                  /* persistent_data */
         },
         {NULL, false, false}};
+
     environ_cb = cb;
+
+    /* Set core options
+ * An annoyance: retro_set_environment() can be called
+ * multiple times, and depending upon the current frontend
+ * state various environment callbacks may be disabled.
+ * This means the reported 'categories_supported' status
+ * may change on subsequent iterations. We therefore have
+ * to record whether 'categories_supported' is true on any
+ * iteration, and latch the result */
+  //  libretro_set_core_options(environ_cb, &option_categories);
+    //libretro_supports_option_categories |= option_categories;
+
     cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void *)subsystems);
     /* Request a persistent content data buffer */
     cb(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE,
        (void *)content_overrides);
+
+    struct retro_core_options_v2 options = {
+       option_cats_us,
+     core_options_us // <-- v2 definitions
+     
+    };
+
+    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2, &options);
 }

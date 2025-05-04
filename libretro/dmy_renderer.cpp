@@ -40,6 +40,7 @@ extern enum color_correction_mode gbc_cc_mode;
 extern bool gbc_lcd_interlacing_enabled;
 extern bool gbc_lcd_interfacing_fast;
 extern float gbc_lcd_interlacing_brightness;
+extern float light_temperature; 
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -62,6 +63,28 @@ extern bool libretro_supports_bitmasks;
 extern int _show_player_screen; // 0 = p1 only, 1 = p2 only, 2 = both players
 
 std::array<word, GRADIENT_STEPS> blended_palette;
+
+
+static inline void temperature_tint(double temperature, double* r, double* g, double* b)
+{
+    if (temperature >= 0) {
+        *r = 1.0;
+        *g = std::pow(1.0 - temperature, 0.375);
+        if (temperature >= 0.75) {
+            *b = 0.0;
+        }
+        else {
+            *b = std::sqrt(0.75 - temperature) / std::sqrt(0.75);
+        }
+    }
+    else {
+        *b = 1.0;
+        double squared = temperature * temperature;
+        *g = 0.125 * squared + 0.3 * temperature + 1.0;
+        *r = 0.21875 * squared + 0.5 * temperature + 1.0;
+    }
+}
+
 
 
 dmy_renderer::dmy_renderer(int which)
@@ -176,6 +199,27 @@ word dmy_renderer::map_color(word gb_col)
 
         default:
             break;
+        }
+
+        if (light_temperature != 0.0) {
+            // Konvertiere 5-Bit zu float [0.0, 1.0]
+            double rf = static_cast<double>(rFinal) / 31.0;
+            double gf = static_cast<double>(gFinal) / 31.0;
+            double bf = static_cast<double>(bFinal) / 31.0;
+
+            // Tönung berechnen
+            double tint_r, tint_g, tint_b;
+            temperature_tint(light_temperature, &tint_r, &tint_g, &tint_b);
+
+            // Tönung anwenden
+            rf *= tint_r;
+            gf *= tint_g;
+            bf *= tint_b;
+
+            // Clampen + zurück nach 5-Bit
+            rFinal = static_cast<unsigned>(std::round(std::clamp(rf, 0.0, 1.0) * 31.0)) & 0x1F;
+            gFinal = static_cast<unsigned>(std::round(std::clamp(gf, 0.0, 1.0) * 31.0)) & 0x1F;
+            bFinal = static_cast<unsigned>(std::round(std::clamp(bf, 0.0, 1.0) * 31.0)) & 0x1F;
         }
       
 
@@ -297,6 +341,7 @@ int dmy_renderer::check_pad()
    return
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_A))      ? 1 : 0) << 0 |
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_B))      ? 1 : 0) << 1 |
+      ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_X))      ? 1 : 0) << 1 |
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT)) ? 1 : 0) << 2 |
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_START))  ? 1 : 0) << 3 |
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))   ? 1 : 0) << 4 |
@@ -305,10 +350,10 @@ int dmy_renderer::check_pad()
       ((joypad_bits & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))  ? 1 : 0) << 7;
 }
 
-void dmy_renderer::add_gbc_interlacing_effect(byte* buf, int width, int height, int depth) {
+void dmy_renderer::add_gbc_interlacing_effect(byte* buf, int width, int height, int pitch) {
 
     const float brighten_factor = gbc_lcd_interlacing_brightness;
-    int pitch = width * ((depth + 7) / 8);
+//    int pitch = width * ((depth + 7) / 8);
 
     for (int y = is_odd_frame; y < height; y += 2) {
 
@@ -370,7 +415,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
             //experimental GBC LCD interlacing effect
             if (is_gbc_rom && gbc_lcd_interlacing_enabled)
             {
-                add_gbc_interlacing_effect(buf, width, height, depth); 
+                add_gbc_interlacing_effect(buf, width, height, pitch);
             }
 
             if (!is_gbc_rom)
@@ -408,8 +453,14 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 {
                     for (int row = 0; row < height; ++row)
                         memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
-                    if (which_gb == 1)
+                    if (which_gb == 1) {
+                        //experimental GBC LCD interlacing effect
+                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                        {
+                            add_gbc_interlacing_effect(joined_buf, width*2, height, pitch * 2);
+                        }
                         video_cb(joined_buf, width * 2, height, pitch * 2);
+                    }
                 }
 
             }
@@ -419,8 +470,14 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 // (this ignores the "switch player screens" setting)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
-                if (which_gb == (emulated_gbs - 1))
+                if (which_gb == (emulated_gbs - 1)) {
+                    //experimental GBC LCD interlacing effect
+                    if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                    {
+                        add_gbc_interlacing_effect(joined_buf, width, height, pitch);
+                    }
                     video_cb(joined_buf, width, height, pitch);
+                }
             }
 
             break;
@@ -440,21 +497,40 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     }
                     if (which_gb == 2) {
                         memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
+                        //experimental GBC LCD interlacing effect
+                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                        {
+                            add_gbc_interlacing_effect(joined_buf4, width* 2, height* 2, pitch* 2);
+                        }
                         video_cb(joined_buf4, width * 2, height * 2, pitch * 2);
                     }
                 }
                 else if (_screen_vertical)
                 {
                     memcpy(joined_buf3 + switched_gb * size_single_screen, buf, size_single_screen);
-                    if (which_gb == 2)
+                    if (which_gb == 2) {
+                        //experimental GBC LCD interlacing effect
+                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                        {
+                            add_gbc_interlacing_effect(joined_buf3, width, height * 3, pitch);
+                        }
                         video_cb(joined_buf3, width, height * 3, pitch);
+                    }
+                       
                 }
                 else
                 {
                     for (int row = 0; row < height; ++row)
                         memcpy(joined_buf3 + pitch * (3 * row + switched_gb), buf + pitch * row, pitch);
-                    if (which_gb == 2)
+                    if (which_gb == 2) {
+                        //experimental GBC LCD interlacing effect
+                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                        {
+                            add_gbc_interlacing_effect(joined_buf3, width*3, height, pitch * 3);
+                        }
                         video_cb(joined_buf3, width * 3, height, pitch * 3);
+                    }
+                       
                 }
             }
             else
@@ -463,8 +539,15 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 // (this ignores the "switch player screens" setting)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
-                if (which_gb == emulated_gbs)
+                if (which_gb == emulated_gbs) {
+                    //experimental GBC LCD interlacing effect
+                    if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                    {
+                        add_gbc_interlacing_effect(joined_buf, width, height, pitch);
+                    }
                     video_cb(joined_buf, width, height, pitch);
+                }
+                   
             }
 
 
@@ -486,6 +569,10 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     }
                     if (which_gb == 3) {
                         memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
+                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                        {
+                            add_gbc_interlacing_effect(joined_buf4, width * 2, height* 2, pitch * 2);
+                        }
                         video_cb(joined_buf4, width * 2, height * 2, pitch * 2);
                     }
                 }
@@ -493,15 +580,27 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 else if (_screen_vertical)
                 {
                     memcpy(joined_buf4 + switched_gb * size_single_screen, buf, size_single_screen);
-                    if (which_gb == emulated_gbs - 1)
+                    if (which_gb == emulated_gbs - 1) {
+                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                        {
+                            add_gbc_interlacing_effect(joined_buf4, width, height * emulated_gbs, pitch);
+                        }
                         video_cb(joined_buf4, width, height * emulated_gbs, pitch);
+                    }
+                       
                 }
                 else
                 {
                     for (int row = 0; row < height; ++row)
                         memcpy(joined_buf4 + pitch * (emulated_gbs * row + switched_gb), buf + pitch * row, pitch);
-                    if (which_gb == emulated_gbs - 1)
-                        video_cb(joined_buf4, width * emulated_gbs, height, pitch * emulated_gbs);
+                    if (which_gb == emulated_gbs - 1) {
+                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                        {
+                            add_gbc_interlacing_effect(joined_buf4, width* emulated_gbs, height, pitch* emulated_gbs);
+                        }
+                        video_cb(joined_buf4, width* emulated_gbs, height, pitch* emulated_gbs);
+                    }
+                       
                 }
             }
             else
@@ -511,7 +610,13 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
                 if (which_gb == (emulated_gbs - 1))
+                {
+                    if (is_gbc_rom && gbc_lcd_interlacing_enabled)
+                    {
+                        add_gbc_interlacing_effect(joined_buf, width, height, pitch);
+                    }
                     video_cb(joined_buf, width, height, pitch);
+                }
             }
 
             break;

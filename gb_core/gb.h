@@ -416,6 +416,8 @@ public:
 	word *get_pal(int num) { return col_pal[num]; }
 	word *get_mapped_pal(int num) { return mapped_pal[num]; }
 
+	void remap_all_palettes();
+
 	void set_enable(int layer,bool enable);
 	bool get_enable(int layer);
 

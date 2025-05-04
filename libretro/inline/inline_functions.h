@@ -9,6 +9,7 @@ extern "C" uint64_t OSGetTime(void);
 #include <sys/time.h>
 #endif
 
+
 void set_cart_name(byte* rombuf)
 {
     memcpy(cart_name, rombuf + 0x134, 16);
@@ -74,6 +75,7 @@ void auto_config_4p_hack()
 
     
 };
+
 
 void auto_config_1p_link() {
 
@@ -259,6 +261,120 @@ void auto_config_1p_link() {
    
 }
 
+
+void auto_link_multiplayer() {
+
+    //set link connections
+    switch (emulated_gbs)
+    {
+    case 1:
+    {
+        //TODO only if DUAL-GAME ROM
+        // set interface for netpaket api (easy pokemon trading)
+        //environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void*)&netpacket_iface);
+
+        auto_config_1p_link();
+        mode = MODE_SINGLE_GAME;
+        break;
+    }
+    case 2:
+    {
+        // mode = MODE_DUAL_GAME;
+        mode = MODE_SINGLE_GAME_DUAL;
+        // for link cables and IR:
+        // if (gblink_enable) {
+        v_gb[0]->set_target(v_gb[1]);
+        v_gb[1]->set_target(v_gb[0]);
+        //}
+        break;
+    }
+    case 3:
+    {
+        mode = MODE_SINGLE_GAME_DUAL;
+
+        if (!master_link)
+        {
+            std::vector<gb*> _gbs;
+            _gbs.insert(_gbs.begin(), std::begin(v_gb), std::begin(v_gb) + 3);
+            master_link = new dmg07(_gbs);
+        }
+        auto_config_4p_hack();
+
+        break;
+    }
+
+    case 4:
+    {
+        mode = MODE_SINGLE_GAME_DUAL;
+
+        //if (use_multi_adapter && !master_link)
+       // if (use_multi_adapter)
+        {
+
+            std::vector<gb*> _gbs;
+            _gbs.insert(_gbs.begin(), std::begin(v_gb), std::begin(v_gb) + 4);
+            master_link = new dmg07(_gbs);
+        }
+
+        if (!use_multi_adapter && gblink_enable)
+        {
+            v_gb[0]->set_target(v_gb[1]);
+            v_gb[1]->set_target(v_gb[0]);
+            v_gb[2]->set_target(v_gb[3]);
+            v_gb[3]->set_target(v_gb[2]);
+        }
+        auto_config_4p_hack();
+
+        break;
+    }
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    {
+        mode = MODE_SINGLE_GAME_DUAL;
+
+        if (!strncmp(cart_name, "FACEBALL 2000", 13))
+        {
+
+            master_link = NULL;
+            linked_target_device = new faceball2000_cable(v_gb);
+            v_gb[0]->set_linked_target(linked_target_device);
+            display_message("RING LINK CABLE plugged in");
+            break;
+        }
+        if (!strcmp(cart_name, "KWIRK"))
+        {
+
+            master_link = NULL;
+            linked_target_device = new hack_4p_kwirk(v_gb);
+            display_message("KWIRK Multiplayer Hack Adapter plugged in");
+            break;
+        }
+        if (!strcmp(cart_name, "TETRIS"))
+        {
+            master_link = new hack_4p_tetris(v_gb);
+            display_message("TETRIS Battle Royal Multiplayer Hack Adapter plugged in");
+            break;
+        }
+
+        master_link = new dmg07x4(v_gb, emulated_gbs);
+        display_message("4x FOUR PLAYER ADAPTERs are plugged in");
+
+        break;
+    }
+
+    }
+}
+
 char* read_file_to_buffer(const char* filename, size_t* file_size) {
     FILE* file = fopen(filename, "rb");
     if (file == NULL) {
@@ -349,15 +465,7 @@ void performExtraInputPoll() {
     }
 }
 
-void check_for_new_players() {
 
-    for (int i = v_gb.size(); i < 4; i++)
-    {
-        int is_start_pressed = input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START);
-        if (is_start_pressed) add_new_player();
-    }
-
-}
 
 static void update_multiplayer_geometry() {
 
@@ -428,6 +536,12 @@ static void check_variables(void)
 
         if (!strcmp(var.value, "Accurate"))
             gbc_cc_mode = GAMBATTE_ACCURATE;
+
+        for (size_t i = 0; i < emulated_gbs; i++)
+        {
+            //v_gb[i]->refresh_pal();
+        }
+       
            
     }
 
@@ -453,6 +567,19 @@ static void check_variables(void)
             gbc_lcd_interfacing_fast = false;
         }
    
+    }
+
+    var.key = "dcgb_light_temperature";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        light_temperature = atof(var.value);
+
+        for (size_t i = 0; i < emulated_gbs; i++)
+        {
+            //v_gb[i]->refresh_pal();
+        }
+
     }
 
    
@@ -757,7 +884,7 @@ void check_special_hotkey() {
     {
         key_state = input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, 256 + i);
         if (key_state)
-        {
+        {   
             dcgb_hotkey_pressed = i < 10 ? i : 256 + i;
             return;
         }
@@ -781,7 +908,9 @@ void check_special_hotkey() {
     }
 
     dcgb_hotkey_pressed = -1; 
-   
+
+
+ 
 }
 
 void hotkey_handle() {
@@ -800,6 +929,41 @@ void hotkey_handle() {
   
     }
 
+}
+
+void check_for_new_players() {
+
+    //check Multiplayer new player
+    int16_t key_state;
+    //check if also the start button is pressed
+    if (emulated_gbs <= 16) {
+        key_state = input_state_cb(emulated_gbs, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
+        if (key_state)
+        {
+            // struct retro_variable var;
+             //var.key = "dcgb_emulated_gameboys";
+             //var.value = "3";
+            // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+            ++emulated_gbs;
+
+
+            check_variables();
+
+            if (emulated_gbs == 2) {
+                _screen_4p_split = false;
+                _screen_vertical = false;
+            }
+            else {
+                _screen_4p_split = true;
+            }
+            _show_player_screen = emulated_gbs;
+
+            auto_link_multiplayer();
+            display_message("Player joined");
+
+            update_multiplayer_geometry();
+        }
+    }
 }
 
 
