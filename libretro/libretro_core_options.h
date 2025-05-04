@@ -2,19 +2,6 @@
 
 
 
-    
-   
-     // 
-      { "dcgb_gb_printer_png_upscale", "GameBoy Printer Output Upscale; DIN A4|DIN A5|DIN A6|Thermalpaper|Off" },
-      { "dcgb_gb_printer_png_alignment", "GameBoy Printer Output Allignment; Center|Top" },
-     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
-     { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
-     { "dcgb_power_antenna_use_rumble", "Power Antenna/Bugsensor use rumble; Strong|Weak|Off" },
-
-     // { "doublecherrygb_detect_gba", "detect playing on gba (gba enhancements); Off|On" },
-     { NULL, NULL },
-};
-
 static struct retro_core_option_definition core_options[] = {
    {
       "dcgb_gbc_color_correction",
