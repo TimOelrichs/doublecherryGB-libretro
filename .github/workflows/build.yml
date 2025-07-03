@@ -19,7 +19,7 @@ jobs:
           - device: 'miyoo'
             core_name: 'doublecherrygb_libretro.so'
             toolchain: 'arm-linux-gnueabihf'
-            device_upper: 'MIYOO'  # Manually added uppercase version
+            device_upper: 'MIYOO'
           - device: 'trimui'
             core_name: 'doublecherrygb_libretro.so'
             toolchain: 'aarch64-linux-gnu'
@@ -30,38 +30,39 @@ jobs:
             device_upper: 'BRICK'
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Build with Docker
-      run: |
-        docker build --target ${{ matrix.device }} -t builder .
-        docker run --rm -v "$PWD/output:/output" builder \
-          sh -c "cmake -B build -DDEVICE_${{ matrix.device_upper }}=ON \
-                -DCMAKE_TOOLCHAIN_FILE=/opt/${{ matrix.device }}/toolchain.cmake \
-                && cmake --build build -j$(nproc) \
-                && cp build/${{ matrix.core_name }} /output/"
+      - name: Build with Docker
+        run: |
+          docker build --target ${{ matrix.device }} -t builder .
+          docker run --rm -v "$PWD/output:/output" builder \
+            sh -c "cmake -B build -DDEVICE_${{ matrix.device_upper }}=ON \
+                  -DCMAKE_TOOLCHAIN_FILE=/opt/${{ matrix.device }}/toolchain.cmake \
+                  && cmake --build build -j$(nproc) \
+                  && cp build/${{ matrix.core_name }} /output/"
 
-    - name: Create ZIP Package
-      run: |
-        mkdir -p release/cores
-        cp output/${{ matrix.core_name }} release/cores/
-        zip -j "DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip" release/cores/*
+      - name: Create ZIP Package
+        run: |
+          mkdir -p release/cores
+          cp output/${{ matrix.core_name }} release/cores/
+          zip -j "DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip" release/cores/*
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.device }}-package
-        path: DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.device }}-package
+          path: DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip
+          retention-days: 7  # Automatically clean up after 1 week
 
-    - name: Create GitHub Release
-      if: github.event_name == 'push'
-      uses: softprops/action-gh-release@v1
-      with:
-        files: DoubleCherryGB_*.zip
-        tag_name: "v${{ env.BUILD_DATE }}-${GIT_HASH}"
-        body: |
-          Automated build for ${{ matrix.device }}
-          Version: ${{ env.BUILD_DATE }} - ${GIT_HASH}
-    
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: DoubleCherryGB_*.zip
+          tag_name: "v${{ env.BUILD_DATE }}-${GIT_HASH}"
+          body: |
+            Automated build for ${{ matrix.device }}
+            Version: ${{ env.BUILD_DATE }} - ${GIT_HASH}
+            Platforms: GB, GBC
