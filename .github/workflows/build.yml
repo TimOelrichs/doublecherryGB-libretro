@@ -1,4 +1,4 @@
-name: Multi-Device Release Builder
+﻿name: Multi-Device Release Builder
 
 on:
   push:
@@ -17,14 +17,17 @@ jobs:
         device: ['miyoo', 'trimui', 'brick']
         include:
           - device: 'miyoo'
-            core_name: 'doublecherrygb_libretro.so' # Einheitlicher Name
+            core_name: 'doublecherrygb_libretro.so'
             toolchain: 'arm-linux-gnueabihf'
+            device_upper: 'MIYOO'  # Manually added uppercase version
           - device: 'trimui'
             core_name: 'doublecherrygb_libretro.so'
             toolchain: 'aarch64-linux-gnu'
+            device_upper: 'TRIMUI'
           - device: 'brick'
             core_name: 'doublecherrygb_libretro.so'
             toolchain: 'mipsel-linux-musl'
+            device_upper: 'BRICK'
 
     steps:
     - uses: actions/checkout@v4
@@ -35,7 +38,7 @@ jobs:
       run: |
         docker build --target ${{ matrix.device }} -t builder .
         docker run --rm -v "$PWD/output:/output" builder \
-          sh -c "cmake -B build -DDEVICE_${{ matrix.device | upper }}=ON \
+          sh -c "cmake -B build -DDEVICE_${{ matrix.device_upper }}=ON \
                 -DCMAKE_TOOLCHAIN_FILE=/opt/${{ matrix.device }}/toolchain.cmake \
                 && cmake --build build -j$(nproc) \
                 && cp build/${{ matrix.core_name }} /output/"
@@ -61,4 +64,4 @@ jobs:
         body: |
           Automated build for ${{ matrix.device }}
           Version: ${{ env.BUILD_DATE }} - ${GIT_HASH}
-          Platforms: GB, GBC
+    
