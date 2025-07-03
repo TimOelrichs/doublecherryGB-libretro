@@ -1,10 +1,13 @@
+﻿# Build-Artifakte
 *.o
 *.so
 *.dll
 *.exe
-tgbdual
-.goutputstream-*
-.github/
-.vs/
-buildnmove.sh
 
+# Temporäre Dateien
+.goutputstream-*
+.vs/
+
+# Lokale Build-Verzeichnisse
+build*/
+tgbdual

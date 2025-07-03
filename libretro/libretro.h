@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2020 The RetroArch team
+﻿/* Copyright (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this libretro API header (libretro.h).
@@ -24,6 +24,7 @@
 #define LIBRETRO_H__
 
 #include <stdint.h>
+//#include <cstdint>
 #include <stddef.h>
 #include <limits.h>
 

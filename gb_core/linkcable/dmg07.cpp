@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
    Four Player Adapter (DMG-07) Emulation
@@ -79,8 +79,8 @@ void dmg07::reset()
 		in_data_buffer[i] = 0;
 		trans_buffer[i].clear();
 		ans_buffer[i].clear();
-		//last_trans_nr[i] = 0;
-		//last_trans_nr[i] = 0;
+		//last_trans_nr[fromGbId] = 0;
+		//last_trans_nr[fromGbId] = 0;
 	}
 }
 
@@ -144,30 +144,30 @@ void dmg07::restart_pingphase()
 	{
 		trans_buffer[i].clear();
 		ans_buffer[i].clear();
-		//last_trans_nr[i] = 0;
+		//last_trans_nr[fromGbId] = 0;
 	}
 }
 
-void dmg07::handle_answer(int i, byte dat)
+void dmg07::handle_answer(int fromGbId, byte dat)
 {
 	switch (current_state)
 	{
 	case PING_PHASE:
 	{
 	
-		switch (ans_buffer[i].size())
+		switch (ans_buffer[fromGbId].size())
 		{
 		case 0:
 		{
-			if (dat == 0x88)
+			if (dat == PING_SIGNAL)
 			{
-				ans_buffer[i].push_back(dat);
-				//last_trans_nr[i] = transfer_count;
+				ans_buffer[fromGbId].push_back(dat);
+				//last_trans_nr[fromGbId] = transfer_count;
 			}
 
-			if (dat == 0xAA && i == 0) //&& ((transfer_count % 4) == 0) )
+			if (dat == SYNC_SIGNAL && fromGbId == 0) //&& ((transfer_count % 4) == 0) )
 			{
-				ans_buffer[i].push_back(dat);
+				ans_buffer[fromGbId].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
@@ -178,26 +178,26 @@ void dmg07::handle_answer(int i, byte dat)
 		}
 		case 1:
 		{
-			if (dat == ans_buffer[i].at(0)) //&& //last_trans_nr[i] == (transfer_count - 1))
+			if (dat == ans_buffer[fromGbId].at(0)) //&& //last_trans_nr[fromGbId] == (transfer_count - 1))
 			{
-				ans_buffer[i].push_back(dat);
-				//last_trans_nr[i] = transfer_count;
+				ans_buffer[fromGbId].push_back(dat);
+				//last_trans_nr[fromGbId] = transfer_count;
 
-				if (dat == 0x88)
+				if (dat == PING_SIGNAL)
 				{
-					enter_status |= (byte)((byte)1 << (byte)(i + 4));
+					enter_status |= (byte)((byte)1 << (byte)(fromGbId + 4));
 				}
 
 			}
-			else if (dat == 0xAA && i == 0)//&& ((transfer_count % 4) == 0))
+			else if (dat == SYNC_SIGNAL && fromGbId == 0)//&& ((transfer_count % 4) == 0))
 			{
-				ans_buffer[i].clear();
-				ans_buffer[i].push_back(dat);
+				ans_buffer[fromGbId].clear();
+				ans_buffer[fromGbId].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
 			}
-			else ans_buffer[i].clear();
+			else ans_buffer[fromGbId].clear();
 
 
 			break;
@@ -205,18 +205,18 @@ void dmg07::handle_answer(int i, byte dat)
 		case 2:
 		{
 
-			if (dat == 0xAA && ans_buffer[i].at(0) == 0xAA && ans_buffer[i].at(1) == 0xAA && i == 0) //&& //last_trans_nr[i] == (transfer_count - 1))
+			if (dat == SYNC_SIGNAL && ans_buffer[fromGbId].at(0) == SYNC_SIGNAL && ans_buffer[fromGbId].at(1) == SYNC_SIGNAL && fromGbId == 0) //&& //last_trans_nr[fromGbId] == (transfer_count - 1))
 			{
 				current_state = SYNC_PHASE;
-				ans_buffer[i].push_back(dat);
+				ans_buffer[fromGbId].push_back(dat);
 				break;
 
 
 			}
-			else if (ans_buffer[i].at(0) == 0x88 && ans_buffer[i].at(1) == 0x88)
+			else if (ans_buffer[fromGbId].at(0) == PING_SIGNAL && ans_buffer[fromGbId].at(1) == PING_SIGNAL)
 			{
-				ans_buffer[i].push_back(dat);
-				//last_trans_nr[i] = transfer_count;
+				ans_buffer[fromGbId].push_back(dat);
+				//last_trans_nr[fromGbId] = transfer_count;
 				
 				if (!transfer_rate)
 				{
@@ -250,29 +250,29 @@ void dmg07::handle_answer(int i, byte dat)
 					
 				}
 			}
-			else if (dat == 0xAA && i == 0)//&& ((transfer_count % 4) == 0))
+			else if (dat == SYNC_SIGNAL && fromGbId == 0)//&& ((transfer_count % 4) == 0))
 			{
-				ans_buffer[i].clear();
-				ans_buffer[i].push_back(dat);
+				ans_buffer[fromGbId].clear();
+				ans_buffer[fromGbId].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
 			}
-			else ans_buffer[i].clear();
+			else ans_buffer[fromGbId].clear();
 
 			break;
 		}
 		case 3:
 		{
-			if ((dat == 0xAA || dat == 0x00) && ans_buffer[i].at(0) == 0xAA && ans_buffer[i].at(1) == 0xAA && ans_buffer[i].at(2) == 0xAA && i == 0) //&& //last_trans_nr[i] == (transfer_count - 1))
+			if ((dat == SYNC_SIGNAL || dat == 0x00) && ans_buffer[fromGbId].at(0) == SYNC_SIGNAL && ans_buffer[fromGbId].at(1) == SYNC_SIGNAL && ans_buffer[fromGbId].at(2) == SYNC_SIGNAL && fromGbId == 0) //&& //last_trans_nr[fromGbId] == (transfer_count - 1))
 			{
 
 				current_state = SYNC_PHASE;
-				ans_buffer[i].clear();
+				ans_buffer[fromGbId].clear();
 
 
 			}
-			else if (ans_buffer[i].at(0) == 0x88 && ans_buffer[i].at(1) == 0x88)
+			else if (ans_buffer[fromGbId].at(0) == PING_SIGNAL && ans_buffer[fromGbId].at(1) == PING_SIGNAL)
 			{
 				if (!packet_size)
 				{
@@ -280,16 +280,16 @@ void dmg07::handle_answer(int i, byte dat)
 					
 				}
 			}
-			else if (dat == 0xAA && i == 0)
+			else if (dat == SYNC_SIGNAL && fromGbId == 0)
 			{
-				ans_buffer[i].clear();
-				ans_buffer[i].push_back(dat);
+				ans_buffer[fromGbId].clear();
+				ans_buffer[fromGbId].push_back(dat);
 				first_aa_trans_nr = transfer_count % 4;
 				current_state = SYNC_PHASE;
 
 			}
 
-			ans_buffer[i].clear();
+			ans_buffer[fromGbId].clear();
 
 			break;
 		}
@@ -298,14 +298,14 @@ void dmg07::handle_answer(int i, byte dat)
 	}
 	case SYNC_PHASE:
 		/*
-		if (i == 0 && dat != 0xAA)
+		if (fromGbId == 0 && dat != SYNC_SIGNAL)
 		{
 			if (transfer_count % 4 == 0) return;
 			//master_is_synced = true; 
 			//sync_trans_nr = transfer_count;
 			return;
 		}
-		if (i != 0 && dat == 0x00)
+		if (fromGbId != 0 && dat == 0x00)
 		{
 			//if (transfer_count % 4 == 0) return;
 			//others_are_synced = true;
@@ -315,38 +315,38 @@ void dmg07::handle_answer(int i, byte dat)
 		break;
 	case TRANSMISSION_PHASE:
 	{
-		if (i == 0)
+		if (fromGbId == 0)
 		{
-			switch (ans_buffer[i].size())
+			switch (ans_buffer[fromGbId].size())
 			{
 			case 0:
 			{
-				if (dat == 0xFF && transfer_count % 4 == 0)
+				if (dat == RESET_SIGNAL && transfer_count % 4 == 0)
 				{
-					ans_buffer[i].push_back(dat);
-					//last_trans_nr[i] = transfer_count;
+					ans_buffer[fromGbId].push_back(dat);
+					//last_trans_nr[fromGbId] = transfer_count;
 				}
 				break;
 			}
 			case 1:
 			{
-				if (dat == 0xFF)
+				if (dat == RESET_SIGNAL)
 				{
 
-					ans_buffer[i].clear();
+					ans_buffer[fromGbId].clear();
 					bytes_to_send = std::vector<byte>();
 					restart_in = packet_size * 4;
 
 					for (int i = 0; i < (packet_size * 4); i++)
 					{
-						bytes_to_send.push_back(0xFF);
+						bytes_to_send.push_back(RESET_SIGNAL);
 					}
 					restart_in += transfer_count;
 					break;
 				}
 				else
 				{
-					ans_buffer[i].clear();
+					ans_buffer[fromGbId].clear();
 					break;
 				}
 				break;
@@ -377,9 +377,9 @@ byte dmg07::send_byte(byte which, byte dat)
 /*
 void dmg07::broadcast_byte(byte dat)
 {
-	for (byte i = 0x00; i < (byte)dmg07::v_gb.size(); i++)
+	for (byte fromGbId = 0x00; fromGbId < (byte)dmg07::v_gb.size(); fromGbId++)
 	{
-		send_byte(i, dat);
+		send_byte(fromGbId, dat);
 	}
 }
 
@@ -416,7 +416,7 @@ void dmg07::send_sync_bytes()
 
 		/*
 		* This is just a hack, to match my assumend speed rate.
-		* i didn't want to hardcode for every game. 
+		* fromGbId didn't want to hardcode for every game. 
 		* haven't found out the meaning of the magic-byte "transfer_rate" yet
 		
 		00 = 5928
@@ -473,7 +473,7 @@ void dmg07::fill_buffer_for_less_than_4p()
 	{
 		for (int i = 0; i < 4 - v_gb.size(); i++)
 		{
-			for (int i = 0; i < packet_size; i++)
+			for (int j = 0; j < packet_size; j++)
 			{
 				bytes_to_send.push_back(0);
 			}
@@ -503,7 +503,7 @@ void dmg07::process()
 				for (byte i = 0; i < v_gb.size(); i++)
 				{
 					byte ret = v_gb[i]->receive_from_linkcable(0x00);
-					//handle_answer(i, ret);
+					//handle_answer(fromGbId, ret);
 
 					if (i == 0)log_traffic(0, 0x00);
 					log_traffic(i + 1, ret);
@@ -600,7 +600,7 @@ size_t dmg07::get_state_size(void)
 	size_t ret = 0;
 	serializer s(&ret, serializer::COUNT);
 
-	int size;
+	size_t size;
 	for (size_t i = 0; i < 4; i++)
 	{
 		size = trans_buffer[i].size();
@@ -625,7 +625,7 @@ void dmg07::save_state_mem(void* buf)
 {
 	serializer s(buf, serializer::SAVE_BUF);
 
-	int size;
+	size_t size;
 	for (size_t i = 0; i < 4; i++)
 	{
 		size = trans_buffer[i].size();

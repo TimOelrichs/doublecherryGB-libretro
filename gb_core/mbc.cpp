@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -24,7 +24,7 @@
 #include "gb.h"
 
 #include <ctime>
-#include <stdint.h>
+#include <cstdint>
 #include <string>
 #include <istream>
 #include <iostream>

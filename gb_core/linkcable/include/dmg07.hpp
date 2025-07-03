@@ -1,7 +1,11 @@
-#pragma once
+﻿#pragma once
 #include "link_master_device.hpp"
 #include "../../serializer.h"
 
+
+constexpr byte PING_SIGNAL = 0x88;
+constexpr byte SYNC_SIGNAL = 0xAA;
+constexpr byte RESET_SIGNAL = 0xFF;
 
 
 //############ DMG-07 

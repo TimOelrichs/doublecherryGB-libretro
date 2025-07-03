@@ -1,8 +1,9 @@
-#ifndef _GNU_SOURCE
+﻿#ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1 // for fopencookie hack in serialize_size
 #endif
 
 #include <stdlib.h>
+#include <cstdint>
 
 #include "libretro.h"
 #include "libretro_core_options.h"
@@ -12,9 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
-#include "libretro.h"
 
 #include "../gb_core/linkcable/include/sio_devices.hpp"
 #include "../gb_core/infrared/include/ir_devices.hpp"
@@ -145,7 +144,7 @@ void retro_init(void)
 }
 
 void retro_deinit(void)
-{
+{ 
     libretro_supports_bitmasks = false;
 }
 

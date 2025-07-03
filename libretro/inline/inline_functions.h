@@ -1,14 +1,14 @@
-#pragma once
+﻿#pragma once
 #include "libretro.h"
 
 #if defined(__PSP__)
 extern "C" uint64_t sceKernelGetSystemTimeWide(void);
 #elif defined(__WIIU__)
 extern "C" uint64_t OSGetTime(void);
+#elif defined(_WIN32)
 #else
 #include <sys/time.h>
 #endif
-
 
 void set_cart_name(byte* rombuf)
 {
@@ -416,35 +416,16 @@ void add_new_player() {
 }
 
 
-bool get_monotonic_time(struct timespec* ts)
-{
-#if defined(CLOCK_MONOTONIC) && !defined(__PSP__) && !defined(__WIIU__)
-    return clock_gettime(CLOCK_MONOTONIC, ts) == 0;
+#include <chrono>
+bool get_monotonic_time(struct timespec* ts) {
+    auto now = std::chrono::steady_clock::now();
+    auto secs = std::chrono::time_point_cast<std::chrono::seconds>(now);
+    auto ns = std::chrono::time_point_cast<std::chrono::nanoseconds>(now) -
+        std::chrono::time_point_cast<std::chrono::nanoseconds>(secs);
 
-#elif defined(__PSP__)
-    // PSP: use sceKernelGetSystemTimeWide (microseconds since boot)
-    uint64_t tick = sceKernelGetSystemTimeWide();
-    ts->tv_sec = tick / 1000000;
-    ts->tv_nsec = (tick % 1000000) * 1000;
+    ts->tv_sec = secs.time_since_epoch().count();
+    ts->tv_nsec = ns.count();
     return true;
-
-#elif defined(__WIIU__)
-    // Wii U: OSGetTime also returns microseconds since boot
-    uint64_t tick = OSGetTime();
-    ts->tv_sec = tick / 1000000;
-    ts->tv_nsec = (tick % 1000000) * 1000;
-    return true;
-
-#else
-    // Fallback: use gettimeofday (less accurate, not monotonic)
-    struct timeval tv;
-    if (gettimeofday(&tv, NULL) != 0)
-        return false;
-
-    ts->tv_sec = tv.tv_sec;
-    ts->tv_nsec = tv.tv_usec * 1000;
-    return true;
-#endif
 }
 
 

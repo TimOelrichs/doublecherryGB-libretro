@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
@@ -28,19 +28,16 @@
 #include <deque>
 
 #include <iostream>
-
-#include <vector>
-#include <queue>
 #include <map>
 #include <list>
-
-
 #include <ctime>
-#include <stdint.h>
+#include <cstdint>
+#include <limits.h> 
 
 #include "gb_types.h"
 #include "renderer.h"
 #include "serializer.h"
+#include "GbPalettes/GBPaletteManager.hpp"
 
 
 #define INT_VBLANK 1
@@ -382,7 +379,7 @@ public:
 	byte cheat_read(word adr);
 	void cheat_write(word adr,byte dat);
 
-	bool cheak_cheat(word adr);
+	//bool cheak_cheat(word adr);
 	void create_cheat_map();
 
 	void add_cheat(cheat_dat *dat);
@@ -447,6 +444,7 @@ private:
 	bool layer_enable[3];
 
 	gb *ref_gb;
+	GBPaletteManager paletteManager;
 };
 
 class apu
@@ -694,7 +692,7 @@ public:
 	void log_link_traffic(byte a, byte b);
 	void log_ir_traffic(ir_signal *signal, bool incoming);
 
-	int next_ir_clock = -2147483648;
+	int next_ir_clock = INT_MIN;
 	std::vector<ir_signal*> out_ir_signal_que;
 
 private:
@@ -703,8 +701,8 @@ private:
 	byte op_read() { return read(regs.PC++); }
 	word op_readw() { regs.PC+=2;return readw(regs.PC-2); }
 
-	int dasm(char *S,byte *A);
-	void log();
+	//int dasm(char *S,byte *A);
+	//void log();
 
 	gb *ref_gb;
 	I_linkcable_target* linked_device;

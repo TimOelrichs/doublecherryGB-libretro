@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
    4x Four Player Adapter (DMG-07) Emulation (up to 16 Players)
@@ -261,7 +261,7 @@ void dmg07x4::reset() {
 
 void dmg07x4::serialize(serializer& s) {
 
-	
+	(void)s; // unused parameter
 }
 
 

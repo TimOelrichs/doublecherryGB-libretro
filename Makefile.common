@@ -1,4 +1,4 @@
-LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
+﻿LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
 INCFLAGS := -I$(CORE_DIR) \
 				-I$(CORE_DIR)/gb_core \
 				-I$(CORE_DIR)/libretro
@@ -16,6 +16,7 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
 	$(CORE_DIR)/gb_core/rom.cpp \
 	$(CORE_DIR)/libretro/dmy_renderer.cpp \
 	$(CORE_DIR)/libretro/libretro.cpp \
+	$(CORE_DIR)/gb_core/GbPalettes/GBPaletteManager.cpp \
 	$(CORE_DIR)/gb_core/linkcable/alleyway_link_controller.cpp \
 	$(CORE_DIR)/gb_core/linkcable/link_master_device.cpp \
 	$(CORE_DIR)/gb_core/linkcable/linkcable_hub.cpp\

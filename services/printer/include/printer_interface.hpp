@@ -1,4 +1,4 @@
-// printer_interface.hpp
+﻿// printer_interface.hpp
 #pragma once
 #include "./image_scaler.hpp"
 #include <string>
@@ -7,7 +7,6 @@
 #include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <string>
 
 
 extern bool gb_printer_png_scale_enabled;
@@ -28,7 +27,7 @@ static std::string get_timestamped_filename() {
 	std::tm* localTime = std::localtime(&now);
 
 	std::ostringstream oss;
-	oss << "./screenshots/gb_print_";  // relative, plattformunabh�ngig
+	oss << "./screenshots/gb_print_";  // relative, plattformunabhängig
 	oss << std::put_time(localTime, "%Y%m%d_%H%M%S");
 	//oss << ".png";
 

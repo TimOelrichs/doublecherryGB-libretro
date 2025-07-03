@@ -1,0 +1,12 @@
+﻿[core]
+name = "DoubleCherryGB"
+author = "Tim Oelrichs"
+version = "0.18.0"
+description = "GameBoy & GameBoy Color Emulator"
+license = "GPLv2"
+categories = ["Emulator"]
+platforms = ["GB", "GBC"]
+requires_game = false
+
+[dependencies]
+min_retroarch = "1.17.0"

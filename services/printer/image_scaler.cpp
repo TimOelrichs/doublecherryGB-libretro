@@ -1,6 +1,8 @@
-﻿#include "./include/image_scaler.hpp"
+﻿#pragma once
+#include "./include/image_scaler.hpp"
 #include <algorithm>
 #include <cstring>
+#include <cstdint>
 
 static void calculate_target_dimensions(ScaleTarget target, int& out_width, int& out_height) {
     switch (target) {
@@ -59,8 +61,8 @@ ScaledImage ImageScaler::scale(
     }
 
     return ScaledImage{
-        .width = target_width,
-        .height = target_height,
-        .rgb_data = std::move(buffer)
+        /*width*/ target_width,
+        /*height*/ target_height,
+        /*rgb_data*/ std::move(buffer)
     };
 }

@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -201,4 +201,7 @@ byte cheat::cheat_read(word adr)
 
 void cheat::cheat_write(word adr,byte dat)
 {
+	//avoid warning about unused parameters
+	(void)adr;
+	(void)dat;
 }

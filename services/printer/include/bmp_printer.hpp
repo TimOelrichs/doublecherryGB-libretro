@@ -1,6 +1,7 @@
-// png_printer.hpp
+﻿// png_printer.hpp
 #pragma once
 #include "printer_interface.hpp"
+#include <cstdint>
 
 #pragma pack(push, 1)
 struct BMPInfoHeader {

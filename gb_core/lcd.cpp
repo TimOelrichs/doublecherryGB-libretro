@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -27,16 +27,39 @@
                              | (((var)<<(bits))&0xff) \
                              | ((var) >> (8-(bits))))
 
+inline uint16_t rgb888_to_rgb555(uint32_t rgb888) {
+	uint8_t r = (rgb888 >> 16) & 0xFF;
+	uint8_t g = (rgb888 >> 8) & 0xFF;
+	uint8_t b = rgb888 & 0xFF;
+	return ((b >> 3) << 10) | ((g >> 3) << 5) | (r >> 3);
+}
+
 lcd::lcd(gb* ref)
 {
 	ref_gb = ref;
 
+	paletteManager.setPalette(GBPalettePreset::DMG_Classic);
+
+
+	for (int i = 0; i < 4; ++i) {
+		m_pal16[i] = paletteManager.mapPixel(i);
+		/*
+		uint32_t color = paletteManager.mapPixel(i);
+		m_pal32[i] = color;
+
+		uint16_t color555 = rgb888_to_rgb555(color);
+		m_pal16[i] = ref_gb->get_renderer()->map_color(color555);;
+		*/
+	};
+
+	/*
 	byte dat[] = { 31,21,11,0 };
 
 	for (int i = 0; i < 4; i++) {
 		m_pal16[i] = ref_gb->get_renderer()->map_color(dat[i] | (dat[i] << 5) | (dat[i] << 10));
 		m_pal32[i] = ((dat[i] << 16) | (dat[i] << 8) | dat[i]);
 	}
+	*/
 
 	/*
 	for (int i = 0; i < 16; i++)

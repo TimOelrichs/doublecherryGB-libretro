@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+ï»¿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -207,16 +207,16 @@ word dmy_renderer::map_color(word gb_col)
             double gf = static_cast<double>(gFinal) / 31.0;
             double bf = static_cast<double>(bFinal) / 31.0;
 
-            // Tönung berechnen
+            // TÃ¶nung berechnen
             double tint_r, tint_g, tint_b;
             temperature_tint(light_temperature, &tint_r, &tint_g, &tint_b);
 
-            // Tönung anwenden
+            // TÃ¶nung anwenden
             rf *= tint_r;
             gf *= tint_g;
             bf *= tint_b;
 
-            // Clampen + zurück nach 5-Bit
+            // Clampen + zurÃ¼ck nach 5-Bit
             rFinal = static_cast<unsigned>(std::round(std::clamp(rf, 0.0, 1.0) * 31.0)) & 0x1F;
             gFinal = static_cast<unsigned>(std::round(std::clamp(gf, 0.0, 1.0) * 31.0)) & 0x1F;
             bFinal = static_cast<unsigned>(std::round(std::clamp(bf, 0.0, 1.0) * 31.0)) & 0x1F;
@@ -234,10 +234,9 @@ word dmy_renderer::map_color(word gb_col)
    if(rgb565)
    {
 #endif
-      return ((gb_col&0x001f) << 11) |
-         ((gb_col&0x03e0) <<  1) |
-         ((gb_col&0x0200) >>  4) |
-         ((gb_col&0x7c00) >> 10);
+       return ((gb_col & 0x7C00) >> 10) |      // blue 5
+           ((gb_col & 0x03E0) << 1) |      // green 6
+           ((gb_col & 0x001F) << 11);       // red 5
 #ifndef FRONTEND_SUPPORTS_RGB565
    }
    return ((gb_col&0x001f) << 10) |
@@ -385,7 +384,7 @@ void dmy_renderer::add_gbc_interlacing_effect(byte* buf, int width, int height, 
         }
         
     }
-    is_odd_frame = !is_odd_frame;
+    is_odd_frame = (byte)!is_odd_frame;
 }
 
 
@@ -427,7 +426,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 for (int i = 0; i < width * height; ++i) {
                     word blended = blendPixels(last_frame[i], frame_buffer[i]);
                     last_frame[i] = frame_buffer[i]; // Update last_frame direkt
-                    frame_buffer[i] = blended;        // Überschreibe buf sofort
+                    frame_buffer[i] = blended;        // Ãœberschreibe buf sofort
                 }
 
                 video_cb(reinterpret_cast<byte*>(frame_buffer), width, height, pitch);

@@ -1,0 +1,64 @@
+name: Multi-Device Release Builder
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  BUILD_DATE: $(date -u +'%Y%m%d')
+  GIT_HASH: $(git rev-parse --short HEAD)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        device: ['miyoo', 'trimui', 'brick']
+        include:
+          - device: 'miyoo'
+            core_name: 'doublecherrygb_libretro.so' # Einheitlicher Name
+            toolchain: 'arm-linux-gnueabihf'
+          - device: 'trimui'
+            core_name: 'doublecherrygb_libretro.so'
+            toolchain: 'aarch64-linux-gnu'
+          - device: 'brick'
+            core_name: 'doublecherrygb_libretro.so'
+            toolchain: 'mipsel-linux-musl'
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Build with Docker
+      run: |
+        docker build --target ${{ matrix.device }} -t builder .
+        docker run --rm -v "$PWD/output:/output" builder \
+          sh -c "cmake -B build -DDEVICE_${{ matrix.device | upper }}=ON \
+                -DCMAKE_TOOLCHAIN_FILE=/opt/${{ matrix.device }}/toolchain.cmake \
+                && cmake --build build -j$(nproc) \
+                && cp build/${{ matrix.core_name }} /output/"
+
+    - name: Create ZIP Package
+      run: |
+        mkdir -p release/cores
+        cp output/${{ matrix.core_name }} release/cores/
+        zip -j "DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip" release/cores/*
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.device }}-package
+        path: DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip
+
+    - name: Create GitHub Release
+      if: github.event_name == 'push'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: DoubleCherryGB_*.zip
+        tag_name: "v${{ env.BUILD_DATE }}-${GIT_HASH}"
+        body: |
+          Automated build for ${{ matrix.device }}
+          Version: ${{ env.BUILD_DATE }} - ${GIT_HASH}
+          Platforms: GB, GBC

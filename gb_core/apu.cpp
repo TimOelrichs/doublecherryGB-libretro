@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -331,26 +331,49 @@ static int sq_wav_dat[4][8]={
 
 
 
-inline short apu_snd::sq1_produce(int freq)
+
+#include <stdint.h>  // Für int16_t, uint32_t etc.
+#include <algorithm> // Für std::clamp (falls C++17 verfügbar)
+
+inline int16_t apu_snd::sq1_produce(int freq)
 {
-	static dword cur_sample=0;
-	dword cur_freq;
-	short ret;
+	static uint32_t cur_sample = 0;
+	uint32_t cur_freq;
+	int16_t ret;
 
-	if (freq>65000)
-		return 15000;
+	// 1. Frequenz-Clipping
+	if (freq > 65000) {
+		return 15000;  // Maximaler Ausgangswert
+	}
 
-	if (freq){
-		ret=sq_wav_dat[stat.sq1_type&3][cur_sample]*20000-10000;
-		cur_freq=((freq*8)>0x10000)?0xffff:freq*8;
-		sq1_cur_pos+=(cur_freq<<16)/44100;
-		if (sq1_cur_pos&0xffff0000){
-			cur_sample=(cur_sample+(sq1_cur_pos>>16))&7;
-			sq1_cur_pos&=0xffff;
+	if (freq != 0) {
+		// 2. Sicherer Array-Zugriff mit Bereichsprüfung
+		const uint8_t type_idx = stat.sq1_type & 3;  // Garantiert 0-3
+		const uint8_t sample_idx = cur_sample % 8;    // Garantiert 0-7
+
+		// Explizite Grenzenprüfung (kann bei vertrauenswürdigen Daten entfernt werden)
+		if (type_idx >= 4 || sample_idx >= 8) {
+			return 0;  // Fallback bei ungültigen Indizes
+		}
+
+		// 3. Wellenform-Skalierung mit sicheren Typen
+		const int8_t sample = sq_wav_dat[type_idx & 0x3][sample_idx & 0x7];
+		ret = static_cast<int16_t>((sample * 20000L) / 127) - 10000;
+
+		// 4. Frequenzberechnung mit Überlaufschutz
+		cur_freq = (freq > 0x2000) ? 0xFFFF : static_cast<uint32_t>(freq) * 8;
+
+		// 5. Positionsupdate (32-Bit-Arithmetik)
+		sq1_cur_pos += (cur_freq << 16) / 44100;
+
+		if (sq1_cur_pos & 0xFFFF0000) {
+			cur_sample = (cur_sample + (sq1_cur_pos >> 16)) % 8;  // Zyklisch 0-7
+			sq1_cur_pos &= 0xFFFF;
 		}
 	}
-	else
-		ret=0;
+	else {
+		ret = 0;  // Silence bei Frequenz 0
+	}
 
 	return ret;
 }
@@ -416,33 +439,41 @@ inline short apu_snd::wav_produce(int freq,bool interpolation)
 	return ret;
 }
 
-static inline unsigned int _mrand(dword degree)
+static inline uint32_t _mrand(uint32_t degree)
 {
-	static int shift_reg=0x7f;
-	static int bef_degree=0;
-	int xor_reg=0;
-	int masked;
-	
-	degree=(degree==7)?0:1;
+	static uint16_t shift_reg = 0x7F;    // 16-Bit, da 0x7FFF/0x8000 verwendet werden
+	static uint32_t bef_degree = 0;      // Konsistenter Typ mit Parameter
+	uint32_t xor_reg = 0;
+	uint32_t masked;
 
-	if (bef_degree!=degree){
-		shift_reg&=(degree?0x7fff:0x7f);
-		if (!shift_reg) shift_reg=degree?0x7fff:0x7f;
+	// Grad auf 0 oder 1 setzen (7 → 0, sonst 1)
+	degree = (degree == 7) ? 0 : 1;
+
+	// Shift-Register zurücksetzen, wenn sich der Grad ändert
+	if (bef_degree != degree) {
+		shift_reg &= (degree ? 0x7FFF : 0x7F);
+		if (shift_reg == 0) {
+			shift_reg = (degree ? 0x7FFF : 0x7F);
+		}
 	}
-	bef_degree=degree;
+	bef_degree = degree;
 
-	masked=shift_reg&3;
-	while(masked)
-	{
-		xor_reg^=masked&0x01;
-		masked>>=1;
+	// XOR-Berechnung der unteren 2 Bits
+	masked = shift_reg & 3;
+	while (masked) {
+		xor_reg ^= masked & 0x01;
+		masked >>= 1;
 	}
 
-	if(xor_reg)
-		shift_reg|=(degree?0x8000:0x80);
-	else
-		shift_reg&=~(degree?0x8000:0x80);
-	shift_reg>>=1;
+	// Höchstes Bit setzen/löschen basierend auf XOR-Ergebnis
+	if (xor_reg) {
+		shift_reg |= (degree ? 0x8000 : 0x80);
+	}
+	else {
+		shift_reg &= ~(degree ? 0x8000 : 0x80);
+	}
+
+	shift_reg >>= 1;  // Rechts-Shift
 
 	return shift_reg;
 }
