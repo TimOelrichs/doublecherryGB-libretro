@@ -8,7 +8,7 @@
 **email:** timoelrichs@gmail.com<br>
 
 
-> DoubleCherryGB is an open source (GPLv2) GB/GBC emulator with up to 16 Player support, based on the TGBDual libretro core by GIGO and Hii.
+> DoubleCherryGB is an open source (GPLv3) GB/GBC emulator with up to 16 Player support, based on the TGBDual libretro core by GIGO and Hii.
 > It emulates the GAMEBOY 4 PLAYER ADAPTER (DMG-07) and also adds 3-16 Player Link Hacks for two-player games.
 > It's named after the Double Cherry Item from Super Mario 3D World.
 
@@ -231,5 +231,8 @@ Original sources from
 - http://gigo.retrogames.com/download.html#tgb-dual
 - http://shinh.skr.jp/tgbdualsdl/
 
+## License
+This project is licensed under the **GNU General Public License v3.0**.  
+See the [LICENSE](LICENSE) file for details.
 
 
