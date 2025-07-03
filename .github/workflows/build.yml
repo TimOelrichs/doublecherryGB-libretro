@@ -19,12 +19,15 @@ jobs:
           - device: 'miyoo'
             core_name: 'doublecherrygb_libretro.so'
             cmake_flag: '-DDEVICE_MIYOO=ON'
+            toolchain_file: '/opt/miyoo/share/buildroot/toolchainfile.cmake'
           - device: 'trimui'
             core_name: 'doublecherrygb_libretro.so'
             cmake_flag: '-DDEVICE_TRIMUI=ON'
+            toolchain_file: '/opt/trimui/share/buildroot/toolchainfile.cmake'
           - device: 'brick'
             core_name: 'doublecherrygb_libretro.so'
             cmake_flag: '-DDEVICE_BRICK=ON'
+            toolchain_file: '/opt/brick/share/cmake/toolchain.cmake'
 
     steps:
       - uses: actions/checkout@v4
@@ -36,12 +39,14 @@ jobs:
           docker build --target ${{ matrix.device }} -t builder .
           docker run --rm -v "$PWD/output:/output" builder \
             sh -c "cmake -B build ${{ matrix.cmake_flag }} \
-                  -DCMAKE_TOOLCHAIN_FILE=/opt/${{ matrix.device }}/toolchain.cmake \
+                  -DCMAKE_TOOLCHAIN_FILE=${{ matrix.toolchain_file }} \
                   && cmake --build build -j$(nproc) \
-                  && ${{ matrix.device == 'brick' && 'mipsel-linux-musl-strip' || 'strip' }} build/${{ matrix.core_name }} \
+                  && ${{ matrix.device == 'brick' && 'mipsel-linux-musl-strip' || \
+                       (if [ '${{ matrix.device }}' = 'miyoo' ]; then echo 'arm-linux-gnueabihf-strip'; \
+                        else echo 'aarch64-linux-strip'; fi) }} build/${{ matrix.core_name }} \
                   && cp build/${{ matrix.core_name }} /output/"
 
-      - name: Create ZIP Package
+      - name: Package Release
         run: |
           mkdir -p release/cores
           cp output/${{ matrix.core_name }} release/cores/
