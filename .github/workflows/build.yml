@@ -1,4 +1,4 @@
-﻿name: Multi-Device Release Builder
+﻿name: Multi-Device Builder
 
 on:
   push:
@@ -18,16 +18,13 @@ jobs:
         include:
           - device: 'miyoo'
             core_name: 'doublecherrygb_libretro.so'
-            toolchain: 'arm-linux-gnueabihf'
-            device_upper: 'MIYOO'
+            cmake_flag: '-DDEVICE_MIYOO=ON'
           - device: 'trimui'
             core_name: 'doublecherrygb_libretro.so'
-            toolchain: 'aarch64-linux-gnu'
-            device_upper: 'TRIMUI'
+            cmake_flag: '-DDEVICE_TRIMUI=ON'
           - device: 'brick'
             core_name: 'doublecherrygb_libretro.so'
-            toolchain: 'mipsel-linux-musl'
-            device_upper: 'BRICK'
+            cmake_flag: '-DDEVICE_BRICK=ON'
 
     steps:
       - uses: actions/checkout@v4
@@ -38,9 +35,10 @@ jobs:
         run: |
           docker build --target ${{ matrix.device }} -t builder .
           docker run --rm -v "$PWD/output:/output" builder \
-            sh -c "cmake -B build -DDEVICE_${{ matrix.device_upper }}=ON \
+            sh -c "cmake -B build ${{ matrix.cmake_flag }} \
                   -DCMAKE_TOOLCHAIN_FILE=/opt/${{ matrix.device }}/toolchain.cmake \
                   && cmake --build build -j$(nproc) \
+                  && ${{ matrix.device == 'brick' && 'mipsel-linux-musl-strip' || 'strip' }} build/${{ matrix.core_name }} \
                   && cp build/${{ matrix.core_name }} /output/"
 
       - name: Create ZIP Package
@@ -54,15 +52,15 @@ jobs:
         with:
           name: ${{ matrix.device }}-package
           path: DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip
-          retention-days: 7  # Automatically clean up after 1 week
+          retention-days: 3
 
-      - name: Create GitHub Release
+      - name: Create Release
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v1
         with:
           files: DoubleCherryGB_*.zip
-          tag_name: "v${{ env.BUILD_DATE }}-${GIT_HASH}"
+          tag_name: "v0.18-${{ env.GIT_HASH }}"
           body: |
             Automated build for ${{ matrix.device }}
-            Version: ${{ env.BUILD_DATE }} - ${GIT_HASH}
-            Platforms: GB, GBC
+            Version: 0.18-${{ env.GIT_HASH }}
+            Build date: ${{ env.BUILD_DATE }}
