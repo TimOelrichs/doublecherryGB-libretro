@@ -5,7 +5,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libtool automake autoconf unzip ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-# Miyoo Mini (ARMv7)
+# Miyoo Mini (ARMv7) - Offizielle Toolchain
 FROM base AS miyoo
 RUN wget -q --show-progress https://github.com/MiyooMini/miyoo-toolchain/releases/download/v1.0/miyoo-toolchain-armv7h.tar.gz -O /tmp/miyoo-toolchain.tar.gz && \
     mkdir -p /opt/miyoo && \
@@ -16,7 +16,7 @@ ENV PATH="/opt/miyoo/bin:$PATH" \
     CXX="arm-linux-gnueabihf-g++" \
     STRIP="arm-linux-gnueabihf-strip"
 
-# Trimui Smart Pro (ARMv8)
+# Trimui Smart Pro (ARMv8) - Alternative Toolchain
 FROM base AS trimui
 RUN wget -q --show-progress https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--glibc--stable-2022.08-1.tar.bz2 -O /tmp/trimui-toolchain.tar.bz2 && \
     mkdir -p /opt/trimui && \
@@ -27,7 +27,7 @@ ENV PATH="/opt/trimui/bin:$PATH" \
     CXX="aarch64-linux-g++" \
     STRIP="aarch64-linux-strip"
 
-# Trimui Brick (MIPS)
+# Trimui Brick (MIPS) - Musl Toolchain
 FROM base AS brick
 RUN wget -q --show-progress https://musl.cc/mipsel-linux-musl-cross.tgz -O /tmp/brick-toolchain.tar.gz && \
     mkdir -p /opt/brick && \
