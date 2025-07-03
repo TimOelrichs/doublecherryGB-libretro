@@ -19,12 +19,18 @@ jobs:
           - device: 'miyoo'
             core_name: 'doublecherrygb_libretro.so'
             cmake_flag: '-DDEVICE_MIYOO=ON'
+            toolchain_file: 'toolchains/miyoo.cmake'
+            strip_cmd: 'arm-linux-gnueabihf-strip'
           - device: 'trimui'
             core_name: 'doublecherrygb_libretro.so'
             cmake_flag: '-DDEVICE_TRIMUI=ON'
+            toolchain_file: 'toolchains/trimui.cmake'
+            strip_cmd: 'aarch64-linux-strip'
           - device: 'brick'
             core_name: 'doublecherrygb_libretro.so'
             cmake_flag: '-DDEVICE_BRICK=ON'
+            toolchain_file: 'toolchains/brick.cmake'
+            strip_cmd: 'mipsel-linux-musl-strip'
 
     steps:
       - uses: actions/checkout@v4
@@ -34,17 +40,16 @@ jobs:
       - name: Build with Docker
         run: |
           docker build --target ${{ matrix.device }} -t builder .
-          docker run --rm -v "$PWD/output:/output" builder \
+          docker run --rm -v "$PWD:/build" -w /build builder \
             sh -c "cmake -B build ${{ matrix.cmake_flag }} \
-                  -DCMAKE_TOOLCHAIN_FILE=/opt/${{ matrix.device }}/toolchain.cmake \
+                  -DCMAKE_TOOLCHAIN_FILE=${{ matrix.toolchain_file }} \
                   && cmake --build build -j$(nproc) \
-                  && ${{ matrix.device == 'brick' && 'mipsel-linux-musl-strip' || 'strip' }} build/${{ matrix.core_name }} \
-                  && cp build/${{ matrix.core_name }} /output/"
+                  && ${{ matrix.strip_cmd }} build/${{ matrix.core_name }}"
 
-      - name: Create ZIP Package
+      - name: Package Release
         run: |
           mkdir -p release/cores
-          cp output/${{ matrix.core_name }} release/cores/
+          cp build/${{ matrix.core_name }} release/cores/
           zip -j "DoubleCherryGB_${{ matrix.device }}_${GIT_HASH}.zip" release/cores/*
 
       - name: Upload Artifact

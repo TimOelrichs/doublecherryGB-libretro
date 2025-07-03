@@ -7,7 +7,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 
 # Miyoo Mini (ARMv7)
 FROM base AS miyoo
-RUN wget -q --show-progress https://github.com/JustEnoughLinuxOS/toolchain-miyoo/releases/download/v1.0.0/miyoo-toolchain-armv7h.tar.gz -O /tmp/miyoo-toolchain.tar.gz && \
+RUN wget -q --show-progress https://github.com/MiyooMini/miyoo-toolchain/releases/download/v1.0/miyoo-toolchain-armv7h.tar.gz -O /tmp/miyoo-toolchain.tar.gz && \
     mkdir -p /opt/miyoo && \
     tar -xzf /tmp/miyoo-toolchain.tar.gz -C /opt/miyoo --strip-components=1 && \
     rm /tmp/miyoo-toolchain.tar.gz
@@ -18,14 +18,14 @@ ENV PATH="/opt/miyoo/bin:$PATH" \
 
 # Trimui Smart Pro (ARMv8)
 FROM base AS trimui
-RUN wget -q --show-progress https://github.com/JustEnoughLinuxOS/toolchain-trimui/releases/download/v1.0.0/trimui-aarch64-toolchain.tar.xz -O /tmp/trimui-toolchain.tar.xz && \
+RUN wget -q --show-progress https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--glibc--stable-2022.08-1.tar.bz2 -O /tmp/trimui-toolchain.tar.bz2 && \
     mkdir -p /opt/trimui && \
-    tar -xf /tmp/trimui-toolchain.tar.xz -C /opt/trimui --strip-components=1 && \
-    rm /tmp/trimui-toolchain.tar.xz
+    tar -xjf /tmp/trimui-toolchain.tar.bz2 -C /opt/trimui --strip-components=1 && \
+    rm /tmp/trimui-toolchain.tar.bz2
 ENV PATH="/opt/trimui/bin:$PATH" \
-    CC="aarch64-linux-gnu-gcc" \
-    CXX="aarch64-linux-gnu-g++" \
-    STRIP="aarch64-linux-gnu-strip"
+    CC="aarch64-linux-gcc" \
+    CXX="aarch64-linux-g++" \
+    STRIP="aarch64-linux-strip"
 
 # Trimui Brick (MIPS)
 FROM base AS brick
@@ -40,7 +40,7 @@ ENV PATH="/opt/brick/bin:$PATH" \
     CXX="mipsel-linux-musl-g++" \
     STRIP="mipsel-linux-musl-strip"
 
-# Finales Image (Multi-Stage)
+# Finales Image
 FROM base AS final
 COPY --from=miyoo /opt/miyoo /opt/miyoo
 COPY --from=trimui /opt/trimui /opt/trimui
