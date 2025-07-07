@@ -1,4 +1,4 @@
-## DoubleCherryGB
+﻿## DoubleCherryGB
 
 <img src="/assets/readme/header.png">
 
@@ -84,6 +84,8 @@ For Multiplayer you have to increase the amount of emulated Gameboy in the core 
 
 ## Builtin Mew and Celebi Maschine and weekly GEN1 Pokemon Distributions 
 
+<img src="/assets/readme/pkbuddyboy.png">
+
 DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
 
 - If you don't own a Mew it will trade you a Lv 5 Mew. 
@@ -143,6 +145,9 @@ Have fun!
 
 ## Unreleased Alleyway Analog Controller
 
+<img src="/assets/readme/alleywaycontroller.png">
+
+
 This was a planned but never released peripheral, and to my knowledge, it's only known today because the game constantly polls the serial port.
 It turns out that the game can be controlled via the link port when it receives correctly formatted data.
 I've implemented several control styles — you can press SELECT to toggle between them:
@@ -157,6 +162,8 @@ See: https://forums.nesdev.org/viewtopic.php?t=18348
 <br>
 
 ## TV REMOTE
+
+<img src="/assets/readme/tvremote.png">
 
 The GBC has a IR receicer and some games used this to unlock cotent with a TV REMOTE.
 You can choose between 4 different JVC TV-Remotes. Use SELECT to switch between the Remotes and use the Numpad to press a button.
@@ -199,7 +206,7 @@ All Barcode Cards are hardcoded. You can select different cards with the Numkeys
 These are devices, that came with the games **Keitai Denjuu Telefang** and **Network Adventure Bugsite**  and are plugged into the linkport. It's simply a led that flashes when, something special happens ingame.
 DoubleCherryGB uses the controller rumble and the retroarch led api to simulate the led flashing on an overlay.
 
-![](/assets/overlays/Bugsensor-overlay.gif)
+<img src="/assets/readme/screenshots/Bugsensor-overlay.gif">
 
 [Here](https://github.com/TimOelrichs/doublecherryGB-libretro/blob/master/overlays/gb-bugsensor.zip) is the example overlay i used over the mega-bezels gbc shader. But you can also make your own.
 
