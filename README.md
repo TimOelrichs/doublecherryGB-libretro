@@ -1,4 +1,4 @@
-## DoubleCherryGB
+﻿## DoubleCherryGB
 
 <img src="/assets/readme/header.png">
 
@@ -83,6 +83,8 @@ For Multiplayer you have to increase the amount of emulated Gameboy in the core 
 <br>
 
 ## Builtin Mew and Celebi Maschine and weekly GEN1 Pokemon Distributions 
+
+<img src="/assets/readme/pkbuddyboy.png">
 
 DoubleCherryGB has a buildin virtual linkcable device that can trade Pokemon. I called it the PKMBuddy Boy.
 
