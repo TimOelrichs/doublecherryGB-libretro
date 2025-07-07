@@ -1,4 +1,4 @@
-﻿## DoubleCherryGB
+## DoubleCherryGB
 
 <img src="/assets/readme/header.png">
 
