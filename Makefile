@@ -1,4 +1,4 @@
-DEBUG = 0
+﻿DEBUG = 0
 
 ifeq ($(platform),)
 platform = unix
@@ -39,6 +39,7 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 endif
 
 TARGET_NAME := DoubleCherryGB
+CXXFLAGS += -std=c++17
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
 	CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
@@ -138,7 +139,7 @@ endif
    endif
    
    fpic += $(MINVERSION) -stdlib=libc++
-   CXXFLAGS += -std=c++17
+   
 
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
@@ -164,7 +165,7 @@ endif
    SHARED += $(MINVERSION)
    CFLAGS += $(MINVERSION)
    CXXFLAGS += $(MINVERSION)
-   CXXFLAGS += -std=c++17
+   
 
 else ifeq ($(platform), tvos-arm64)
    TARGET := $(TARGET_NAME)_libretro_tvos.dylib
@@ -184,7 +185,7 @@ else ifeq ($(platform), tvos-arm64)
    SHARED += $(MINVERSION)
    CFLAGS += $(MINVERSION)
    CXXFLAGS += $(MINVERSION)
-   CXXFLAGS += -std=c++17
+   
 # Theos
 else ifeq ($(platform), theos_ios)
 DEPLOYMENT_IOSVERSION = 5.0
