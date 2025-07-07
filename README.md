@@ -1,6 +1,6 @@
 ﻿## DoubleCherryGB
 
-<img src="/screenshots/logo.png" height="250">
+<img src="/assets/readme/header.png">
 
 
 
@@ -12,7 +12,6 @@
 > It emulates the GAMEBOY 4 PLAYER ADAPTER (DMG-07) and also adds 3-16 Player Link Hacks for two-player games.
 > It's named after the Double Cherry Item from Super Mario 3D World.
 
-Check my [website](https://timoelrichs.is-a.dev) for more information, planned features and compatibility list.
 
 <br>
 
@@ -65,11 +64,11 @@ Check my [website](https://timoelrichs.is-a.dev) for more information, planned f
 Netplay is working. Make sure to have all the same amount of emulated gameboys in your core options.
 
 
-![](/screenshots/F-1%20Race.png)
-![](/screenshots/SuperRC.png)
-![](/screenshots/TopRankTennis.png)
-![](/screenshots/YoshisCookie.png)
-![](/screenshots/WaveRace.png)
+![](/assets/readme/screenshots/F-1%20Race.png)
+![](/assets/readme/screenshots/SuperRC.png)
+![](/assets/readme/screenshots/TopRankTennis.png)
+![](/assets/readme/screenshots/YoshisCookie.png)
+![](/assets/readme/screenshots/WaveRace.png)
 
 <br>
 
@@ -98,7 +97,7 @@ It's already preconfigured. Leave emulated Gameboys at 1 and just visit the cabl
 Weekly Gen1 Pokemon Distribution List
 https://docs.google.com/spreadsheets/d/1SMcpTz_4Mwo1eVAKWB3AbaLHJNthkB5sKHlOPnQw2UI/edit?gid=0#gid=0
 
-<img src="/screenshots/gotMew.png">
+<img src="/assets/readme/screenshots/gotMew.png">
 
 <br>
 
@@ -200,7 +199,7 @@ All Barcode Cards are hardcoded. You can select different cards with the Numkeys
 These are devices, that came with the games **Keitai Denjuu Telefang** and **Network Adventure Bugsite**  and are plugged into the linkport. It's simply a led that flashes when, something special happens ingame.
 DoubleCherryGB uses the controller rumble and the retroarch led api to simulate the led flashing on an overlay.
 
-![](/screenshots/Bugsensor-overlay.gif)
+![](/assets/overlays/Bugsensor-overlay.gif)
 
 [Here](https://github.com/TimOelrichs/doublecherryGB-libretro/blob/master/overlays/gb-bugsensor.zip) is the example overlay i used over the mega-bezels gbc shader. But you can also make your own.
 
@@ -211,7 +210,9 @@ led1_map = "1"
 
 <br>
 
-If you like to support me
+## Support DoubleCherryGB
+I have tons of ideas—but not nearly enough time to bring them all to life. Your support helps me dedicate more time to development and make DoubleCherry the cherry on top of your retro gaming experience 🍒
+
 https://patreon.com/double_cherry_projects<br>
 https://www.buymeacoffee.com/timoelrichs<br>
 
@@ -221,10 +222,10 @@ Thanks to
 - Ninoh-Fox for his work on Koriki cfw
 - GIGO and Hii for making TGBDual and the libretro port
 
-![](/screenshots/Faceball%202000.png)
-![](/screenshots/Tetris.png)
-![](/screenshots/tetris_winner.png)
-![](/screenshots/Kwirk.png)
+![](/assets/readme/screenshots/Faceball%202000.png)
+![](/assets/readme/screenshots/Tetris.png)
+![](/assets/readme/screenshots/tetris_winner.png)
+![](/assets/readme/screenshots/Kwirk.png)
 
 Original sources from
 - https://github.com/libretro/tgbdual-libretro
