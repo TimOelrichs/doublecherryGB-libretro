@@ -24,7 +24,7 @@
   <br>
 
 ### Multiplayer
-- GAMEBOY 4 PLAYER ADAPTER (DMG-07) emulation (F1-Race, Wave Race, Yoshi's Cookie...) [compatibility list](https://peppermint-theater-276.notion.site/4-player-adapter-compatibility-8d33abe17f1d4bf5a361b368af6622b7)
+- GAMEBOY 4 PLAYER ADAPTER (DMG-07) emulation (F1-Race, Wave Race, Yoshi's Cookie...) 
 - up to 16-Player Faceball 2000 emulation (1-15 without bugfix-patch, 16 players needs [patched](https://github.com/Zarithya/Faceball2000DX) rom)
   
 - up to 16-Player Tetris Battle Royal Hack (virtual link device, no modified rom needed)
@@ -61,15 +61,6 @@
 - Retroarchivments support
 - Netplay
 
-Netplay is working. Make sure to have all the same amount of emulated gameboys in your core options.
-
-
-![](/assets/readme/screenshots/F-1%20Race.png)
-![](/assets/readme/screenshots/SuperRC.png)
-![](/assets/readme/screenshots/TopRankTennis.png)
-![](/assets/readme/screenshots/YoshisCookie.png)
-![](/assets/readme/screenshots/WaveRace.png)
-
 <br>
 
 ## How to
@@ -78,7 +69,6 @@ You can download the core via RetroArch Online-Updater on Windows, Linux, Androi
 For Android make sure to use the retroarch APK from retroarch.com and not the GooglePlay Version.
 
 For Multiplayer you have to increase the amount of emulated Gameboy in the core options in your frontend and reload.
-
 
 <br>
 
@@ -143,6 +133,20 @@ Have fun!
 
 <br>
 
+## 4-Player Adapter Emulation
+
+<img src="/assets/readme/4playeradapter.png">
+
+![](/assets/readme/screenshots/F-1%20Race.png)
+![](/assets/readme/screenshots/SuperRC.png)
+![](/assets/readme/screenshots/TopRankTennis.png)
+![](/assets/readme/screenshots/YoshisCookie.png)
+![](/assets/readme/screenshots/WaveRace.png)
+
+Netplay is working. Make sure to have all the same amount of emulated gameboys in your core options.
+
+[compatibility list](https://peppermint-theater-276.notion.site/4-player-adapter-compatibility-8d33abe17f1d4bf5a361b368af6622b7)
+
 ## Unreleased Alleyway Analog Controller
 
 <img src="/assets/readme/alleywaycontroller.png">
@@ -177,6 +181,8 @@ If you are playing on a handheld you can activate the "autorandom IR Signal" in 
 <br>
  
 ## BARCODE BOY
+
+<img src="/assets/readme/barcodeboy.png">
 
 The BARCODE BOY is a japan exclusive peripheral (See https://shonumi.github.io/articles/art7.html).
 
