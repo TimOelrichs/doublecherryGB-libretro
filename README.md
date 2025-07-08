@@ -178,6 +178,8 @@ If you are playing on a handheld you can activate the "autorandom IR Signal" in 
  
 ## BARCODE BOY
 
+<img src="/assets/readme/barcodeboy.png">
+
 The BARCODE BOY is a japan exclusive peripheral (See https://shonumi.github.io/articles/art7.html).
 
 The following games have support or even need the BARCODE BOY to be played:
