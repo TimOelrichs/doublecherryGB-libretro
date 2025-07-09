@@ -10,7 +10,7 @@ RUN apt-get update && \
 # === Stage: Miyoo Mini Toolchain (ARMv7) ===
 FROM base AS miyoo
 
-RUN wget -q https://github.com/MiyooMini/miyoo-toolchain/releases/download/v1.0/miyoo-toolchain-armv7h.tar.gz -O /tmp/miyoo-toolchain.tar.gz && \
+RUN wget -q https://github.com/MiyooMini/miyoo-toolchain/releases/download/v1.0/gcc-arm-8.2-2018.08-x86_64-arm-linux-gnueabihf.tar.gz -O /tmp/miyoo-toolchain.tar.gz && \
     mkdir -p /opt/miyoo && \
     tar -xzf /tmp/miyoo-toolchain.tar.gz -C /opt/miyoo --strip-components=1 && \
     rm /tmp/miyoo-toolchain.tar.gz
