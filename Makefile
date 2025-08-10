@@ -94,7 +94,15 @@ else ifeq ($(platform),$(filter $(platform),classic_armv7_a7 unix-armv7-hardfloa
 	  endif
 	endif
 #######################################
-   
+# Android
+else ifeq ($(platform), android)
+    TARGET := $(TARGET_NAME)_libretro_$(platform).so
+    DEFINES := -DANDROID
+    CFLAGS  := $(DEFINES) -O3 -fPIC
+    CFLAGS  += $(INCDIRS) -std=gnu11
+    CXXFLAGS := $(CFLAGS) -std=gnu++17
+    STATIC_LINKING = 0
+
 # OS X
 else ifeq ($(platform), osx)
    TARGET := $(TARGET_NAME)_libretro.dylib
@@ -215,7 +223,7 @@ else ifeq ($(platform), libnx)
                  -fPIE -I$(LIBNX)/include/ -ffunction-sections -fdata-sections -ftls-model=local-exec -Wl,--allow-multiple-definition -specs=$(LIBNX)/switch.specs
     CFLAGS += $(INCDIRS)
     CFLAGS	+=	-D__SWITCH__ -DHAVE_LIBNX -march=armv8-a -mtune=cortex-a57 -mtp=soft
-    CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fno-rtti -std=gnu++14
+    CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fno-rtti -std=gnu++17
     CFLAGS += -std=gnu11
     STATIC_LINKING = 1
 
