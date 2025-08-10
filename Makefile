@@ -1,4 +1,4 @@
-﻿DEBUG = 0
+DEBUG = 0
 
 ifeq ($(platform),)
 platform = unix
