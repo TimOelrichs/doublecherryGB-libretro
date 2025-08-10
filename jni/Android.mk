@@ -1,3 +1,4 @@
+﻿android.mk
 LOCAL_PATH := $(call my-dir)
 
 CORE_DIR := $(LOCAL_PATH)/..
@@ -13,7 +14,7 @@ endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE    := retro
-LOCAL_SRC_FILES := $(SOURCES_CXX) 
-LOCAL_CFLAGS    := $(COREFLAGS)
+LOCAL_SRC_FILES := $(SOURCES_CXX)
+LOCAL_CPPFLAGS  := $(COREFLAGS) -std=c++17
 LOCAL_LDFLAGS   := -Wl,-version-script=$(CORE_DIR)/libretro/link.T
 include $(BUILD_SHARED_LIBRARY)
