@@ -1,5 +1,4 @@
-﻿android.mk
-LOCAL_PATH := $(call my-dir)
+﻿LOCAL_PATH := $(call my-dir)
 
 CORE_DIR := $(LOCAL_PATH)/..
 
