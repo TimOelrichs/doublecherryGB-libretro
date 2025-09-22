@@ -38,38 +38,12 @@ lcd::lcd(gb* ref)
 {
 	ref_gb = ref;
 
-	//paletteManager.setPalette(GBPalettePreset::DMG_Classic);
-
-	for (int i = 0; i < 4; ++i) {
-		//TODO: Add Color Palette Support
-		//m_pal16[i] = paletteManager.mapPixel(i);
-		
-		uint32_t color = paletteManager.mapPixel(i);
-		m_pal32[i] = color;
-
-		uint16_t color555 = rgb888_to_rgb555(color);
-		m_pal16[i] = ref_gb->get_renderer()->map_color(color555);;
-		
-	};
-
-	/*
 	byte dat[] = { 31,21,11,0 };
 
 	for (int i = 0; i < 4; i++) {
 		m_pal16[i] = ref_gb->get_renderer()->map_color(dat[i] | (dat[i] << 5) | (dat[i] << 10));
 		m_pal32[i] = ((dat[i] << 16) | (dat[i] << 8) | dat[i]);
 	}
-	*/
-
-	/*
-	for (int i = 0; i < 16; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			mapped_pal[i][j] = (word)0x0000;
-			col_pal[i][j] = (word)0x0000;
-		}
-	}*/
 
 	reset();
 }

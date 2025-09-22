@@ -27,9 +27,7 @@
 
 */
 
-
 #include "./include/tv_remote.hpp"
-#pragma once
 #include "../../libretro/libretro.h"
 #include "./include/inline/inline_tv_remote_code.hpp"
 
