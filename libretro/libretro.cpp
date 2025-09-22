@@ -35,8 +35,10 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
+    check_variables();
 
-    int w = 160, h = 144;
+    //int w = 160, h = 144;
+    int w = 160 * gbc_rgbSubpixel_upscale_factor, h = 144 * gbc_rgbSubpixel_upscale_factor;
     info->geometry.max_width = w * max_gbs;
     info->geometry.max_height = h * max_gbs;
 

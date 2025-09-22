@@ -29,6 +29,7 @@
 #include "dmy_renderer.h"
 #include "../gb_core/gb.h"
 #include "libretro.h"
+#include "../Filter/Video/VideoFilter.hpp"
 
 extern std::vector<gb* > v_gb;
 extern int emulated_gbs;
@@ -42,6 +43,9 @@ extern bool gbc_lcd_interlacing_enabled;
 extern bool gbc_lcd_interfacing_fast;
 extern float gbc_lcd_interlacing_brightness;
 extern float light_temperature; 
+extern int gbc_rgbSubpixel_upscale_factor;
+extern int gb_dotMarix_upscale_factor;
+extern bool gbc_lcd_blur_effect_enabled;
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -430,12 +434,51 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     frame_buffer[i] = blended;        // Überschreibe buf sofort
                 }
 
-                video_cb(reinterpret_cast<byte*>(frame_buffer), width, height, pitch);
+
+                if(gb_dotMarix_upscale_factor == 1) {
+                    video_cb(buf, width, height, pitch);
+                    return;
+				}
+ 
+
+                const uint16_t* buffer = DmgDotMatrixUpscale(reinterpret_cast<const word*>(buf), gb_dotMarix_upscale_factor);
+                pitch = width * gb_dotMarix_upscale_factor * ((depth + 7) / 8);
+
+                video_cb(buffer, width * gb_dotMarix_upscale_factor, height * gb_dotMarix_upscale_factor, pitch);
                 break; 
             }
 
-            video_cb(buf, width, height, pitch);
-            break;
+
+
+            if (gbc_rgbSubpixel_upscale_factor == 1) {
+                video_cb(buf, width, height, pitch);
+                return;
+            }
+
+
+            const uint16_t* buffer = reinterpret_cast<const word*>(buf);
+
+            switch (gbc_rgbSubpixel_upscale_factor)
+            {
+            case 3:
+                buffer = toSubpixel3x3RGB565(buffer, width, height);
+                break;
+
+            case 6:
+                buffer = toSubpixelRGB6x6Bleed(buffer, width, height);
+                break;
+            default:
+                // Ensure all cases are handled, even if no specific action is required
+                break;
+            }
+
+            if (gbc_lcd_blur_effect_enabled) applyBlurRGB565(const_cast<uint16_t*>(buffer), width * gbc_rgbSubpixel_upscale_factor, height * gbc_rgbSubpixel_upscale_factor);
+
+            pitch = width * gbc_rgbSubpixel_upscale_factor * ((depth + 7) / 8);
+
+            video_cb(buffer, width * gbc_rgbSubpixel_upscale_factor, height * gbc_rgbSubpixel_upscale_factor, pitch);
+
+            return;
       
         }
         case 2:
