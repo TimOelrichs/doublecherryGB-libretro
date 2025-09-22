@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../dcgb_hotkey_target.hpp"
 
 #define RETRO_MEMORY_GAMEBOY_1_SRAM ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
@@ -141,6 +141,9 @@ bool extra_inputpolling_enabled = false;
 int extra_inputpolling_interval = 5;
 
 bool is_gbc_rom = false; 
+int gbc_rgbSubpixel_upscale_factor = 1;
+int gb_dotMarix_upscale_factor = 1;
+bool gbc_lcd_blur_effect_enabled = false;
 bool gbc_color_correction_enabled = true; 
 bool gbc_lcd_interlacing_enabled = false; 
 bool gbc_lcd_interfacing_fast = true; 

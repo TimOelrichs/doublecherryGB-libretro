@@ -550,6 +550,54 @@ static void check_variables(void)
    
     }
 
+
+    var.key = "dcgb_gbc_RGB_SubPixel_Simulation";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        gbc_rgbSubpixel_upscale_factor = value;
+
+        int screenw = 160 * gbc_rgbSubpixel_upscale_factor;
+        int screenh = 144 * gbc_rgbSubpixel_upscale_factor;
+        my_av_info->geometry.base_width = screenw;
+        my_av_info->geometry.base_height = screenh;
+        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+
+
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+
+    }
+
+   
+
+    var.key = "dcgb_gb_dotmatrix_upscale";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        gb_dotMarix_upscale_factor = value;
+
+        int screenw = 160 * gb_dotMarix_upscale_factor;
+        int screenh = 144 * gb_dotMarix_upscale_factor;
+        my_av_info->geometry.base_width = screenw;
+        my_av_info->geometry.base_height = screenh;
+        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+
+
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+
+    }
+
+    var.key = "dcgb_gbc_LCD_blur";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        gbc_lcd_blur_effect_enabled = (bool)value;
+
+    }
+
     var.key = "dcgb_light_temperature";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

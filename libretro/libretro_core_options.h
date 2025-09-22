@@ -1,11 +1,16 @@
-#include <libretro.h>
+﻿#include <libretro.h>
 
 struct retro_core_option_v2_category option_cats_us[] = {
 
       {
+	  "DotMatrixGrid",
+	  "Game Boy LCD",
+      "Game Boy DotMatrix Simulation settings"
+      },
+      {
       "LCD",
-      "LCD Simulation",
-      "LCD settings"
+      "Game Boy Color LCD",
+      "Game Boy Color LCD Simulation settings"
       },
        {
       "Input",
@@ -34,11 +39,11 @@ static struct retro_core_option_v2_definition core_options_us[] = {
     //********************LCD OPTIONS START*********************************
    {
       "dcgb_gb_lcd_ghosting",
-      "GB LCD Ghosting",
+      "Game Boy LCD Ghosting",
       NULL,
-      "Simulates the ghosting effect of the LCDP from the Orignal Gameboy",
+      "Simulates the ghosting effect of the DotMatrix LCD from the Orignal Gameboy",
       NULL,
-      "LCD",
+      "DotMatrixGrid",
       {
           {"On", NULL},
           {"Off", NULL},
@@ -46,6 +51,24 @@ static struct retro_core_option_v2_definition core_options_us[] = {
 
       },
       "On",
+   },
+     {
+      "dcgb_gb_dotmatrix_upscale",
+      "Game Boy DotMatrix Grid",
+      NULL,
+      "Simulates the DotMatrix Grid from the Orignal Gameboy",
+      NULL,
+      "DotMatrixGrid",
+      {
+          {"1", "Off"},
+          {"3", "x3 (480p)"},
+          {"4", "x4 (640p)"},
+          {"5", "x5 (800p)"},
+          {"6", "x6 (960p)"},
+          {NULL, NULL}
+
+      },
+      "1",
    },
     {
      "dcgb_gbc_lcdcolor_correction",
@@ -83,10 +106,14 @@ static struct retro_core_option_v2_definition core_options_us[] = {
      "dcgb_gbc_lcd_interlacing_brightnesss",
      "GBC LCD Interlacing Brightnesss difference",
       NULL,
-      "Without shader leave this to 5, with a shader you might choose a higher value, to see the effect",
+      "Without shader leave this low, with a shader you might choose a higher value, to see the effect",
       NULL,
       "LCD",
       {
+          {"1", NULL},
+          {"2", NULL},
+          {"3", NULL},
+          {"4", NULL},
           {"5", NULL},
           {"10", NULL},
           {"15", NULL},
@@ -100,8 +127,38 @@ static struct retro_core_option_v2_definition core_options_us[] = {
           {NULL, NULL}
 
       },
-      "5",
+      "2",
     },
+       {
+      "dcgb_gbc_RGB_SubPixel_Simulation",
+      "GBC LCD RGB Subpixel Simulation Scale Factor",
+      NULL,
+      "Simulates the the GBC RGB Subpixels, by upscaling and replacing each color Pixel with one pixel for it's RGB Value.\n\nFor best result: \n- enable Integer Scaling (Settings/Video/Scaling)\n- you might need to restart the core, after changing this setting " ,
+      NULL,
+      "LCD",
+      {
+          {"1", "Off"},
+          {"3", "x3 (480p)"},
+          {"6", "x6 (960p)"},
+          {NULL, NULL}
+
+      },
+      "1",
+       },
+              {
+      "dcgb_gbc_LCD_blur",
+      "GBC LCD Blur",
+      NULL,
+      "Apply Blur Effect, this is very cpu cost-intensive. Leave to this Off, on weaker Hardware. Or try Shaders if possible" ,
+      NULL,
+      "LCD",
+      {
+          {"0", "Off"},
+          {"1", "On"},
+          {NULL, NULL}
+      },
+      "0",
+             },
  {
         "dcgb_light_temperature",
         "Video - Ambient Light Temperature",
