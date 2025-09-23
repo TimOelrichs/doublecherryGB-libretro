@@ -56,7 +56,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
       "dcgb_gb_dotmatrix_upscale",
       "Game Boy DotMatrix Grid",
       NULL,
-      "Simulates the DotMatrix Grid from the Orignal Gameboy",
+      "Simulates the DotMatrix Grid from the Orignal Gameboy.\nMeant for Hardware without GPU and Shader support. If possible, prefer shaders.",
       NULL,
       "DotMatrixGrid",
       {
@@ -201,7 +201,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
      "dcgb_input_polling_rate",
      "Input Polling Rate (Hz)",
       NULL,
-      "Increased Inputpolling rate for better Inpit reactivty",
+      "Increased Inputpolling rate for better Inpit reactivty. \nCan improve input reactivity for jump and runs, but might feel to reactivate for some other games.",
       NULL,
       "Input",
       {
