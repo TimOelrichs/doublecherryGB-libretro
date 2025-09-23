@@ -149,6 +149,8 @@ bool gbc_lcd_interlacing_enabled = false;
 bool gbc_lcd_interfacing_fast = true; 
 float gbc_lcd_interlacing_brightness = 1.05f;
 float light_temperature = 0.0f; 
+bool useGbcLCDforDmG = false;
+bool useDmgGhosting = true; 
 
 enum color_correction_mode gbc_cc_mode = GAMBATTE_SIMPLE;
 

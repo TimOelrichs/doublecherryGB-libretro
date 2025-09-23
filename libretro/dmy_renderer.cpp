@@ -46,6 +46,7 @@ extern float light_temperature;
 extern int gbc_rgbSubpixel_upscale_factor;
 extern int gb_dotMarix_upscale_factor;
 extern bool gbc_lcd_blur_effect_enabled;
+extern bool useDmgGhosting;
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -69,6 +70,8 @@ extern int _show_player_screen; // 0 = p1 only, 1 = p2 only, 2 = both players
 
 std::array<word, GRADIENT_STEPS> blended_palette;
 
+
+extern bool useGbcLCDforDmG;
 
 static inline void temperature_tint(double temperature, double* r, double* g, double* b)
 {
@@ -416,14 +419,9 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
         {
         case 1: {
 
-            //experimental GBC LCD interlacing effect
-            if (is_gbc_rom && gbc_lcd_interlacing_enabled)
-            {
-                add_gbc_interlacing_effect(buf, width, height, pitch);
-            }
+			//DMG Ghosting Effect
+            if (!is_gbc_rom && useDmgGhosting) {
 
-            if (!is_gbc_rom)
-            {
                 //DMG Ghosting Effect
                 // Cast buf to 16-bit to work with 16-bit color values
                 word* frame_buffer = reinterpret_cast<word*>(buf);
@@ -433,14 +431,24 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     last_frame[i] = frame_buffer[i]; // Update last_frame direkt
                     frame_buffer[i] = blended;        // Überschreibe buf sofort
                 }
+            }
 
+			//GBC Interlacing Effect
+            if ((is_gbc_rom || useGbcLCDforDmG) && gbc_lcd_interlacing_enabled)
+            {
+                add_gbc_interlacing_effect(buf, width, height, pitch);
+            }
+
+
+            //Render DMG
+            if (!is_gbc_rom && !useGbcLCDforDmG)
+            {
 
                 if(gb_dotMarix_upscale_factor == 1) {
                     video_cb(buf, width, height, pitch);
                     return;
 				}
  
-
                 const uint16_t* buffer = DmgDotMatrixUpscale(reinterpret_cast<const word*>(buf), gb_dotMarix_upscale_factor);
                 pitch = width * gb_dotMarix_upscale_factor * ((depth + 7) / 8);
 
@@ -449,7 +457,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
             }
 
 
-
+			//Render GBC
             if (gbc_rgbSubpixel_upscale_factor == 1) {
                 video_cb(buf, width, height, pitch);
                 return;

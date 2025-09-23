@@ -45,12 +45,12 @@ static struct retro_core_option_v2_definition core_options_us[] = {
       NULL,
       "DotMatrixGrid",
       {
-          {"On", NULL},
-          {"Off", NULL},
+          {"0", "Off"},
+          {"1", "On"},
           {NULL, NULL}
 
       },
-      "On",
+      "1",
    },
      {
       "dcgb_gb_dotmatrix_upscale",
@@ -69,6 +69,21 @@ static struct retro_core_option_v2_definition core_options_us[] = {
 
       },
       "1",
+   },
+         {
+      "dcgb_gb_use_gbc_lcd",
+      "Use Game Boy Color LCD instead of DotMatrix",
+      NULL,
+      "Use Game Boy Color LCD instead of DotMatrix. Will Use the Game Boy Color LCD Settings",
+      NULL,
+      "DotMatrixGrid",
+      {
+          {"0", "Off"},
+          {"1", "On"},
+          {NULL, NULL}
+
+      },
+      "0",
    },
     {
      "dcgb_gbc_lcdcolor_correction",
@@ -201,7 +216,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
      "dcgb_input_polling_rate",
      "Input Polling Rate (Hz)",
       NULL,
-      "Increased Inputpolling rate for better Inpit reactivty. \nCan improve input reactivity for jump and runs, but might feel to reactivate for some other games.",
+      "Increased Inputpolling rate for better Input reactivty. \nCan improve input reactivity for some games, but might feel to reactivate for some other games.",
       NULL,
       "Input",
       {

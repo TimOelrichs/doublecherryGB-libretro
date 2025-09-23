@@ -598,6 +598,27 @@ static void check_variables(void)
 
     }
 
+    var.key = "dcgb_gb_use_gbc_lcd";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        useGbcLCDforDmG = (bool)value;
+
+    }
+
+    
+    var.key = "dcgb_gb_lcd_ghosting";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        useDmgGhosting = (bool)value;
+
+    }
+
+
+
     var.key = "dcgb_light_temperature";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
