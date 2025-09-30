@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "../../gb.h"
 #include "./sio_devices.hpp"
 #include <time.h>
 
 
-class LinkCableHUB : public I_linkcable_target {
+class LinkCableHUB final : public I_linkcable_target {
 
 public:
 	LinkCableHUB();

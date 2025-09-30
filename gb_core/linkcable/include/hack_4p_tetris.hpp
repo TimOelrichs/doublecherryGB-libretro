@@ -1,4 +1,4 @@
-#include "link_master_device.hpp"
+﻿#include "link_master_device.hpp"
 
 enum hack_4p_tetris_state
 {
@@ -85,7 +85,7 @@ struct hack_4p_tetris_mem_state {
 };
 */
 
-class hack_4p_tetris : public link_master_device {
+class hack_4p_tetris final : public link_master_device {
 
 	friend class cpu;
 public:

@@ -40,7 +40,7 @@ struct dmg07_mem_state_size {
 
 };
 
-class dmg07 : public link_master_device {
+class dmg07 final : public link_master_device {
 
 	friend class cpu;
 public:

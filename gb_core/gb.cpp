@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -92,7 +92,7 @@ void gb::reset()
 	skip=skip_buf=0;
 	re_render=0;
 
-	if (use_gba) this->get_cpu()->get_regs()->BC.b.l = 0x01;
+	//if (use_gba) this->get_cpu()->get_regs()->BC.b.l = 0x01;
 
 	
 }

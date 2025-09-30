@@ -1,6 +1,6 @@
-#include "../../gb.h"
+﻿#include "../../gb.h"
 
-class faceball2000_cable : public I_linkcable_target {
+class faceball2000_cable final : public I_linkcable_target {
 
 public:
 	faceball2000_cable(std::vector<gb*> g_gb);

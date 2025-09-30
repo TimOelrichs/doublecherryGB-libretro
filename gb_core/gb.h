@@ -56,9 +56,9 @@ class mbc;
 class cheat;
 
 enum color_correction_mode {
-	OFF,
-	GAMBATTE_SIMPLE,
-	GAMBATTE_ACCURATE
+	OFF = 0,
+	GAMBATTE_SIMPLE = 1,
+	GAMBATTE_ACCURATE = 2
 };
 
 
@@ -258,7 +258,7 @@ public:
 };
 
 
-class gb : public I_linkcable_target, public I_linkcable_sender, public I_ir_target, public I_ir_sender
+class gb final : public I_linkcable_target, public I_linkcable_sender, public I_ir_target, public I_ir_sender
 {
 friend class cpu;
 friend class I_linkcable_target; 

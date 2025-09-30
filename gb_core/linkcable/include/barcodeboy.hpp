@@ -1,4 +1,4 @@
-
+﻿
 
 #include "link_master_device.hpp"
 #include <string>
@@ -6,7 +6,7 @@
 #pragma once
 #include "../../../libretro/dcgb_hotkey_target.hpp"
 
-class barcodeboy :  public I_linkcable_target,
+class barcodeboy final :  public I_linkcable_target,
 					public link_master_device, 
 					public I_dcgb_hotkey_target
 

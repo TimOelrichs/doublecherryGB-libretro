@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator - 4Players (based on TGBDual)
    Copyright (C) 2023  Tim Oelrichs
@@ -38,7 +38,7 @@ enum pkm_generation {
 };
 
 
-class pokebuddy_gen1 : public I_linkcable_target, public I_dcgb_hotkey_target, public I_savestate {
+class pokebuddy_gen1 final : public I_linkcable_target, public I_dcgb_hotkey_target, public I_savestate {
 
 public:
 	pokebuddy_gen1(std::vector<gb*> gbs);

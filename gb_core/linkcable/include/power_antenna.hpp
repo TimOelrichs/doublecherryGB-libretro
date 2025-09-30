@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
    Copyright (C) 2023  Tim Oelrichs
@@ -25,7 +25,7 @@
 
 extern bool power_antenna_on;
 
-class power_antenna : public I_linkcable_target {
+class power_antenna final : public I_linkcable_target {
 
 public:
 	power_antenna() {};

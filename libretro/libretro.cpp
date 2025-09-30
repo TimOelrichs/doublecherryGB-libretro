@@ -37,67 +37,46 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
     check_variables();
 
-    //int w = 160, h = 144;
-    int w = 160 * gbc_rgbSubpixel_upscale_factor, h = 144 * gbc_rgbSubpixel_upscale_factor;
-    info->geometry.max_width = w * max_gbs;
-    info->geometry.max_height = h * max_gbs;
 
-    if (_show_player_screen == emulated_gbs) {
+    int base_w = 160 * gbc_rgbSubpixel_upscale_factor;
+    int base_h = 144 * gbc_rgbSubpixel_upscale_factor;
 
-        if (_screen_4p_split)
-        {
+   
+    int screen_count = 1;
+    if (_show_player_screen == emulated_gbs)
+        screen_count = emulated_gbs;
+    else if (_number_of_local_screens > 1)
+        screen_count = _number_of_local_screens;
 
-            if (emulated_gbs <= 4)
-            {
-                h *= 2;
-                w *= 2;
-            }
-            else if (emulated_gbs <= 9)
-            {
-                h *= 3;
-                w *= 3;
-            }
-            else
-            {
-                h *= 4;
-                w *= 4;
-            }
+   
+    auto split_factor = [](int n) {
+        if (n <= 1) return 1;
+        if (n <= 4) return 2;
+        if (n <= 9) return 3;
+        return 4;
+        };
 
+    int w = base_w;
+    int h = base_h;
+
+    if (screen_count > 1) {
+        if (_screen_4p_split && screen_count > 2) {
+            int f = split_factor(screen_count);
+            w *= f;
+            h *= f;
         }
-        else if (_screen_vertical)
-            h *= emulated_gbs;
-        else
-            w *= emulated_gbs;
+        else if (_screen_vertical) {
+            h *= screen_count;
+        }
+        else {
+            w *= screen_count;
+        }
     }
 
-    else if (_number_of_local_screens > 1) { 
-        if (_screen_4p_split && _number_of_local_screens > 2)
-        {
+    // Geometriegrenzen setzen
+    info->geometry.max_width = base_w * max_gbs;
+    info->geometry.max_height = base_h * max_gbs;
 
-            if (_number_of_local_screens <= 4)
-            {
-                h *= 2;
-                w *= 2;
-            }
-            else if (_number_of_local_screens <= 9)
-            {
-                h *= 3;
-                w *= 3;
-            }
-            else
-            {
-                h *= 4;
-                w *= 4;
-            }
-
-        }
-        else if (_screen_vertical)
-            h *= _number_of_local_screens;
-        else
-            w *= _number_of_local_screens;
-    }
-      
- 
     info->timing.fps = 4194304.0 / 70224.0;
     info->timing.sample_rate = 44100.0f;
     info->geometry.base_width = w;
@@ -152,84 +131,57 @@ void retro_deinit(void)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-    size_t rom_size;
-    byte *rom_data;
-    const struct retro_game_info_ext *info_ext = NULL;
-    // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars_single);
-    // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars_quad);
-    check_variables();
+    size_t rom_size = 0;
+    byte* rom_data = nullptr;
+    const retro_game_info_ext* info_ext = nullptr;
 
     mode = MODE_SINGLE_GAME;
-
-    unsigned i;
-
-    
-    if (!info)
-        return false;
-
     v_gb.clear();
     render.clear();
 
     environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, input_desc);
 
-    /*
-    switch (emulated_gbs)
-    {
-    case 1:
-        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_single);
-        break;
-    case 2:
-        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_dual);
-        break;
-    case 3:
-        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_tripple);
-        break;
-    case 4:
-        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
-        break;
-    }
-*/
+   
     if (environ_cb(RETRO_ENVIRONMENT_GET_GAME_INFO_EXT, &info_ext) &&
         info_ext->persistent_data)
     {
-        rom_data = (byte *)info_ext->data;
+        rom_data = (byte*)info_ext->data;
         rom_size = info_ext->size;
         libretro_supports_persistent_buffer = true;
     }
-    else
-    {
-        rom_data = (byte *)info->data;
+    else {
+        rom_data = (byte*)info->data;
         rom_size = info->size;
     }
 
-    //create gameboy instances
-    for (byte i = 0; i < max_gbs; i++)
-    {
-        
-        render.push_back(new dmy_renderer(i));
-        v_gb.push_back(new gb(render[i], true, true));
+
+    v_gb.reserve(max_gbs);
+    render.reserve(max_gbs);
+
+ 
+    for (byte i = 0; i < max_gbs; i++) {
+        auto r = new dmy_renderer(i);
+        auto g = new gb(r, true, true);
+
         _serialize_size[i] = 0;
+        if (!g->load_rom(rom_data, rom_size, nullptr, 0, libretro_supports_persistent_buffer))
+            return false;
+
+        render.push_back(std::move(r));
+        v_gb.push_back(std::move(g));
     }
 
-    //load roms
-    for (byte i = 0; i < max_gbs; i++)
-    {
-            if (!v_gb[i]->load_rom(rom_data, rom_size, NULL, 0,libretro_supports_persistent_buffer))
-                return false;
-       
-        //v_gb[i]->set_use_gba(detect_gba);
-    }
-
-    //set cart name for autoconfig
+    // Cartridge-Infos
     set_cart_name(rom_data);
     is_gbc_rom = v_gb[0]->get_rom()->get_info()->gb_type == 3;
 
+    // Multiplayer-Setup
     auto_link_multiplayer();
-
     check_variables();
     set_memory_maps();
 
-    if (master_link) v_serializable_devices.push_back(master_link);
+    if (master_link)
+        v_serializable_devices.push_back(master_link);
 
    return true;
 }

@@ -1,7 +1,7 @@
-#include "link_master_device.hpp"
+﻿#include "link_master_device.hpp"
 #include "dmg07.hpp"
 
-class dmg07x4 : public link_master_device {
+class dmg07x4 final : public link_master_device {
 
 public:
 	dmg07x4(std::vector<gb*> v_gb, int players);

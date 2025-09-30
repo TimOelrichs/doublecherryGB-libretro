@@ -152,7 +152,7 @@ float light_temperature = 0.0f;
 bool useGbcLCDforDmG = false;
 bool useDmgGhosting = true; 
 
-enum color_correction_mode gbc_cc_mode = GAMBATTE_SIMPLE;
+enum color_correction_mode gbc_cc_mode = GAMBATTE_ACCURATE;
 
 
 

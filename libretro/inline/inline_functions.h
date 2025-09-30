@@ -450,43 +450,39 @@ void performExtraInputPoll() {
 
 static void update_multiplayer_geometry() {
 
-    int screenw = 160, screenh = 144;
+    int base_w = 160;
+    int base_h = 144;
+
+    int screenw = base_w;
+    int screenh = base_h;
+
+    auto split_factor = [](int n) {
+        if (n < 5)  return 2;
+        if (n < 10) return 3;
+        return 4;
+        };
 
     if (_screen_4p_split && (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)) {
-
-        if (emulated_gbs < 5) {
-            screenw *= 2;
-            screenh *= 2;
-        }
-        else if (emulated_gbs < 10) {
-            screenw *= 3;
-            screenh *= 3;
-        }
-        else {
-            screenw *= 4;
-            screenh *= 4;
-        }
-
+        int f = split_factor(emulated_gbs);
+        screenw *= f;
+        screenh *= f;
     }
-    else if (emulated_gbs > 1 && _show_player_screen == 2 && _number_of_local_screens == 1)
-    {
+    else if (emulated_gbs > 1 && _show_player_screen == 2 && _number_of_local_screens == 1) {
         if (_screen_vertical)
             screenh *= emulated_gbs;
         else
             screenw *= emulated_gbs;
     }
-    else if (_number_of_local_screens > 1)
-    {
+    else if (_number_of_local_screens > 1) {
         if (_screen_vertical)
             screenh *= _number_of_local_screens;
         else
             screenw *= _number_of_local_screens;
     }
 
-
     my_av_info->geometry.base_width = screenw;
     my_av_info->geometry.base_height = screenh;
-    my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+    my_av_info->geometry.aspect_ratio = static_cast<float>(screenw) / screenh;
 
     already_checked_options = true;
     environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
@@ -502,28 +498,15 @@ static void check_variables(void)
     struct retro_variable var;
 
    // { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off" },
-    var.key = "dcgb_gbc_color_correction";
+    var.key = "dcgb_gbc_lcdcolor_correction";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        if (!strcmp(var.value, "Off")) {
-            gbc_color_correction_enabled = false;
-            gbc_cc_mode = OFF;
-        }
-        else gbc_color_correction_enabled = true;
-     
-        if (!strcmp(var.value, "Simple"))
-            gbc_cc_mode = GAMBATTE_SIMPLE;
 
-        if (!strcmp(var.value, "Accurate"))
-            gbc_cc_mode = GAMBATTE_ACCURATE;
-
-        for (size_t i = 0; i < emulated_gbs; i++)
-        {
-            //v_gb[i]->refresh_pal();
-        }
-       
-           
+        int value = atoi(var.value);
+        gbc_color_correction_enabled = (bool)value;
+		gbc_cc_mode = (color_correction_mode)value;
+    
     }
 
     //{ "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear" },

@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator - 4Players (based on TGBDual)
    Copyright (C) 2023  Tim Oelrichs
@@ -26,7 +26,7 @@
 
 extern bool logging_allowed; 
 
-class hack_4p_kwirk : public I_linkcable_target {
+class hack_4p_kwirk final : public I_linkcable_target {
 
 public:
 	hack_4p_kwirk(std::vector<gb*> g_gb);
