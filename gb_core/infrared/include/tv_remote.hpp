@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../../gb.h"
 #include "../../../libretro/dcgb_hotkey_target.hpp"
 
@@ -18,7 +18,7 @@ enum tv_remote_protocol {
 	ITT
 };
 
-class tv_remote : public I_ir_master_device, public I_dcgb_hotkey_target
+class tv_remote final : public I_ir_master_device, public I_dcgb_hotkey_target
 {
 
 public:

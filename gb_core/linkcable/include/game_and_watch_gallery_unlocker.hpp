@@ -1,6 +1,6 @@
-#include "../../gb.h"
+﻿#include "../../gb.h"
 
-class game_and_watch_gallery_unlocker : public I_linkcable_target {
+class game_and_watch_gallery_unlocker final : public I_linkcable_target {
 
 public:
 	game_and_watch_gallery_unlocker(std::vector<gb*> g_gb);

@@ -1,4 +1,4 @@
-#include "link_master_device.hpp"
+﻿#include "link_master_device.hpp"
 
 enum hack_4p_burger_time_deluxe_game_state
 {
@@ -10,7 +10,7 @@ enum hack_4p_burger_time_deluxe_game_state
 	BURGERTIME_START_NEXT
 };
 
-class hack_4p_burger_time_deluxe : public link_master_device {
+class hack_4p_burger_time_deluxe final : public link_master_device {
 
 	friend class cpu;
 public:
@@ -51,7 +51,7 @@ private:
 	hack_4p_burger_time_deluxe_game_state game_state;
 
 
-	// Geerbt �ber link_master_device
+	// Geerbt über link_master_device
 	void save_state_mem(void* buf) override;
 
 	void restore_state_mem(void* buf) override;

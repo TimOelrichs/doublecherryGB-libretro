@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../../gb.h"
 #include "../../../libretro/dcgb_hotkey_target.hpp"
 
@@ -11,7 +11,7 @@
 
 
 
-class full_changer : public I_ir_master_device, public I_dcgb_hotkey_target
+class full_changer final : public I_ir_master_device, public I_dcgb_hotkey_target
 {
 
 public:

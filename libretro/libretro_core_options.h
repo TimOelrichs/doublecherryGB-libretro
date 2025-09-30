@@ -93,13 +93,13 @@ static struct retro_core_option_v2_definition core_options_us[] = {
       NULL,
       "LCD",
       {
-          {"Off", NULL},
-          {"Gambatte Simple", NULL},
-          {"Gambatte Accurate", NULL},
+          {"0", "Off"},
+          {"1", "Simple"},
+          {"2", "Accurate"},
           {NULL, NULL}
 
       },
-      "Gambatte Accurate",
+      "2",
    },
       {
      "dcgb_gbc_lcd_interlacing",

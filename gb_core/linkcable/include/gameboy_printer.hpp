@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../../gb.h"
 #include "services/printer/include/printer_registry.hpp"
 
@@ -17,7 +17,7 @@ enum printer_state
 extern void display_message(std::string msg_str);
 
 
-class gameboy_printer : public I_linkcable_target
+class gameboy_printer final : public I_linkcable_target
 	
 {
 

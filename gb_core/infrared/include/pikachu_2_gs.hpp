@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../../gb.h"
 #include <vector>
 
@@ -19,7 +19,7 @@ enum pikachu_2_gs_state {
 
 };
 
-class pikachu_2_gs : public I_ir_target, public I_ir_master_device 
+class pikachu_2_gs final : public I_ir_target, public I_ir_master_device 
 {
 
 public:
@@ -30,7 +30,7 @@ public:
 	void send_ir_signal(ir_signal* signal) override;
 	void process_ir() override;
 
-	// Geerbt �ber I_ir_target
+	// Geerbt über I_ir_target
 	dword* get_rp_que() override;
 
 	void reset() override;

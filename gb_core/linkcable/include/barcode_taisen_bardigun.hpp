@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
    Barcode Taisen Bardigun Emulation
@@ -32,7 +32,7 @@
 #include <iostream>
 #include <fstream>
 
-class barcode_taisen_bardigun : public I_linkcable_target, public I_dcgb_hotkey_target {
+class barcode_taisen_bardigun final : public I_linkcable_target, public I_dcgb_hotkey_target {
 
 public:
 	barcode_taisen_bardigun();

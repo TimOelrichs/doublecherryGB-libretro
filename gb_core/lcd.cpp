@@ -27,6 +27,49 @@
                              | (((var)<<(bits))&0xff) \
                              | ((var) >> (8-(bits))))
 
+
+// Helper: expand 16-bit tile line (bitplanes) into 8 2-bit palette indices (0..3).
+// Two implementations: bitops (fast, no memory) or LUT (faster at cost of memory).
+// Choose LUT by defining USE_EXPAND_LUT.
+
+#ifdef USE_EXPAND_LUT
+// 65536 entries * 8 bytes = 512 KB -> trade memory for speed
+static uint8_t expand_lut[65536][8];
+static std::once_flag expand_lut_init_flag;
+
+static void build_expand_lut() {
+	for (uint32_t v = 0; v < 65536; ++v) {
+		uint16_t tmp = (uint16_t)v;
+		// original mapping attempt: high and low bitplanes
+		uint8_t a = tmp & 0xFF;
+		uint8_t b = (tmp >> 8) & 0xFF;
+		for (int px = 0; px < 8; ++px) {
+			// bit position: a bit 7->0 for plane0, b bit 7->0 for plane1 (match original packing)
+			uint8_t bit0 = (a >> (7 - px)) & 1;
+			uint8_t bit1 = (b >> (7 - px)) & 1;
+			expand_lut[v][px] = (bit1 << 1) | bit0; // combined 2-bit index
+		}
+	}
+}
+#endif
+
+static inline void expand_tmpdat_to_pixels(uint16_t tmp_dat, uint8_t out[8]) {
+#ifdef USE_EXPAND_LUT
+	std::call_once(expand_lut_init_flag, build_expand_lut);
+	memcpy(out, expand_lut[tmp_dat], 8);
+#else
+	// Bitops version (no LUT): extract bits
+	uint8_t low = tmp_dat & 0xFF;
+	uint8_t high = (tmp_dat >> 8) & 0xFF;
+	// out[0]..out[7]
+	for (int px = 0; px < 8; ++px) {
+		uint8_t b0 = (low >> (7 - px)) & 1;
+		uint8_t b1 = (high >> (7 - px)) & 1;
+		out[px] = (b1 << 1) | b0;
+	}
+#endif
+}
+
 inline uint16_t rgb888_to_rgb555(uint32_t rgb888) {
 	uint8_t r = (rgb888 >> 16) & 0xFF;
 	uint8_t g = (rgb888 >> 8) & 0xFF;
@@ -266,6 +309,7 @@ void lcd::win_render(void *buf,int scanline)
 	}
 }
 
+/*
 void lcd::sprite_render(void *buf,int scanline)
 {
 	if (!(ref_gb->get_regs()->LCDC&0x80)||!(ref_gb->get_regs()->LCDC&0x02))
@@ -290,6 +334,8 @@ void lcd::sprite_render(void *buf,int scanline)
 	pal[1][2]=m_pal16[(ref_gb->get_regs()->OBP2>>4)&0x3];
 	pal[1][3]=m_pal16[(ref_gb->get_regs()->OBP2>>6)&0x3];
 
+
+	
 	for (i=39;i>=0;i--){
 		tile=oam[i*4+2];
 		atr=oam[i*4+3];
@@ -381,6 +427,145 @@ void lcd::sprite_render(void *buf,int scanline)
 				if ((l1>>2)&3) *(now_pos+5)=cur_p[(l1>>2)&3];
 				if (l2&3) *(now_pos+6)=cur_p[l2&3];
 				if (l1&3) *(now_pos+7)=cur_p[l1&3];
+			}
+		}
+	}
+	
+}
+*/
+
+void lcd::sprite_render(void* buf, int scanline)
+{
+	if (!(ref_gb->get_regs()->LCDC & 0x80) || !(ref_gb->get_regs()->LCDC & 0x02))
+		return;
+
+	word* sdat = ((word*)buf) + (scanline) * 160;
+	byte* oam = ref_gb->get_cpu()->get_oam(), * vram = ref_gb->get_cpu()->get_vram();
+	bool sp_size = (ref_gb->get_regs()->LCDC & 0x04) ? true : false;
+
+	// Palette setup
+	word pal[2][4];
+	pal[0][0] = m_pal16[ref_gb->get_regs()->OBP1 & 0x3];
+	pal[0][1] = m_pal16[(ref_gb->get_regs()->OBP1 >> 2) & 0x3];
+	pal[0][2] = m_pal16[(ref_gb->get_regs()->OBP1 >> 4) & 0x3];
+	pal[0][3] = m_pal16[(ref_gb->get_regs()->OBP1 >> 6) & 0x3];
+
+	pal[1][0] = m_pal16[ref_gb->get_regs()->OBP2 & 0x3];
+	pal[1][1] = m_pal16[(ref_gb->get_regs()->OBP2 >> 2) & 0x3];
+	pal[1][2] = m_pal16[(ref_gb->get_regs()->OBP2 >> 4) & 0x3];
+	pal[1][3] = m_pal16[(ref_gb->get_regs()->OBP2 >> 6) & 0x3];
+
+	for (int i = 39; i >= 0; i--) {
+		int oam_offset = i * 4;
+		int tile = oam[oam_offset + 2];
+		int atr = oam[oam_offset + 3];
+		int palnum = (atr >> 4) & 1;
+		word* cur_p = pal[palnum];
+
+		int x, y, now;
+		word tmp_dat;
+
+		if (sp_size) { // 8*16
+			y = oam[oam_offset] - 1;
+			x = oam[oam_offset + 1] - 8;
+			if ((x == -8 && y == -16) || x > 160 || y > 144 + 15 || (y < scanline) || (y > scanline + 15))
+				continue;
+
+			now = (atr & 0x40) ? ((y - scanline) & 7) : ((7 - (y - scanline)) & 7);
+			int tile_base = (tile & 0xfe) * 16 + now * 2;
+
+			if (scanline - y + 15 < 8) { //上半分
+				tmp_dat = *(word*)(vram + tile_base + ((atr & 0x40) ? 16 : 0));
+			}
+			else { // 下半分
+				tmp_dat = *(word*)(vram + tile_base + ((atr & 0x40) ? 0 : 16));
+			}
+		}
+		else { // 8*8
+			y = oam[oam_offset] - 9;
+			x = oam[oam_offset + 1] - 8;
+			if ((x == -8 && y == -16) || (x > 160) || (y > 144 + 7) || (y < scanline) || (y > scanline + 7))
+				continue;
+
+			now = (atr & 0x40) ? ((y - scanline) & 7) : ((7 - (y - scanline)) & 7);
+			tmp_dat = *(word*)(vram + tile * 16 + now * 2);
+		}
+		sprite_count++;
+		word* now_pos = sdat + x;
+
+		// Pixel extraction
+		word l1 = tmp_dat;
+		word l2 = tmp_dat >> 7;
+		l1 &= 0x55;
+		l2 &= 0xAA;
+		l1 |= l2;
+		l2 = tmp_dat >> 1;
+		tmp_dat >>= 8;
+		tmp_dat &= 0xAA;
+		l2 &= 0x55;
+		l2 |= tmp_dat;
+
+		// Horizontal flip
+		if (atr & 0x20) {
+			byte tmp_p = l2;
+			l2 = ((l1 >> 2) & 0x33) | ((l1 << 2) & 0xcc);
+			ROL_BYTE(l2, 4);
+			l1 = ((tmp_p >> 2) & 0x33) | ((tmp_p << 2) & 0xcc);
+			ROL_BYTE(l1, 4);
+		}
+
+		// Extract all pixel values
+		const byte pixels[8] = {
+			(byte)(l2 >> 6),     // p0
+			(byte)(l1 >> 6),     // p1  
+			(byte)((l2 >> 4) & 3), // p2
+			(byte)((l1 >> 4) & 3), // p3
+			(byte)((l2 >> 2) & 3), // p4
+			(byte)((l1 >> 2) & 3), // p5
+			(byte)(l2 & 3),      // p6
+			(byte)(l1 & 3)       // p7
+		};
+
+		bool priority_mode = (atr & 0x80);
+
+		// Unified pixel rendering with reduced branching
+		if (x < 0) {
+			// Left clipping
+			int clip_start = -x;
+			for (int px = 1; px < 8; px++) {
+				if (px < clip_start) continue;
+
+				int screen_x = x + px;
+				byte pixel_val = pixels[px];
+
+				if (pixel_val) {
+					if (priority_mode) {
+						if (!trans_tbl[screen_x]) {
+							now_pos[px] = cur_p[pixel_val];
+						}
+					}
+					else {
+						now_pos[px] = cur_p[pixel_val];
+					}
+				}
+			}
+		}
+		else {
+			// Normal rendering
+			for (int px = 0; px < 8; px++) {
+				int screen_x = x + px;
+				byte pixel_val = pixels[px];
+
+				if (pixel_val) {
+					if (priority_mode) {
+						if (!trans_tbl[screen_x]) {
+							now_pos[px] = cur_p[pixel_val];
+						}
+					}
+					else {
+						now_pos[px] = cur_p[pixel_val];
+					}
+				}
 			}
 		}
 	}
@@ -649,6 +834,121 @@ void lcd::win_render_color(void *buf,int scanline)
 	}
 }
 
+void lcd::sprite_render_color(void* buf, int scanline)
+{
+	if (!(ref_gb->get_regs()->LCDC & 0x80) || !(ref_gb->get_regs()->LCDC & 0x02))
+		return;
+
+	word* sdat = ((word*)buf) + (scanline) * 160;
+	byte* oam = ref_gb->get_cpu()->get_oam(), * vram = ref_gb->get_cpu()->get_vram();
+	bool sp_size = (ref_gb->get_regs()->LCDC & 0x04) ? true : false;
+
+	for (int i = 39; i >= 0; i--) {
+		int oam_offset = i * 4;
+		int tile = oam[oam_offset + 2];
+		int atr = oam[oam_offset + 3];
+		word* cur_p = mapped_pal[(atr & 7) + 8];
+		word bank = (atr & 0x08 ? 0x2000 : 0);
+
+		int x, y, now;
+		word tmp_dat;
+
+		if (sp_size) { // 8*16
+			y = oam[oam_offset] - 1;
+			x = oam[oam_offset + 1] - 8;
+			if ((x == -8 && y == -16) || x > 160 || y > 144 + 15 || (y < scanline) || (y > scanline + 15))
+				continue;
+
+			now = (atr & 0x40) ? ((y - scanline) & 7) : ((7 - (y - scanline)) & 7);
+			int tile_base = bank + (tile & 0xfe) * 16 + now * 2;
+
+			if (scanline - y + 15 < 8) { //上半分
+				tmp_dat = *(word*)(vram + tile_base + ((atr & 0x40) ? 16 : 0));
+			}
+			else { // 下半分
+				tmp_dat = *(word*)(vram + tile_base + ((atr & 0x40) ? 0 : 16));
+			}
+		}
+		else { // 8*8
+			y = oam[oam_offset] - 9;
+			x = oam[oam_offset + 1] - 8;
+			if ((x == -8 && y == -16) || (x > 160) || (y > 144 + 7) || (y < scanline) || (y > scanline + 7))
+				continue;
+
+			now = (atr & 0x40) ? ((y - scanline) & 7) : ((7 - (y - scanline)) & 7);
+			tmp_dat = *(word*)(vram + tile * 16 + now * 2 + bank);
+		}
+		sprite_count++;
+		word* now_pos = sdat + x;
+
+		// Pixel extraction
+		word l1 = tmp_dat;
+		word l2 = tmp_dat >> 7;
+		l1 &= 0x55;
+		l2 &= 0xAA;
+		l1 |= l2;
+		l2 = tmp_dat >> 1;
+		tmp_dat >>= 8;
+		tmp_dat &= 0xAA;
+		l2 &= 0x55;
+		l2 |= tmp_dat;
+
+		// Horizontal flip
+		if (atr & 0x20) {
+			byte tmp_p = l2;
+			l2 = ((l1 >> 2) & 0x33) | ((l1 << 2) & 0xcc);
+			ROL_BYTE(l2, 4);
+			l1 = ((tmp_p >> 2) & 0x33) | ((tmp_p << 2) & 0xcc);
+			ROL_BYTE(l1, 4);
+		}
+
+		// Extract all pixel values
+		const byte pixels[8] = {
+			(byte)(l2 >> 6),     // p0
+			(byte)(l1 >> 6),     // p1  
+			(byte)((l2 >> 4) & 3), // p2
+			(byte)((l1 >> 4) & 3), // p3
+			(byte)((l2 >> 2) & 3), // p4
+			(byte)((l1 >> 2) & 3), // p5
+			(byte)(l2 & 3),      // p6
+			(byte)(l1 & 3)       // p7
+		};
+
+		bool priority_mode = (atr & 0x80);
+
+		// Unified pixel rendering with reduced branching
+		if (x < 0) {
+			// Left clipping
+			int clip_start = -x;
+			for (int px = 1; px < 8; px++) {
+				if (px < clip_start) continue;
+
+				int screen_x = x + px;
+				byte pixel_val = pixels[px];
+				bool trans_clear = !trans_tbl[screen_x];
+				bool priority_clear = !(priority_tbl[screen_x] && trans_tbl[screen_x]);
+
+				if (pixel_val && (priority_mode ? trans_clear : priority_clear)) {
+					now_pos[px] = cur_p[pixel_val];
+				}
+			}
+		}
+		else {
+			// Normal rendering
+			for (int px = 0; px < 8; px++) {
+				int screen_x = x + px;
+				byte pixel_val = pixels[px];
+				bool trans_clear = !trans_tbl[screen_x];
+				bool priority_clear = !(priority_tbl[screen_x] && trans_tbl[screen_x]);
+
+				if (pixel_val && (priority_mode ? trans_clear : priority_clear)) {
+					now_pos[px] = cur_p[pixel_val];
+				}
+			}
+		}
+	}
+}
+/*
 void lcd::sprite_render_color(void *buf,int scanline)
 {
 	if (!(ref_gb->get_regs()->LCDC&0x80)||!(ref_gb->get_regs()->LCDC&0x02))
@@ -760,6 +1060,8 @@ void lcd::sprite_render_color(void *buf,int scanline)
 		}
 	}
 }
+*/
+
 
 
 void lcd::render(void *buf,int scanline)

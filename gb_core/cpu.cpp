@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -451,10 +451,15 @@ void cpu::io_write(word adr,byte dat)
 				ref_gb->get_regs()->SC = dat & 0x83;
 				if ((dat & 0x80) && (dat & 1)) // 送信開始 // Transmission start
             {
+					const bool doublespeed = (dat & 2);
+					seri_occer = total_clock + 512 * 8 / (1 + (31* doublespeed));
+
+					/*
 					if (dat & 2)
 						seri_occer = total_clock + 512 * 8 / 32; // 転送速度通常の32倍 // 32 times the normal transfer rate
 					else
 						seri_occer = total_clock + 512 * 8;
+					*/
             }
 			}
 			return;
@@ -587,7 +592,8 @@ void cpu::io_write(word adr,byte dat)
 			word tmp_adr;
 			tmp_adr=0x8000+(dma_dest&0x1ff0);
 //			fprintf(file,"%03d : %04X -> %04X  %d byte %s\n",ref_gb->get_regs()->LY,dma_src,dma_dest,((in_data&0x7f)+1)*16,(in_data&0x80)?"delay":"immidiately");
-			if ((dma_src>=0x8000&&dma_src<0xA000)||(dma_src>=0xE000)||(!(tmp_adr>=0x8000&&tmp_adr<0xA000))){
+			//if ((dma_src>=0x8000&&dma_src<0xA000)||(dma_src>=0xE000)||(!(tmp_adr>=0x8000&&tmp_adr<0xA000))){
+			if ((dma_src >= 0x8000 && dma_src < 0xA000) + (dma_src >= 0xE000) + (!(tmp_adr >= 0x8000 && tmp_adr < 0xA000))) {
 				ref_gb->get_cregs()->HDMA5=0;
 				return;
 			}
@@ -932,12 +938,13 @@ static const byte ZTable[256] =
 
 byte cpu::receive_from_linkcable(byte in_data)
 {
-
+	/*
 	bool is_external_clock = (ref_gb->get_regs()->SC & 0x81) == 0x80;
 	if (!is_external_clock) return 0xFF;
+	*/
 
 	byte out_data = ref_gb->get_regs()->SB;
-	log_link_traffic(in_data, out_data);
+	//log_link_traffic(in_data, out_data);
 
 	ref_gb->get_regs()->SB = in_data;
 	ref_gb->get_regs()->SC &= 1;
@@ -1141,7 +1148,7 @@ void cpu::exec(int clocks)
 
 				byte send_data = ref_gb->get_regs()->SB;
 				byte received_data = ref_gb->send_over_linkcable(send_data);
-				log_link_traffic(send_data, received_data);
+				//log_link_traffic(send_data, received_data);
 				ref_gb->get_regs()->SB = received_data;
 				ref_gb->get_regs()->SC&=3;
 			}
