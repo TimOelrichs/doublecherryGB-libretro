@@ -112,6 +112,19 @@ void retro_init(void)
         rumble_state_cb = 0;
     }
 
+    // Sensor Interface anfordern
+    bool sensors_available = true;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE, &sensor_interface)) {
+        set_sensor_state = sensor_interface.set_sensor_state;
+        get_sensor_input = sensor_interface.get_sensor_input;
+
+        // Sensoren aktivieren (falls verfügbar)
+        if (set_sensor_state) {
+            set_sensor_state(0, RETRO_SENSOR_ACCELEROMETER_ENABLE, 60); // 60 Hz
+            set_sensor_state(0, RETRO_SENSOR_GYROSCOPE_ENABLE, 60);
+        }
+    }
+
     environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))

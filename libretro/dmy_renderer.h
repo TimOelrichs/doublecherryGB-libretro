@@ -1,4 +1,5 @@
-﻿/*--------------------------------------------------
+﻿#pragma once	
+/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -22,6 +23,10 @@
 #include <cmath>
 #include <array>
 #include "../gb_core/renderer.h"
+
+
+
+
 
 #define clampf(x, min, max) ((x) < (min) ? (min) : ((x) > (max) ? (max) : (x)))
 
@@ -48,7 +53,7 @@ public:
 	virtual ~dmy_renderer(){};
 
 	virtual void reset() {}
-	virtual word get_sensor(bool x_y) { return 0; }
+	virtual word get_sensor(bool x_y) override; // { return 0; }
 	virtual void set_bibrate(bool bibrate) {}
 
 	virtual void render_screen(byte *buf,int width,int height,int depth);
