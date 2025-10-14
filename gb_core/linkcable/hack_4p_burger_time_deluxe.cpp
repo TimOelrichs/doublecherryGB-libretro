@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
    Burger Time Deluxe Multiplayer Hack
@@ -104,7 +104,7 @@ void dmg07::serialize(serializer& s)
 
 	s_ARRAY(in_data_buffer);
 	s_ARRAY(trans_buffer.data());
-	s_ARRAY(ans_buffer.data());
+	s_ARRAY(answerbytes_buffer.data());
 	s_ARRAY(bytes_to_send.data());
 
 

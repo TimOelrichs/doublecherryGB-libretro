@@ -58,6 +58,8 @@ public:
 
 	void log_save_state(char* data, size_t size);
 
+protected:
+	void update_seri_occer() override;
 private:
 	/*
 	bool is_ready_to_process();
@@ -68,8 +70,10 @@ private:
 	*/
 
 	void handle_answer(int i, byte dat);
+	void handle_answer_pingphase(int i, byte dat);
+	void handle_answer_for_restart_pingphase(int i, byte dat);
 	void restart_pingphase();
-	//void log_traffic(byte id, byte b);
+	void log_traffic(byte id, byte b);
 
 	
 	byte send_byte(byte which, byte dat) override;
@@ -78,37 +82,62 @@ private:
 	void send_sync_bytes();
 	void send_each_ping_byte();
 	byte send_ping_byte(byte which);
+	void process_transmission_phase();
 
 	void fill_buffer_for_less_than_4p();
 	void clear_all_buffers();
 
+	int microseconds_to_clocks(int microseconds) {
+		return (int)((microseconds * 4.194304f) + 0.5f);
+	}; 
+
+
+
 	dmg07_state current_state = PING_PHASE;
 
+	
+
 	//converted to no initialize for compat with windows MCSV
+	const int transfer_time_per_byte_in_clocks = microseconds_to_clocks(128);
+	const int delay_between_bytes_in_clocks_default = microseconds_to_clocks(2457);
+	const int delay_between_packages_in_clocks_default = microseconds_to_clocks(12290);
+
+	int delay_between_bytes_in_clocks = delay_between_bytes_in_clocks_default;
+	int delay_between_packages_in_clocks = delay_between_packages_in_clocks_default;
+
+	int last_log_clock = 0;
+
+	const int transmission_base_delay_between_packages_in_ms = 138656;
 	int transfer_count;
 	int phase_byte_count;
 
 	int last_trans_nr[4];
 	int restart_in;
-	byte enter_status;
-
-	byte packet_size;
-	byte transfer_rate;
-
 	int first_aa_trans_nr;
 	int sync_trans_nr;
 
 	int delay;
+	
+	byte enter_status;
+
+	byte current_packet_size = 1;
+	byte packet_size = 0;
+	byte transfer_rate;
+
+	
 	bool ready_to_sync_master;
 	bool master_is_synced;
-
+	bool received_pingphase_restart_demand = false;
 	//byte in_data_buffer[4];
 
 	std::vector<byte> trans_buffer[4];
-	std::vector<byte> ans_buffer[4];
+	std::vector<byte> answerbytes_buffer[4];
 
 	std::vector<byte> bytes_to_send;
 	//std::queue<byte> bytes_to_send;
 	//dmg07_mem_state mem{};
+
+	
+
 };
 

@@ -240,6 +240,9 @@ private:
 	word last_frame[160*144];
 	word current_frame[160*144];
 
+	word last_frame_4p_slit[160 * 144 * 4];
+	word current_frame_4p_split[160 * 144 * 4];
+
 	GhostingMode ghosting_mode = GhostingMode::PALETTE_BLEND;
 
 

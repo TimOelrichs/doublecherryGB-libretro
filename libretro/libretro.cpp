@@ -456,7 +456,7 @@ size_t retro_serialize_size(void)
 {
     size_t _all_size = 0;
 
-    for (int i = 0; i < max_gbs; ++i)
+    for (int i = 0; i < emulated_gbs; ++i)
     {
         if (v_gb[i])
         {
@@ -464,6 +464,12 @@ size_t retro_serialize_size(void)
             _all_size += _serialize_size[i];
         }
     }
+
+    for (int i = 0; i < v_serializable_devices.size(); i++)
+    {
+        _all_size += v_serializable_devices[i]->get_state_size();
+    }
+
 
     return _all_size + 0xFF00;
 }
@@ -475,7 +481,7 @@ bool retro_serialize(void *data, size_t size)
         unsigned i;
         uint8_t *ptr = (uint8_t *)data;
 
-        for (int i = 0; i < max_gbs; ++i)
+        for (int i = 0; i < emulated_gbs; ++i)
         {
             //if (v_gb[i])
             {
@@ -503,7 +509,7 @@ bool retro_unserialize(const void *data, size_t size)
         unsigned i;
         uint8_t *ptr = (uint8_t *)data;
 
-        for (i = 0; i < max_gbs; ++i)
+        for (i = 0; i < emulated_gbs; ++i)
         {
             //if (v_gb[i])
             {
@@ -512,10 +518,12 @@ bool retro_unserialize(const void *data, size_t size)
             }
         }
 
+        
         for (int i = 0; i < v_serializable_devices.size(); i++)
         {
             v_serializable_devices[i]->restore_state_mem(ptr);
         }
+        
         return true;
     }
     return false;
