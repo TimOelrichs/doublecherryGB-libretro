@@ -38,10 +38,9 @@ protected:
 	virtual byte send_byte(byte which, byte dat);
 	virtual void broadcast_byte(byte dat);
 	void log_traffic(byte id, byte b);
-
 	bool gbs_are_ready_to_process();
 	bool is_ready_for_next_tik();
-	void update_seri_occer();
+	virtual void update_seri_occer();
 
 	//virtual void handle_answer(int i, byte dat);
 

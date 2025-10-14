@@ -509,11 +509,16 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 {
                     memcpy(joined_buf3 + switched_gb * size_single_screen, buf, size_single_screen);
                     if (which_gb == 2) {
+
+
+
                         //experimental GBC LCD interlacing effect
                         if (is_gbc_rom && gbc_lcd_interlacing_enabled)
                         {
                             add_gbc_interlacing_effect(joined_buf3, width, height * 3, pitch);
                         }
+
+
                         video_cb(joined_buf3, width, height * 3, pitch);
                     }
                        
@@ -569,11 +574,53 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     }
                     if (which_gb == 3) {
                         memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
-                        if (is_gbc_rom && gbc_lcd_interlacing_enabled)
-                        {
-                            add_gbc_interlacing_effect(joined_buf4, width * 2, height* 2, pitch * 2);
+
+                        //DMG Ghosting Effect
+                        if (!is_gbc_rom && useDmgGhosting) {
+
+                            //DMG Ghosting Effect
+                            // Cast buf to 16-bit to work with 16-bit color values
+                            word* frame_buffer = reinterpret_cast<word*>(joined_buf4);
+
+                            for (int i = 0; i < width * 4 * height; ++i) {
+                                word blended = blendPixels(last_frame_4p_slit[i], frame_buffer[i]);
+                                last_frame_4p_slit[i] = frame_buffer[i]; // Update last_frame direkt
+                                frame_buffer[i] = blended;        // Überschreibe buf sofort
+                            }
                         }
-                        video_cb(joined_buf4, width * 2, height * 2, pitch * 2);
+
+
+                        //GBC Interlacing Effect
+                        if ((is_gbc_rom || useGbcLCDforDmG) && gbc_lcd_interlacing_enabled)
+                        {
+                            pitch = width * 2 * ((depth + 7) / 8);
+                            add_gbc_interlacing_effect(joined_buf4, width * 2, height* 2, pitch);
+                        }
+
+                        //Render GBC
+                        if (gbc_rgbSubpixel_upscale_factor == 1) {
+                            pitch = width * 2 * ((depth + 7) / 8);
+                            video_cb(joined_buf4, width * 2, height * 2, pitch);
+                            return;
+                        }
+
+
+                        const uint16_t* buffer = reinterpret_cast<const word*>(joined_buf4);
+
+                        switch (gbc_rgbSubpixel_upscale_factor)
+                        {
+                        case 3:  
+                        case 6:
+                            buffer = toSubpixel3x3RGB565(buffer, width * 2, height*2);
+                            break;
+                        default:
+                            // Ensure all cases are handled, even if no specific action is required
+                            break;
+                        }
+
+                        pitch = width * 3 * 2 * ((depth + 7) / 8);
+
+                        video_cb(buffer, width * 2 * 3, height * 2 * 3, pitch);
                     }
                 }
 

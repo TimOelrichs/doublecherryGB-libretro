@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
 
    DoubleCherryGB - Gameboy Emulator (based on TGBDual)
    Copyright (C) 2023  Tim Oelrichs
@@ -62,10 +62,11 @@ void link_master_device::log_traffic(byte id, byte b) {
 };
 
 bool link_master_device::is_ready_for_next_tik() {
-	return (v_gb[0]->get_cpu()->get_clock() >= seri_occer) && (v_gb[0]->get_regs()->SC == 0x80); 
+	return (v_gb[0]->get_cpu()->get_clock() >= seri_occer); //&& (v_gb[0]->get_regs()->SC == 0x80); 
 }
 
 void link_master_device::update_seri_occer() {
+
 	seri_occer = v_gb[0]->get_cpu()->get_clock() + transfer_speed;
 }
 
