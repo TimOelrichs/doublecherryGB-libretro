@@ -718,53 +718,27 @@ void dmg07::restore_state_mem(void* buf)
 {
 	serializer s(buf, serializer::LOAD_BUF);
 
-	int size;
-	byte* tmp;
-	
+	size_t size;
+
 	for (int i = 0; i < 4; i++)
 	{
-		trans_buffer[i] = std::vector<byte>();
-		answerbytes_buffer[i] = std::vector<byte>();
-
+		// trans_buffer
 		s_VAR(size);
-		if (size) {
-			tmp = new byte[size];
-			s_ARRAY(tmp);
+		trans_buffer[i].resize(size);
+		if (size) s_ARRAY(trans_buffer[i].data());
 
-			for (int j = 0; j < size; j++)
-			{
-				trans_buffer[i].push_back(tmp[j]);
-			}
-		}
-		
+		// answerbytes_buffer
 		s_VAR(size);
-		if (size) {
-			tmp = new byte[size];
-			s_ARRAY(tmp);
-
-
-			for (int k = 0; k < size; k++)
-			{
-				answerbytes_buffer[i].push_back(tmp[k]);
-			};
-		}
-	
+		answerbytes_buffer[i].resize(size);
+		if (size) s_ARRAY(answerbytes_buffer[i].data());
 	}
 
-	bytes_to_send = std::vector<byte>();
+	// bytes_to_send
 	s_VAR(size);
-	if (size) {
-		tmp = new byte[size];
-		s_ARRAY(tmp);
+	bytes_to_send.resize(size);
+	if (size) s_ARRAY(bytes_to_send.data());
 
-		for (size_t i = 0; i < size; i++)
-		{
-			bytes_to_send.push_back(tmp[i]);
-		};
-	}
-	
-	//delete tmp; 
-//	serialize(s);
+	serialize(s);
 }
 
 
@@ -772,23 +746,40 @@ void dmg07::restore_state_mem(void* buf)
 void dmg07::serialize(serializer& s) 
 {
 
-	s_VAR(current_state); 
-	s_VAR(transfer_speed);
-	s_VAR(seri_occer);
+	s_VAR(current_state);
+	s_VAR(delay_between_bytes_in_clocks);
+	s_VAR(delay_between_packages_in_clocks);
+	s_VAR(last_log_clock);
 	s_VAR(transfer_count);
 	s_VAR(phase_byte_count);
 	s_VAR(restart_in);
-	s_VAR(enter_status);
-	s_VAR(current_packet_size);
-	s_VAR(transfer_rate);
 	s_VAR(first_aa_trans_nr);
 	s_VAR(sync_trans_nr);
 	s_VAR(delay);
+	s_VAR(seri_occer);
+	s_VAR(transfer_count);
+	s_VAR(phase_byte_count);
+	s_VAR(enter_status);
+	s_VAR(current_packet_size);
+	s_VAR(packet_size);
+	s_VAR(transfer_speed);
+	s_VAR(transfer_rate);
 	s_VAR(ready_to_sync_master);
 	s_VAR(master_is_synced);
-	s_VAR(delay_between_bytes_in_clocks);
-	s_VAR(delay_between_packages_in_clocks);
-	s_ARRAY(in_data_buffer);
+	s_VAR(received_pingphase_restart_demand);
+	s_VAR(use_v_gb_size);
 
+	s_ARRAY(in_data_buffer);
+	s_ARRAY(last_trans_nr);
+	
+	
 
 }
+
+
+
+
+
+
+
+

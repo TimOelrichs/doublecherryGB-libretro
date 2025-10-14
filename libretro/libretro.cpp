@@ -465,10 +465,13 @@ size_t retro_serialize_size(void)
         }
     }
 
+	if(master_link) _all_size += master_link->get_state_size();
+
+    /*
     for (int i = 0; i < v_serializable_devices.size(); i++)
     {
         _all_size += v_serializable_devices[i]->get_state_size();
-    }
+    }*/
 
 
     return _all_size + 0xFF00;
@@ -483,18 +486,19 @@ bool retro_serialize(void *data, size_t size)
 
         for (int i = 0; i < emulated_gbs; ++i)
         {
-            //if (v_gb[i])
+            if (v_gb[i])
             {
                 v_gb[i]->save_state_mem(ptr);
                 ptr += _serialize_size[i];
             }
         }
    
-
+		if (master_link) master_link->save_state_mem(ptr);
+        /*
         for (int i = 0; i < v_serializable_devices.size(); i++)
         {
             v_serializable_devices[i]->save_state_mem(ptr);
-        }
+        }*/
 
         return true;
     }
@@ -511,18 +515,19 @@ bool retro_unserialize(const void *data, size_t size)
 
         for (i = 0; i < emulated_gbs; ++i)
         {
-            //if (v_gb[i])
+            if (v_gb[i])
             {
                 v_gb[i]->restore_state_mem(ptr);
                 ptr += _serialize_size[i];
             }
         }
 
-        
+		if (master_link) master_link->restore_state_mem(ptr);
+        /*
         for (int i = 0; i < v_serializable_devices.size(); i++)
         {
             v_serializable_devices[i]->restore_state_mem(ptr);
-        }
+        }*/
         
         return true;
     }

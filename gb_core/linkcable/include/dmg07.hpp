@@ -93,25 +93,29 @@ private:
 
 
 
+
+	std::vector<byte> trans_buffer[4];
+	std::vector<byte> answerbytes_buffer[4];
+	std::vector<byte> bytes_to_send;
+
 	dmg07_state current_state = PING_PHASE;
 
-	
-
-	//converted to no initialize for compat with windows MCSV
 	const int transfer_time_per_byte_in_clocks = microseconds_to_clocks(128);
 	const int delay_between_bytes_in_clocks_default = microseconds_to_clocks(2457);
 	const int delay_between_packages_in_clocks_default = microseconds_to_clocks(12290);
+	const int transmission_base_delay_between_packages_in_ms = 138656;
 
+	int last_trans_nr[4];
 	int delay_between_bytes_in_clocks = delay_between_bytes_in_clocks_default;
 	int delay_between_packages_in_clocks = delay_between_packages_in_clocks_default;
 
 	int last_log_clock = 0;
 
-	const int transmission_base_delay_between_packages_in_ms = 138656;
+
 	int transfer_count;
 	int phase_byte_count;
 
-	int last_trans_nr[4];
+	
 	int restart_in;
 	int first_aa_trans_nr;
 	int sync_trans_nr;
@@ -130,10 +134,7 @@ private:
 	bool received_pingphase_restart_demand = false;
 	//byte in_data_buffer[4];
 
-	std::vector<byte> trans_buffer[4];
-	std::vector<byte> answerbytes_buffer[4];
 
-	std::vector<byte> bytes_to_send;
 	//std::queue<byte> bytes_to_send;
 	//dmg07_mem_state mem{};
 
