@@ -4,7 +4,7 @@
 #include <cstring>
 #include <cstdint>
 
-static void calculate_target_dimensions(ScaleTarget target, int& out_width, int& out_height) {
+static void calculate_target_dimensions(ScaleTarget target, int source_width, int source_height, int& out_width, int& out_height) {
     switch (target) {
     case ScaleTarget::DIN_A4:
         out_width = 2480; out_height = 3508; break; // 300 DPI
@@ -14,7 +14,8 @@ static void calculate_target_dimensions(ScaleTarget target, int& out_width, int&
         out_width = 1240; out_height = 1748; break;
     case ScaleTarget::THERMAL_PAPER:
         out_width = 576; out_height = 960; break; // Thermopapier (z. B. 2x Höhe)
-    case ScaleTarget::NONE: break;
+    case ScaleTarget::NONE:
+        out_width = source_width; out_height = source_height; break;
     }
 }
 
@@ -24,7 +25,26 @@ ScaledImage ImageScaler::scale(
     Alignment alignment
 ) {
     int target_width, target_height;
-    calculate_target_dimensions(target, target_width, target_height);
+    calculate_target_dimensions(target, width, height, target_width, target_height);
+
+    // Bei NONE keine Skalierung, direkte Übergabe
+    if (target == ScaleTarget::NONE) {
+        std::vector<uint8_t> buffer(target_width * target_height * 3);
+
+        // Direkte Konvertierung von ARGB zu RGB
+        for (int i = 0; i < target_width * target_height; ++i) {
+            uint32_t pixel = argb_pixels[i];
+            buffer[i * 3 + 0] = (pixel >> 16) & 0xFF; // R
+            buffer[i * 3 + 1] = (pixel >> 8) & 0xFF;  // G
+            buffer[i * 3 + 2] = pixel & 0xFF;         // B
+        }
+
+        return ScaledImage{
+            /*width*/ target_width,
+            /*height*/ target_height,
+            /*rgb_data*/ std::move(buffer)
+        };
+    }
 
     // Berechne Skalierungsfaktor (nur uniform, kein Stretching)
     float scale = std::min(

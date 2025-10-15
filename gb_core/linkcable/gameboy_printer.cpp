@@ -1,4 +1,4 @@
-
+﻿
 // DoubleCherryGB Gameboy Printer ported from GBE+ 
 // Ported by Tim Oelrichs
 
@@ -425,6 +425,8 @@ void gameboy_printer::data_process()
 	if (data_length != 0) { strip_count++; }
 }
 
+
+
 void gameboy_printer::print_image()
 {
 	unsigned int height = (16 * strip_count);
@@ -445,43 +447,29 @@ void gameboy_printer::print_image()
 	pal[2] = (data_pal >> 4) & 0x3;
 	pal[3] = (data_pal >> 6) & 0x3;
 
-	//Calculate printing exposure (contrast for final pixels) and set color accordingly
+	//Calculate printing exposure (contrast for final pixels)
 	short exposure = (packet_buffer[9] & 0x7F);
-	unsigned int print_color_0 = (DMG_BG_PAL[0] & 0xFF);
-	unsigned int print_color_1 = (DMG_BG_PAL[1] & 0xFF);
-	unsigned int print_color_2 = (DMG_BG_PAL[2] & 0xFF);
-	unsigned int print_color_3 = (DMG_BG_PAL[3] & 0xFF);
+
+	// Start with grayscale values (0=white, 255=black for typical Game Boy)
+	unsigned int base_color_0 = 255; // White
+	unsigned int base_color_1 = 170; // Light gray  
+	unsigned int base_color_2 = 85;  // Dark gray
+	unsigned int base_color_3 = 0;   // Black
 
 	double diff = (0x40 - exposure) * (25.0 / 64);
 	diff = ((100 + diff) / 100);
 
+	// Apply exposure and clamp values
+	unsigned int print_color_0 = std::min(std::max(int(base_color_0 * diff), 0), 255);
+	unsigned int print_color_1 = std::min(std::max(int(base_color_1 * diff), 0), 255);
+	unsigned int print_color_2 = std::min(std::max(int(base_color_2 * diff), 0), 255);
+	unsigned int print_color_3 = std::min(std::max(int(base_color_3 * diff), 0), 255);
 
-	print_color_0 = std::min(std::max(int(print_color_0 * diff), 0), 255);
-	print_color_1 = std::min(std::max(int(print_color_1 * diff), 0), 255);
-	print_color_2 = std::min(std::max(int(print_color_2 * diff), 0), 255);
-	print_color_3 = std::min(std::max(int(print_color_3 * diff), 0), 255);
-
-	/*
-	if ((print_color_0 * diff) > 255) { print_color_0 = 255; }
-	else if ((print_color_0 * diff) < 0) { print_color_0 = 0; }
-	else { print_color_0 *= diff; }
+	// Convert to ARGB format (0xFFRRGGBB)
 	print_color_0 = 0xFF000000 | (print_color_0 << 16) | (print_color_0 << 8) | print_color_0;
-
-	if ((print_color_1 * diff) > 255) { print_color_1 = 255; }
-	else if ((print_color_1 * diff) < 0) { print_color_1 = 0; }
-	else { print_color_1 *= diff; }
 	print_color_1 = 0xFF000000 | (print_color_1 << 16) | (print_color_1 << 8) | print_color_1;
-
-	if ((print_color_2 * diff) > 255) { print_color_2 = 255; }
-	else if ((print_color_2 * diff) < 0) { print_color_2 = 0; }
-	else { print_color_2 *= diff; }
 	print_color_2 = 0xFF000000 | (print_color_2 << 16) | (print_color_2 << 8) | print_color_2;
-
-	if ((print_color_3 * diff) > 255) { print_color_3 = 255; }
-	else if ((print_color_3 * diff) < 0) { print_color_3 = 0; }
-	else { print_color_3 *= diff; }
 	print_color_3 = 0xFF000000 | (print_color_3 << 16) | (print_color_3 << 8) | print_color_3;
-	*/
 
 	for (unsigned int x = 0; x < img_size; x++)
 	{
@@ -516,48 +504,15 @@ void gameboy_printer::print_image()
 		full_buffer.push_back(scanline_buffer[x]);
 	}
 
-	
-
 	strip_count = 0;
-
-	/*
-
-	//Print full combined strip if detected
-	if (print_full_pix)
-	{
-		height = full_buffer.size() / 160;
-		SDL_Surface* full_screen = SDL_CreateRGBSurface(SDL_SWSURFACE, 160, height, 32, 0, 0, 0, 0);
-
-		if (SDL_MUSTLOCK(full_screen)) { SDL_LockSurface(full_screen); }
-		unsigned int* full_pixel_data = (unsigned int*)full_screen->pixels;
-
-		for (unsigned int x = 0; x < full_buffer.size(); x++) { full_pixel_data[x] = full_buffer[x]; }
-		full_buffer.clear();
-
-		//Unlock source surface
-		if (SDL_MUSTLOCK(full_screen)) { SDL_UnlockSurface(full_screen); }
-
-		filename = "full_" + filename;
-
-		SDL_SaveBMP(full_screen, filename.c_str());
-		SDL_FreeSurface(full_screen);
-	}
-
-	*/
-
 
 	unsigned int width = 160;
 	unsigned int gb_height = full_buffer.size() / width;
 
-
-	if (
-		PrinterRegistry::current()->print(reinterpret_cast<const uint32_t*>(full_buffer.data()), width, height, gb_printer_png_scale_mode, gb_printer_png_alignment)
-		)
-		display_message("Printed successfull to ./Screenshots");
+	if (PrinterRegistry::current()->print(reinterpret_cast<const uint32_t*>(full_buffer.data()), width, gb_height, gb_printer_png_scale_mode, gb_printer_png_alignment))
+		display_message("Printed successfully to ./Screenshots");
 	else
 		display_message("Something went wrong.");
-
-
 }
 
 void gameboy_printer::reset()
