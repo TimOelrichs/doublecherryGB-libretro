@@ -31,6 +31,8 @@
 #include "libretro.h"
 #include "../Filter/Video/VideoFilter.hpp"
 #include "gbc_lut_accurate.h"
+#include "libretro.h"
+
 
 extern std::vector<gb* > v_gb;
 extern int emulated_gbs;
@@ -68,6 +70,10 @@ extern bool _screen_4p_split;
 extern bool _screen_switched; // set to draw player 2 on the left/top
 extern bool libretro_supports_bitmasks;
 extern int _show_player_screen; // 0 = p1 only, 1 = p2 only, 2 = both players
+
+extern retro_set_sensor_state_t set_sensor_state;
+extern retro_sensor_get_input_t get_sensor_input;
+extern struct retro_sensor_interface sensor_interface;
 
 std::array<word, GRADIENT_STEPS> blended_palette;
 
@@ -111,6 +117,92 @@ dmy_renderer::dmy_renderer(int which)
    //gradient for DMG LCD Ghosting effect
    generateGradient();
    std::fill_n(last_frame, 160 * 144, 0xFFFF);
+}
+word dmy_renderer::get_sensor(bool x_y) {    // Libretro Input State abfragen
+
+    /*
+    // Libretro Input State abfragen
+    int16_t analog_x = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+    int16_t analog_y = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+
+    // Neutralwert wie im MBC7
+    const uint16_t base_value = 0x81D0;
+
+    if (x_y) {
+        // X-Achse: Konvertiere -32768..32767 zu MBC7 X-Werten
+        // Invertieren für korrekte Richtung
+        int16_t mapped_x = -analog_x;
+        return base_value + (mapped_x / 256); // Skalierung anpassen
+    }
+    else {
+        // Y-Achse: Konvertiere -32768..32767 zu MBC7 Y-Werten  
+        // INVERTIERT für vorne/hinten: Stick nach vorne = positive Werte
+        int16_t mapped_y = -analog_y; // Y-Achse invertieren
+        return base_value + (mapped_y / 256); // Skalierung anpassen
+    }*/
+
+    // Zuerst versuchen, Motion Controls (Gyro/Accelerometer) zu verwenden
+   // Falls nicht verfügbar, auf Analogstick zurückfallen
+    const uint16_t base_value = 0x81D0;
+    static bool sensors_initialized = false;
+    static bool sensors_available = false;
+
+    // Sensoren beim ersten Aufruf initialisieren
+    if (!sensors_initialized) {
+        sensors_initialized = true;
+        if (set_sensor_state) {
+            // Accelerometer mit 60 Hz aktivieren
+            sensors_available = set_sensor_state(0, RETRO_SENSOR_ACCELEROMETER_ENABLE, 60);
+            // Gyro ebenfalls aktivieren
+            set_sensor_state(0, RETRO_SENSOR_GYROSCOPE_ENABLE, 60);
+        }
+    }
+
+    if (sensors_available && get_sensor_input) {
+        float accel_value = 0.0f;
+        unsigned sensor_id;
+
+        if (x_y) {
+            sensor_id = RETRO_SENSOR_ACCELEROMETER_X;
+        }
+        else {
+            sensor_id = RETRO_SENSOR_ACCELEROMETER_Y;
+        }
+
+        accel_value = get_sensor_input(0, sensor_id);
+
+        // Deadzone für kleine Bewegungen
+        const float deadzone = 0.1f;
+        if (std::abs(accel_value) < deadzone) {
+            return base_value;
+        }
+
+        // Accelerometer-Wert skalieren (typisch ±2G)
+        // 1G ≈ 0x70 Variation laut MBC7 Dokumentation
+        int16_t mapped_value = static_cast<int16_t>(accel_value * 0x70);
+
+        if (x_y) {
+            // X-Achse: Neigung nach links = positive Werte
+            return base_value + mapped_value;
+        }
+        else {
+            // Y-Achse: Neigung nach vorne = positive Werte, also invertieren
+            return base_value - mapped_value;
+        }
+    }
+
+    // Fallback: Analogstick
+    int16_t analog_x = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+    int16_t analog_y = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+
+    if (x_y) {
+        int16_t mapped_x = -analog_x;
+        return base_value + (mapped_x / 256);
+    }
+    else {
+        int16_t mapped_y = -analog_y;
+        return base_value + (mapped_y / 256);
+    }
 }
 
 word dmy_renderer::map_color(word gb_col)

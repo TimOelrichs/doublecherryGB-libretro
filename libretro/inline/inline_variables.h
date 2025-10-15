@@ -41,7 +41,13 @@ bool current_mouse_click;
 
 Alleyway_Controls_Mode AlleywayControlsMode = Alleyway_Controls_Mode::ANALOG_STICK;
 
-
+// Sensor Interface
+retro_set_sensor_state_t set_sensor_state = NULL;
+retro_sensor_get_input_t get_sensor_input = NULL;
+struct retro_sensor_interface sensor_interface = {
+    set_sensor_state,
+    get_sensor_input
+};
 
 
 static const struct retro_variable vars_single[] = {
