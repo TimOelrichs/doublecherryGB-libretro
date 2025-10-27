@@ -751,7 +751,7 @@ void mbc::huc3_write(word adr,byte dat)
 	case 2:
 		if (dat<8){
 			sram_page=ref_gb->get_rom()->get_sram()+0x2000*(dat&3);
-			ext_is_ram=true;
+			//ext_is_ram=true;
 		}
 		else{
 //			ext_is_ram=false;
@@ -860,17 +860,20 @@ void mbc::huc3_execute_command()
 		}
 		*/
 		huc3_access_adress++;
+		huc3_ramValue = 1;
 		break;
 	}
 	case 0x40:
 	{
 		huc3_access_adress &= 0xF0;
 		huc3_access_adress |= argument;
+		huc3_ramValue = 1;
 		break;
 	}
 	case 0x50:
 		huc3_access_adress &= 0x0F;
 		huc3_access_adress |= (argument << 4);
+		huc3_ramValue = 1;
 		break;
 		//extended command
 	case 0x60:
@@ -896,129 +899,131 @@ void mbc::huc3_execute_command()
 
 void mbc::huc3_copy_Scratch2RTC()
 {
+	for (int i = 0; i < 7; i++)
+		huc3_rtc_register[16 + i] = huc3_rtc_register[i];
 
-	huc3_rtc_register[16] = huc3_rtc_register[0];
-	huc3_rtc_register[17] = huc3_rtc_register[1];
-	huc3_rtc_register[18] = huc3_rtc_register[2];
-	huc3_rtc_register[19] = huc3_rtc_register[3];
-	huc3_rtc_register[20] = huc3_rtc_register[4];
-	huc3_rtc_register[21] = huc3_rtc_register[5];
-
-
-	huc3_shift = 0;
-	huc3_writingTime = 0;
-	for (size_t i = 0; i < 7; i++)
-	{
-		huc3_writingTime |= huc3_rtc_register[i] << huc3_shift;
-		huc3_shift += 4;
-	}
-
-
-	unsigned minute = (huc3_writingTime & 0xFFF) % 1440;
-	unsigned day = (huc3_writingTime & 0xFFF000) >> 12;
-
-	huc3_baseTime = std::time(0) - minute * 60 - day * 86400;
-	huc3_haltTime = huc3_baseTime;
-	
+	// überträgt Scratch-Register → aktuelle RTC
+	huc3_updateTime();
 }
 
 void mbc::huc3_copy_RTC2Scratch()
 {
+	// Latch berechnen (aktualisiert Minuten & Tage korrekt)
 	huc3_doLatch();
-	huc3_rtc_register[16] = (byte)huc3_dataTime & 0x0F;
-	huc3_rtc_register[17] = (byte)(huc3_dataTime >> 4) & 0x0F;
-	huc3_rtc_register[18] = (byte)(huc3_dataTime >> 8) & 0x0F;
-	huc3_rtc_register[19] = (byte)(huc3_dataTime >> 12) & 0x0F;
-	huc3_rtc_register[20] = (byte)(huc3_dataTime >> 16) & 0x0F;
-	huc3_rtc_register[21] = (byte)(huc3_dataTime >> 20) & 0x0F;
 
-	huc3_rtc_register[0] = huc3_rtc_register[16];
-	huc3_rtc_register[1] = huc3_rtc_register[17];
-	huc3_rtc_register[2] = huc3_rtc_register[18];
-	huc3_rtc_register[3] = huc3_rtc_register[19];
-	huc3_rtc_register[4] = huc3_rtc_register[20];
-	huc3_rtc_register[5] = huc3_rtc_register[21];
-	//huc3_rtc_register[6] = (byte)(huc3_dataTime >> 24) & 0x0F;
+	// Scratch-Register (0..5) mit RTC-Register (0x10..0x15) füllen
+	for (int i = 0; i < 6; ++i) {
+		huc3_rtc_register[i] = huc3_rtc_register[0x10 + i];
+	}
 
+	// Internes 24-bit Feld optional setzen (für alte Logik)
+	huc3_dataTime = 0;
+	for (int i = 0; i < 6; ++i) {
+		huc3_dataTime |= ((uint32_t)(huc3_rtc_register[i] & 0x0F)) << (i * 4);
+	}
 }
+
+
+#include <ctime>
+#include <cstdint>
+#include <chrono>
 
 void mbc::huc3_doLatch()
 {
-	huc3_updateTime();
+	using namespace std::chrono;
 
-	uint64_t tmp = (huc3_halted ? huc3_haltTime : std::time(0)) - huc3_baseTime;
+	uint64_t now = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
 
-	unsigned minute = (tmp / 60) % 1440;
-	unsigned day = (tmp / 86400) & 0xFFF;
-	huc3_dataTime = (day << 12) | minute;
+	// Initialisiere Timestamp, falls noch nicht vorhanden
+	if (huc3_state.rtc_timestamp == 0)
+		huc3_state.rtc_timestamp = now;
 
-	
-	/*
-	//huc3_dataTime = (day_t << 12) | minute_t;
+	int64_t time_passed = static_cast<int64_t>(now - huc3_state.rtc_timestamp);
 
-	unsigned minutes =	(huc3_rtc_register[HUC3_RTC_MINUTES_HI] << 8) |
-						(huc3_rtc_register[HUC3_RTC_MINUTES_MI] << 4) |
-						(huc3_rtc_register[HUC3_RTC_MINUTES_LO]);
+	// Aktuelle Sekunden seit Mitternacht
+	uint32_t seconds = huc3_state.rtc_seconds;
 
-	unsigned days =		(huc3_rtc_register[HUC3_RTC_DAYS_HI] << 8) |
-						(huc3_rtc_register[HUC3_RTC_DAYS_MI] << 4) |
-						(huc3_rtc_register[HUC3_RTC_DAYS_LO]);
+	if (time_passed > 0)
+	{
+		for (int64_t i = 0; i < time_passed; i++)
+		{
+			seconds++;
+			if (seconds >= 86400)
+			{
+				seconds = 0;
+				huc3_state.rtc_days++;
+			}
+		}
+	}
+	else if (time_passed < 0)
+	{
+		time_passed = -time_passed;
+		for (int64_t i = 0; i < time_passed; i++)
+		{
+			if (seconds == 0)
+			{
+				seconds = 86399;
+				if (huc3_state.rtc_days) huc3_state.rtc_days--;
+			}
+			else
+				seconds--;
+		}
+	}
 
+	// Neue Sekunden und Timestamp speichern
+	huc3_state.rtc_seconds = seconds;
+	huc3_state.rtc_timestamp = now;
 
-	unsigned long tmp = std::time(0) - huc3_baseTime;
-	//unsigned long minute_t = (tmp / 60) % 1440;
-	//unsigned long day_t = (tmp / 86400) & 0xFFF;
+	// Minuten und Tage für RTC Register berechnen
+	unsigned minutes = seconds / 60;
+	unsigned days = huc3_state.rtc_days & 0xFFF; // 12 Bit
 
-	minutes += (tmp / 60) % 1440;
-	days += (tmp / 86400) & 0xFFF;
+	huc3_rtc_register[0x10] = minutes & 0x0F;
+	huc3_rtc_register[0x11] = (minutes >> 4) & 0x0F;
+	huc3_rtc_register[0x12] = (minutes >> 8) & 0x0F;
 
-	huc3_dataTime = (days << 12) | minutes;
+	huc3_rtc_register[0x13] = days & 0x0F;
+	huc3_rtc_register[0x14] = (days >> 4) & 0x0F;
+	huc3_rtc_register[0x15] = (days >> 8) & 0x0F;
 
-	*/
-
-	/*
-	huc3_rtc_register[0] = (byte)(minute) & 0x0F;
-	huc3_rtc_register[1] = (byte)(minute >> 4) & 0x0F;
-	huc3_rtc_register[2] = (byte)(minute >> 8) & 0x0F;
-	huc3_rtc_register[3] = (byte)(day) & 0x0F;
-	huc3_rtc_register[4] = (byte)(day >> 4) & 0x0F;
-	huc3_rtc_register[5] = (byte)(day >> 8) & 0x0F;
-	huc3_rtc_register[6] = (byte)(day >> 12) & 0x0F;
-
-
-
-	huc3_rtc_register[HUC3_RTC_MINUTES_LO] = (byte)(minutes) & 0x0F;
-	huc3_rtc_register[HUC3_RTC_MINUTES_MI] = (byte)(minutes >> 4) & 0x0F;
-	huc3_rtc_register[HUC3_RTC_MINUTES_HI] = (byte)(minutes >> 8) & 0x0F;
-	huc3_rtc_register[HUC3_RTC_DAYS_LO]	 = (byte)(days) & 0x0F;
-	huc3_rtc_register[HUC3_RTC_DAYS_MI]	 = (byte)(days >> 4) & 0x0F;
-	huc3_rtc_register[HUC3_RTC_DAYS_HI]	 = (byte)(days >> 8) & 0x0F;
-
-
-	*/
+	// Scratch-Register synchronisieren
+	for (int i = 0; i < 6; ++i)
+		huc3_rtc_register[i] = huc3_rtc_register[0x10 + i];
 }
-
 void mbc::huc3_updateTime()
 {
+	// Build writingTime from scratch registers (same wie vorher)
+	huc3_writingTime = 0;
+	huc3_shift = 0;
+	for (size_t i = 0; i < 7; i++) {
+		huc3_writingTime |= (uint32_t)(huc3_rtc_register[i] & 0x0F) << huc3_shift;
+		huc3_shift += 4;
+	}
+
 	unsigned minute = (huc3_writingTime & 0xFFF) % 1440;
-	unsigned day = (huc3_writingTime & 0xFFF000) >> 12;
-	huc3_baseTime = std::time(0) - minute * 60 - day * 86400;
+	unsigned day = (huc3_writingTime >> 12) & 0xFFF;
+
+	uint64_t now = (uint64_t)std::time(nullptr);
+
+	// Wenn noch kein timestamp vorhanden ist -> initialisiere
+	if (huc3_state.rtc_timestamp == 0) {
+		huc3_state.rtc_timestamp = now;
+	}
+
+	// Setze die struktur aus den Registern (Spiel hat Uhr manuell gesetzt)
+	huc3_state.rtc_seconds = minute * 60;
+	huc3_state.rtc_days = day; // 12bit, fit in 32bit
+
+	// Nur wenn timestamp == 0 (erste Initialisierung) verwenden wir now als Basis.
+	// WICHTIG: wir dürfen rtc_timestamp nicht immer überschreiben.
+	// Falls der game code hat explizit Scratch->RTC (also setzt neue Werte),
+	// kannst du hier huc3_state.rtc_timestamp = now;  (wenn das Verhalten gewünscht)
+	// aber nicht beim normalen update nach load.
+	// Update baseTime/haltTime für interne Nutzung:
+	huc3_baseTime = now - (uint64_t)huc3_state.rtc_days * 86400ULL - (uint64_t)huc3_state.rtc_seconds;
 	huc3_haltTime = huc3_baseTime;
-
-	/*
-	unsigned minute = (huc3_rtc_register[HUC3_RTC_MINUTES_HI] << 8) |
-		(huc3_rtc_register[HUC3_RTC_MINUTES_MI] << 4) |
-		(huc3_rtc_register[HUC3_RTC_MINUTES_LO]);
-
-	unsigned day = (huc3_rtc_register[HUC3_RTC_DAYS_HI] << 8) |
-		(huc3_rtc_register[HUC3_RTC_DAYS_MI] << 8) |
-		(huc3_rtc_register[HUC3_RTC_DAYS_LO]);
-
-
-	huc3_baseTime = std::time(0) - minute * 60 - day * 86400;
-	huc3_haltTime = huc3_baseTime;
-	*/
 }
+
 
 void mbc::huc3_log(bool read, byte adress, byte value)
 {

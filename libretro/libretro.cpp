@@ -20,6 +20,8 @@
 #include "inline/inline_variables.h"
 #include "inline/inline_functions.h"
 
+
+
 static void check_variables(void);
 
 void retro_get_system_info(struct retro_system_info *info)
