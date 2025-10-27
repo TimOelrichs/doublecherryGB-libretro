@@ -10,6 +10,81 @@ extern "C" uint64_t OSGetTime(void);
 #include <sys/time.h>
 #endif
 
+#include <chrono>
+#include <thread>
+
+// Netplay (Netpacket) interface
+
+void netpacket_poll_receive() {
+    if (netpacket_pollrcv_fn_ptr)
+        netpacket_pollrcv_fn_ptr();
+}
+
+void netpacket_send(uint16_t client_id, const void* buf, size_t len) {
+    // Force all packets to be flushed ASAP, to minimize latency.
+    if (netpacket_send_fn_ptr)
+        netpacket_send_fn_ptr(RETRO_NETPACKET_RELIABLE | RETRO_NETPACKET_FLUSH_HINT, buf, len, client_id);
+}
+
+static void netpacket_start(uint16_t client_id, retro_netpacket_send_t send_fn, retro_netpacket_poll_receive_t poll_receive_fn) {
+    netpacket_send_fn_ptr = send_fn;
+    netpacket_pollrcv_fn_ptr = poll_receive_fn;
+    num_clients = 0;
+    my_client_id = client_id;
+}
+
+// Netplay session ends.
+static void netpacket_stop() {
+    netpacket_send_fn_ptr = NULL;
+    netpacket_pollrcv_fn_ptr = NULL;
+}
+
+
+static void netpacket_receive(const void* buf, size_t len, unsigned short client_id) {
+
+    const byte* data = reinterpret_cast<const byte*>(buf);
+
+    
+    bool isMaster = (v_gb[0]->get_regs()->SC & 0x01) == 1;
+    if (!isMaster) {
+        byte retbuf[1] = { v_gb[0]->receive_from_linkcable(data[0]) };
+        //netpacket_send(client_id, retbuf, 1);
+
+
+        return;
+    }
+
+    v_gb[0]->get_cpu()->received_netpacket_data.push(data[0]);
+    v_gb[0]->get_cpu()->waiting_for_netpacket = false;
+}
+
+
+// Ensure we do not have too many clients for the type of connection used.
+static bool netpacket_connected(unsigned short client_id) {
+    int max_clients = 1;
+
+    if (num_clients >= max_clients)
+        return false;
+
+    num_clients++;
+
+    return true;
+}
+
+static void netpacket_disconnected(unsigned short client_id) {
+    num_clients--;
+}
+
+const struct retro_netpacket_callback netpacket_iface = {
+  netpacket_start,          // start
+  netpacket_receive,        // receive
+  netpacket_stop,           // stop
+  netpacket_poll_receive,   // poll
+  netpacket_connected,      // connected
+  netpacket_disconnected,   // disconnected
+  "DoubleCherryGB netpack V1.0",   // core version char* 
+};
+
 void set_cart_name(byte* rombuf)
 {
     memcpy(cart_name, rombuf + 0x134, 16);
@@ -271,7 +346,7 @@ void auto_link_multiplayer() {
     {
         //TODO only if DUAL-GAME ROM
         // set interface for netpaket api (easy pokemon trading)
-        //environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void*)&netpacket_iface);
+        environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void*)&netpacket_iface);
 
         auto_config_1p_link();
         mode = MODE_SINGLE_GAME;
@@ -1000,79 +1075,6 @@ void check_for_new_players() {
 }
 
 
-
-// Netplay (Netpacket) interface
-
-void netpacket_poll_receive() {
-    if (netpacket_pollrcv_fn_ptr)
-        netpacket_pollrcv_fn_ptr();
-}
-
-void netpacket_send(uint16_t client_id, const void* buf, size_t len) {
-    // Force all packets to be flushed ASAP, to minimize latency.
-    if (netpacket_send_fn_ptr)
-        netpacket_send_fn_ptr(RETRO_NETPACKET_RELIABLE | RETRO_NETPACKET_FLUSH_HINT, buf, len, client_id);
-}
-
-static void netpacket_start(uint16_t client_id, retro_netpacket_send_t send_fn, retro_netpacket_poll_receive_t poll_receive_fn) {
-    netpacket_send_fn_ptr = send_fn;
-    netpacket_pollrcv_fn_ptr = poll_receive_fn;
-    num_clients = 0;
-    my_client_id = client_id;
-}
-
-// Netplay session ends.
-static void netpacket_stop() {
-    netpacket_send_fn_ptr = NULL;
-    netpacket_pollrcv_fn_ptr = NULL;
-}
-
-static void netpacket_receive(const void* buf, size_t len, unsigned short client_id) {
-
-    const byte* data = (const byte*)buf;
-
-    bool isMaster = (v_gb[0]->get_regs()->SC & 0x01) == 01;
-    if (!isMaster)
-    {    
-        byte retbuf[1] = { v_gb[0]->receive_from_linkcable(data[0])};
-        
-        netpacket_send(client_id, retbuf, 1 );
-        return;
-    }
-
-    v_gb[0]->get_regs()->SB = data[0]; 
-    v_gb[0]->get_regs()->SC &= 3;
-    v_gb[0]->get_cpu()->irq(INT_SERIAL);
-}
-
-
-// Ensure we do not have too many clients for the type of connection used.
-static bool netpacket_connected(unsigned short client_id) {
-    int max_clients = 1;
-
-    if (num_clients >= max_clients)
-        return false;
-
-    num_clients++;
-    
-    //test if when can change back to normal netplay
-    environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, NULL);
-    return true;
-}
-
-static void netpacket_disconnected(unsigned short client_id) {
-    num_clients--;
-}
-
-const struct retro_netpacket_callback netpacket_iface = {
-  netpacket_start,          // start
-  netpacket_receive,        // receive
-  netpacket_stop,           // stop
-  NULL,                     // poll
-  netpacket_connected,      // connected
-  netpacket_disconnected,   // disconnected
-  "DoubleCherryGB netpack V1.0",   // core version char* 
-};
 
 
 void log_save_state(uint8_t* data, size_t size)

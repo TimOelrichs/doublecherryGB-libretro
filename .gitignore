@@ -13,3 +13,5 @@
 # Lokale Build-Verzeichnisse
 build*/
 out
+
+CMakeSettings.json

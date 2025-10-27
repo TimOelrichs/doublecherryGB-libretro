@@ -55,6 +55,14 @@ class rom;
 class mbc;
 class cheat;
 
+
+// use fixed-width types
+struct Huc3_Rtc_State {
+	uint64_t rtc_timestamp; // last sync time (epoch seconds)
+	uint32_t rtc_seconds;   // seconds since midnight 0..86399
+	uint32_t rtc_days;      // accumulated days (can overflow high, but HuC3 uses 12 bit)
+};
+
 enum color_correction_mode {
 	OFF = 0,
 	GAMBATTE_SIMPLE = 1,
@@ -535,6 +543,7 @@ public:
 	void serialize(serializer& s);
 
 	unsigned long huc3_baseTime;
+	Huc3_Rtc_State huc3_state{};
 
 private:
 	void mbc1_write(word adr, byte dat);
@@ -594,8 +603,16 @@ private:
 	bool huc1_16_8;
 	byte huc1_dat;
 
-	unsigned long huc3_haltTime, huc3_writingTime;
-	unsigned long huc3_dataTime;
+	// --- HuC3 RTC persistent state ---
+	uint64_t huc3_rtc_timestamp = 0; // letzter "Systemzeitpunkt"
+	uint32_t huc3_rtc_days = 0;      // akkumulierte Tage
+	uint32_t huc3_rtc_seconds = 0;   // Sekunden seit Mitternacht (0–86399)
+
+
+	uint64_t huc3_haltTime = 0;
+	uint64_t huc3_writingTime = 0;
+	uint32_t huc3_dataTime = 0; // 24 Bit reichen
+
 	byte huc3_ramValue, huc3_shift, huc3_current_mem_control_reg, huc3_modeflag;
 	bool huc3_halted;
 	byte huc3_command, huc3_access_adress;
@@ -694,6 +711,9 @@ public:
 
 	int next_ir_clock = INT_MIN;
 	std::vector<ir_signal*> out_ir_signal_que;
+	bool waiting_for_netpacket = false;
+	std::queue<byte> received_netpacket_data;
+	
 
 private:
 	byte inline io_read(word adr);
@@ -743,6 +763,7 @@ private:
 	int clocks_since_last_serial;
 	
 	byte last_rp_write = 0xC0;
+
 
 
 };

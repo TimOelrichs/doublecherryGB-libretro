@@ -27,6 +27,8 @@
 #include <istream>
 #include <iostream>
 #include <fstream>
+#include <chrono>
+#include <thread>
 
 #define Z_FLAG 0x40
 #define H_FLAG 0x10
@@ -438,31 +440,37 @@ void cpu::io_write(word adr,byte dat)
 			ref_gb->get_regs()->SB=dat;
 			return;
 		case 0xFF02://SC(コントロール) // SC (control)
-			if (ref_gb->get_rom()->get_info()->gb_type==1){
+		{
+			auto& regs = *ref_gb->get_regs();
+			const bool is_dmg = (ref_gb->get_rom()->get_info()->gb_type == 1);
+			const bool start_transmission = (dat & 0x80);
+			const uint8_t sc_mask = is_dmg ? 0x81 : 0x83;
+			regs.SC = dat & sc_mask;
+
+			if (start_transmission)
+			{
 				
-				//if (this->m_dmg07)  ref_gb->get_regs()->SC = in_data & net_id;
-				//else 
-				ref_gb->get_regs()->SC = dat & 0x81;
+				const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
+				if (netpacket_active) {
+					int id = my_client_id ? 0 : 1;
+					byte data[1] = { ref_gb->get_regs()->SB };
+					netpacket_send(id, data, 1);
+					waiting_for_netpacket = true;
+				}
 
-				if ((dat&0x80)&&(dat&1)) // 送信開始 // Transmission start
-					seri_occer=total_clock+512;
-			}
-			else{ // GBCでの拡張 // Enhancements in GBC
-				ref_gb->get_regs()->SC = dat & 0x83;
-				if ((dat & 0x80) && (dat & 1)) // 送信開始 // Transmission start
-            {
-					const bool doublespeed = (dat & 2);
-					seri_occer = total_clock + 512 * 8 / (1 + (31* doublespeed));
+				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 01;
+				if (!isMaster) return;
 
-					/*
-					if (dat & 2)
-						seri_occer = total_clock + 512 * 8 / 32; // 転送速度通常の32倍 // 32 times the normal transfer rate
-					else
-						seri_occer = total_clock + 512 * 8;
-					*/
-            }
+				const int speed_factor = (!is_dmg && (dat & 0x02)) ? 32 : 1;
+				const int transfer_cycles = is_dmg ? 512 : (512 * 8) / speed_factor;
+				seri_occer = total_clock + transfer_cycles;
+
+				
+
 			}
+
 			return;
+		}
 		case 0xFF04://DIV(ディバイダー) // DIV (divider)
 			ref_gb->get_regs()->DIV=0;
 			return;
@@ -1057,6 +1065,7 @@ void cpu::irq_process()
 
 void cpu::exec(int clocks)
 {
+
 	if (speed)
 		clocks*=2;
 
@@ -1088,8 +1097,12 @@ void cpu::exec(int clocks)
 			gdma_rest=0;
 		}
 	}
+	const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
 
 	while(rest_clock>0){
+
+		if (netpacket_active) netpacket_poll_receive();
+
 		irq_process();
 
 		op_code=op_read();
@@ -1106,6 +1119,7 @@ void cpu::exec(int clocks)
 			tmp_clocks=cycles_cb[op_code];
 			switch(op_code){
 #include "op_cb.h"
+#include <thread>
 			}
 			break;
 		}
@@ -1136,14 +1150,36 @@ void cpu::exec(int clocks)
 		if (total_clock>seri_occer){
 			seri_occer=0x7fffffff;
 
-			//new netpacket feature for pokemon
-			if (emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1)) {
-				int id = my_client_id ? 0 : 1;
-				byte data[1] = { ref_gb->get_regs()->SB };
-				netpacket_send(id, data, 1);
-				return;
-			}
+			const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
+			if (netpacket_active) {
+				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 1;
+				if (!isMaster) return;
 
+				auto start = std::chrono::steady_clock::now();
+				const auto timeout = std::chrono::seconds(5);
+
+				// Blockierende Warte-Schleife, bis ein Byte da ist oder Timeout
+				while (received_netpacket_data.empty()) {
+					netpacket_poll_receive();
+
+					auto elapsed = std::chrono::steady_clock::now() - start;
+					if (elapsed > timeout) {
+						// wirklich Timeout → Defaultwert setzen
+						received_netpacket_data.push(0xFF);
+						waiting_for_netpacket = false;
+						break;
+					}
+
+					std::this_thread::sleep_for(std::chrono::milliseconds(1)); // CPU schonen
+				}
+
+				// Daten übernehmen (Byte vorhanden oder Timeout)
+				ref_gb->get_regs()->SB = received_netpacket_data.front();
+				received_netpacket_data.pop();
+				ref_gb->get_regs()->SC &= 0x3;
+				
+				
+			}
 			else if (ref_gb->get_linked_target()){
 
 				byte send_data = ref_gb->get_regs()->SB;
