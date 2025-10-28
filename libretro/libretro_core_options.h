@@ -155,6 +155,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
           {"1", "Off"},
           {"3", "x3 (480p)"},
           {"6", "x6 (960p)"},
+          {"9", "x9 (1440p)"},
           {NULL, NULL}
 
       },

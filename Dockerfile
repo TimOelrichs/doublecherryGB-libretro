@@ -1,12 +1,10 @@
-﻿# === Basis-Image mit Build-Tools ===
-FROM ubuntu:22.04 AS base
+﻿FROM ubuntu:22.04 AS base
 
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential cmake git wget pkg-config xz-utils \
     libtool automake autoconf unzip ca-certificates && \
     rm -rf /var/lib/apt/lists/*
-
 # === Stage: Miyoo Mini Toolchain (ARMv7) ===
 FROM base AS miyoo
 

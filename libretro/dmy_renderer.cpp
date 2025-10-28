@@ -230,18 +230,90 @@ word dmy_renderer::map_color(word gb_col)
         }
         case GAMBATTE_ACCURATE:
         {
-            uint16_t corrected = gbc_lut_accurate[gb_col];
+            static bool lutAvailable = false;
+            static bool lutChecked = false;
 
-            if (rgb565) {
-                rFinal = (corrected >> 11) & 0x1F;
-                gFinal = (corrected >> 6) & 0x1F;
-                bFinal = (corrected >> 0) & 0x1F;
+            // Nur einmal prüfen, ob die LUT in den Speicher passt
+            if (!lutChecked)
+            {
+                lutChecked = true;
+
+                // Versuche Test-Allokation für eine 32x32x32 LUT
+                try {
+                    constexpr size_t LUT_SIZE = 32 * 32 * 32 * sizeof(uint16_t);
+                    std::unique_ptr<uint16_t[]> testLut(new uint16_t[32 * 32 * 32]);
+                    memset(testLut.get(), 0, LUT_SIZE); // Sicherheitstest
+                    lutAvailable = true;
+                }
+                catch (const std::bad_alloc&) {
+                    lutAvailable = false;
+                }
             }
-            else {
-                bFinal = (corrected >> 10) & 0x1F;
-                gFinal = (corrected >> 5) & 0x1F;
-                rFinal = (corrected >> 0) & 0x1F;
+
+            if (lutAvailable)
+            {
+                // --- LUT-Version ---
+                uint16_t corrected = gbc_lut_accurate[gb_col];
+
+                if (rgb565) {
+                    rFinal = (corrected >> 11) & 0x1F;
+                    gFinal = (corrected >> 6) & 0x1F;
+                    bFinal = (corrected >> 0) & 0x1F;
+                }
+                else {
+                    bFinal = (corrected >> 10) & 0x1F;
+                    gFinal = (corrected >> 5) & 0x1F;
+                    rFinal = (corrected >> 0) & 0x1F;
+                }
             }
+            else
+            {
+                // --- Fallback: Farbkorrektur per Berechnung ---
+                #define GBC_CC_LUM 0.94f
+                #define GBC_CC_R   0.82f
+                #define GBC_CC_G   0.665f
+                #define GBC_CC_B   0.73f
+                #define GBC_CC_RG  0.125f
+                #define GBC_CC_RB  0.195f
+                #define GBC_CC_GR  0.24f
+                #define GBC_CC_GB  0.075f
+                #define GBC_CC_BR  -0.06f
+                #define GBC_CC_BG  0.21f
+
+                static const float rgbMax = 31.0f;
+                static const float rgbMaxInv = 1.0f / rgbMax;
+                float colorCorrectionBrightness = 0.5f;
+
+                static const float targetGamma = 2.2f;
+                static const float displayGammaInv = 1.0f / targetGamma;
+
+                float adjustedGamma = targetGamma - colorCorrectionBrightness;
+                float rFloat = std::pow(static_cast<float>(r) * rgbMaxInv, adjustedGamma);
+                float gFloat = std::pow(static_cast<float>(g) * rgbMaxInv, adjustedGamma);
+                float bFloat = std::pow(static_cast<float>(b) * rgbMaxInv, adjustedGamma);
+
+                float rCorrect = GBC_CC_LUM * ((GBC_CC_R * rFloat) + (GBC_CC_GR * gFloat) + (GBC_CC_BR * bFloat));
+                float gCorrect = GBC_CC_LUM * ((GBC_CC_RG * rFloat) + (GBC_CC_G * gFloat) + (GBC_CC_BG * bFloat));
+                float bCorrect = GBC_CC_LUM * ((GBC_CC_RB * rFloat) + (GBC_CC_GB * gFloat) + (GBC_CC_B * bFloat));
+
+                rCorrect = std::clamp(rCorrect, 0.0f, 1.0f);
+                gCorrect = std::clamp(gCorrect, 0.0f, 1.0f);
+                bCorrect = std::clamp(bCorrect, 0.0f, 1.0f);
+
+                rCorrect = std::pow(rCorrect, displayGammaInv);
+                gCorrect = std::pow(gCorrect, displayGammaInv);
+                bCorrect = std::pow(bCorrect, displayGammaInv);
+
+                rCorrect = std::clamp(rCorrect, 0.0f, 1.0f);
+                gCorrect = std::clamp(gCorrect, 0.0f, 1.0f);
+                bCorrect = std::clamp(bCorrect, 0.0f, 1.0f);
+
+                rFinal = static_cast<unsigned>((rCorrect * rgbMax) + 0.5f) & 0x1F;
+                gFinal = static_cast<unsigned>((gCorrect * rgbMax) + 0.5f) & 0x1F;
+                bFinal = static_cast<unsigned>((bCorrect * rgbMax) + 0.5f) & 0x1F;
+            }
+
+            break;
         }
 
         default:
@@ -516,7 +588,11 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
             case 6:
                 buffer = toSubpixelRGB6x6Bleed(buffer, width, height);
                 break;
+            case 9:
+                buffer = toSubpixelRGB9x9Bleed(buffer, width, height);
+                break;
             default:
+
                 // Ensure all cases are handled, even if no specific action is required
                 break;
             }
