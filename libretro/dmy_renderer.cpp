@@ -25,6 +25,7 @@
 #include <time.h>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #include "dmy_renderer.h"
 #include "../gb_core/gb.h"

@@ -465,6 +465,7 @@ void dmg07::send_sync_bytes()
 				delay_between_packages_in_clocks = microseconds_to_clocks(2105);
 				break;
 			}
+			break;
 		}
 		case 4: {
 			switch (transfer_rate)

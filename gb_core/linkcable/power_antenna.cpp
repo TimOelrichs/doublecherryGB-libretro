@@ -22,7 +22,6 @@
 //-------------------------------------------------
 
 #include "./include/power_antenna.hpp"
-#pragma once
 #include "../../libretro/libretro.h"
 
 extern retro_set_rumble_state_t rumble_state_cb;

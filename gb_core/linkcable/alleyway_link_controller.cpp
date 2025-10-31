@@ -1,5 +1,4 @@
-﻿#pragma once
-#include "./include/alleyway_link_controller.hpp"
+﻿#include "./include/alleyway_link_controller.hpp"
 #include "../../libretro/libretro.h"
 
 extern retro_input_state_t input_state_cb;

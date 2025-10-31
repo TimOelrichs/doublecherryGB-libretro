@@ -24,10 +24,9 @@
 
 extern int emulated_gbs; 
 
-faceball2000_cable::faceball2000_cable(std::vector<gb*> g_gb) {
-	v_gb.insert(v_gb.begin(), std::begin(g_gb), std::end(g_gb));
-}
-
+faceball2000_cable::faceball2000_cable(const std::vector<gb*>& g_gb)
+    : v_gb(g_gb) 
+{}
 
 byte faceball2000_cable::receive_from_linkcable(byte data) {
 

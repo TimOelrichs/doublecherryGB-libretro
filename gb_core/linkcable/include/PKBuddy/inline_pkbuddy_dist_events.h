@@ -1117,7 +1117,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 		case 31:
 		{
 			// Surfing Pikachu CoroCoro Comic Special
-			// This Pokémon was available in Japan
+			// This Pokï¿½mon was available in Japan
 			// from August 30 to September 30, 1997; September 13 to October 14, 1997.
 			
 
@@ -1195,7 +1195,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 		case 21:
 		{
 			// Surfing Pikachu CoroCoro Comic Special
-			// This Pokémon was available in Japan
+			// This Pokï¿½mon was available in Japan
 			// from August 30 to September 30, 1997; September 13 to October 14, 1997.
 		
 			display_message("Surfing Pikachu CoroCoro Comic Special Event");
@@ -1302,7 +1302,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 		case 21:
 		{
 			// Surfing Pikachu CoroCoro Comic Special
-		// This Pokémon was available in Japan
+		// This Pokï¿½mon was available in Japan
 		// from August 30 to September 30, 1997; September 13 to October 14, 1997.
 
 
@@ -2720,7 +2720,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 31:
 		{
 			// Surfing Pikachu CoroCoro Comic Special
-			// This Pokémon was available in Japan
+			// This Pokï¿½mon was available in Japan
 			// from August 30 to September 30, 1997; September 13 to October 14, 1997.
 
 
@@ -2798,7 +2798,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 21:
 		{
 			// Surfing Pikachu CoroCoro Comic Special
-			// This Pokémon was available in Japan
+			// This Pokï¿½mon was available in Japan
 			// from August 30 to September 30, 1997; September 13 to October 14, 1997.
 
 			display_message("Surfing Pikachu CoroCoro Comic Special Event");
@@ -2909,7 +2909,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 21:
 		{
 			// Surfing Pikachu CoroCoro Comic Special
-		// This Pokémon was available in Japan
+		// This Pokï¿½mon was available in Japan
 		// from August 30 to September 30, 1997; September 13 to October 14, 1997.
 
 
@@ -3014,7 +3014,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 13:
 		case 14:
 		{
-			display_message("Union Cave Pokémon");
+			display_message("Union Cave Pokï¿½mon");
 
 			int len = 5;
 			int dex_no[] = { 120,98,95,118,131 };
@@ -3114,7 +3114,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 6:
 		case 7:
 		{
-			display_message("Psychic Type Pokémon Week");
+			display_message("Psychic Type Pokï¿½mon Week");
 
 			int len = 3;
 			int dex_no[] = { 63, 96, 102, 177, 122 };
@@ -3140,7 +3140,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 13:
 		case 14:
 		{
-			display_message("The Johto Initial Three Pokémon Week");
+			display_message("The Johto Initial Three Pokï¿½mon Week");
 
 			int len = 5;
 			int dex_no[] = { 154,157,160,250,249 };
@@ -3167,7 +3167,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 20:
 		case 21:
 		{
-			display_message("Rock Tunnel Pokémon");
+			display_message("Rock Tunnel Pokï¿½mon");
 
 			int len = 6;
 			int dex_no[] = { 74,41,66,95,104,115 };
@@ -3195,7 +3195,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 27:
 		case 28:
 		{
-			display_message("Ice Type Pokémon");
+			display_message("Ice Type Pokï¿½mon");
 
 			int len = 4;
 			int dex_no[] = { 225,86,131,220 };
@@ -3217,7 +3217,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 		case 30:
 		case 31:
 		{
-			display_message("Pokémon that Appear at Night only Week");
+			display_message("Pokï¿½mon that Appear at Night only Week");
 
 			int len = 5;
 			int dex_no[] = { 163,198,200,215,120 };
@@ -3242,85 +3242,3 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 	}
 
 }
-
-
-
-/*
-void event_pokemon_stamp_august_1998_japan() {
-
-
-	//Pokémon Stamp Pokémon
-	//Two Pokémon, Fearow and Rapidash, with the special move Pay Day were available through the Pokémon Stamp campaign
-	//that ran in various magazines published by Shogakukan.
-
-	//These Pokémon are the Kanto Pokémon Fan Club Chairman's two favorite Pokémon that he mentions in the games,
-	//and also made their appearance in The Coming of Slowpoke (Eventually) in Pokémon Adventures.
-
-	//This Pokémon was available in Japan in August 1998.
-	
-
-	display_message("Pokemon Stamp Distribution Event August 1998 - JAPAN");
-	display_message("Get your PAY DAY FEAROW and PAY DAY RAPIDASH!");
-
-	pokemon fearow = generate_pk_from_base_table(21, 25);
-	fearow.move4 = 0x06;
-	insert_pokemon_into_next_slot(fearow, "Fearow");
-
-	pokemon rapidash = generate_pk_from_base_table(77, 40);
-	rapidash.move4 = 0x06;
-	insert_pokemon_into_next_slot(rapidash, "Rapidash");
-
-
-}
-
-
-
-/*
-void event_pokemon_summer_1998_pokemon_battle_tour_pikachu(){
-
-	// Summer 1998 Pokémon Battle Tour Pikachu
-	//This Pokémon was available in Japan
-	// from July 19 to August 23, 1998.
-	
-
-	display_message("Summer 1998 Pokémon Battle Tour Pikachu from July 19 to August 23");
-	display_message("Get your SURFING PIKACHU!");
-
-	pokemon pikachu = generate_pk_from_base_table(24, 5);
-	pikachu.move3 = 0x39;
-	insert_pokemon_into_next_slot(pikachu, "Pikachu");
-
-}
-
-void event_pokemon_n64_surfing_pikachu() {
-
-	//This Pokémon was available in Japan
-	//from September 21 to October 31, 1997.
-	
-
-	display_message("Nintendo 64 Surfing Pikachu 1997 - September 21 to October 31");
-	display_message("Get your SURFING PIKACHU!");
-
-	pokemon pikachu = generate_pk_from_base_table(24, 5);
-	pikachu.move3 = 0x39;
-	insert_pokemon_into_next_slot(pikachu, "Pikachu");
-
-}
-
-void event_pokemon_university_magikarp_july_1998_japan() {
-
-	//University Magikarp
-	//This Pokémon was available in Japan on July 1998.
-	
-	display_message("University Magikarp July 1998");
-	display_message("Get your DRAGON RAGE MAGIKARP!");
-
-	pokemon pkm = generate_pk_from_base_table(128, 15);
-	pkm.move2 = 0x52;
-	insert_pokemon_into_next_slot(pikachu, "Magikarp");
-
-
-}
-
-
-*/
