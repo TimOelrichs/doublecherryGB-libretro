@@ -231,6 +231,7 @@ word dmy_renderer::map_color(word gb_col)
         }
         case GAMBATTE_ACCURATE:
         {
+            /*  //disable cclut for now, because it crashes on the miyoo mini
             static bool lutAvailable = false;
             static bool lutChecked = false;
 
@@ -268,6 +269,7 @@ word dmy_renderer::map_color(word gb_col)
                 }
             }
             else
+            */
             {
                 // --- Fallback: Farbkorrektur per Berechnung ---
                 #define GBC_CC_LUM 0.94f
