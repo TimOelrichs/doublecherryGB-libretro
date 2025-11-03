@@ -27,8 +27,15 @@
 #include <istream>
 #include <iostream>
 #include <fstream>
-#include <chrono>
-#include <thread>
+
+#ifdef _3DS
+	#include <3ds.h>
+	#define SLEEP_MS(ms) svcSleepThread(1000000LL * (ms))
+#else
+	#include <thread>
+	#include <chrono>
+	#define SLEEP_MS(ms) std::this_thread::sleep_for(std::chrono::milliseconds(ms))
+#endif
 
 #define Z_FLAG 0x40
 #define H_FLAG 0x10
@@ -1169,8 +1176,8 @@ void cpu::exec(int clocks)
 						waiting_for_netpacket = false;
 						break;
 					}
+					SLEEP_MS(1);
 
-					std::this_thread::sleep_for(std::chrono::milliseconds(1)); // CPU schonen
 				}
 
 				// Daten übernehmen (Byte vorhanden oder Timeout)
