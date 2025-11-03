@@ -27,8 +27,13 @@
 #include <istream>
 #include <iostream>
 #include <fstream>
-#include <chrono>
-#include <thread>
+
+#include "libretro-common/include/retro_timers.h"
+
+	#define SLEEP_MS(ms) retro_sleep(ms)
+
+	#include <thread>
+	#include <chrono>
 
 #define Z_FLAG 0x40
 #define H_FLAG 0x10
@@ -1169,8 +1174,8 @@ void cpu::exec(int clocks)
 						waiting_for_netpacket = false;
 						break;
 					}
+					SLEEP_MS(1);
 
-					std::this_thread::sleep_for(std::chrono::milliseconds(1)); // CPU schonen
 				}
 
 				// Daten übernehmen (Byte vorhanden oder Timeout)
