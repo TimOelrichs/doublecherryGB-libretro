@@ -64,11 +64,11 @@ private:
 	pikachu_2_gs_state current_state; 
 	std::vector<ir_signal*> in_ir_signals, out_ir_signals;
 	std::vector<byte> in_bytes, bytes_out_for_msg, all_bytes_out_for_checksum;
-	unsigned int sending_delay;
+	int sending_delay;
 	int delay_start_clock; 
 	bool is_waiting_for_delay_carry;
 	
-	byte in_data_length; 
+	byte in_data_length;
 	bool is_master;
 
  

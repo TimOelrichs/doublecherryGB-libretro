@@ -29,7 +29,7 @@ public:
 	
 private:
 	void log_traffic(byte id, byte b);
-	void fill_send_data_queue(char sequence[]);
+	void fill_send_data_queue(char sequence[], int len);
 	void init_send_data_queue();
 	void clear_data_for_next_round();
 

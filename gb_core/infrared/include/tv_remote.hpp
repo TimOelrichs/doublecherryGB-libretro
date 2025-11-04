@@ -58,7 +58,7 @@ private:
 
 	void switch_tv_remote();
 	std::string get_remote_name();
-	byte key_2_remote_command(int key);
+	int key_2_remote_command(int key);
 	void gen_random_remote_signal();
 
 	int micro_seconds_to_clocks(int micro_seconds) { return (int)(4194304.0 / 1000000.0 * micro_seconds); };

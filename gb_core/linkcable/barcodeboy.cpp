@@ -108,7 +108,7 @@ void barcodeboy::process() {
 	if (round++) {
 		is_in_mastermode = false;
 		round = 0; 
-		barcode_index = (++barcode_index >= barcodes.size()) ? 0 : barcode_index;
+		current_barcode_index = (current_barcode_index + 1) % battle_space_barcodes.size();
 		current_barcode = barcodes[barcode_index];
 	}
 
@@ -170,13 +170,17 @@ void barcodeboy::handle_special_hotkey(int key) {
 
 	if (key < 0) return;
 
+	auto is_valid_key = [](int key, size_t container_size) {
+		return key == 0x10 || static_cast<size_t>(key) < container_size;
+	};
+
 	if (!strcmp(this->cart_name, "BATTLE SPACE"))
 	{
-		if (key >= battle_space_barcodes.size() && key != 0x10) return;
+		if (!is_valid_key(key, battle_space_barcodes.size()))return;
 
 		//SELECT BUTTON
 		if (key == 0x10) 
-			current_barcode_index = ++current_barcode_index % battle_space_barcodes.size();
+			current_barcode_index = (current_barcode_index + 1)  % battle_space_barcodes.size();
 		else
 			current_barcode_index = key;
 
@@ -187,11 +191,11 @@ void barcodeboy::handle_special_hotkey(int key) {
 	}
 	if (!strcmp(this->cart_name, "MONSTER MAKER"))
 	{
-		if (key >= monster_maker_barcodes.size() && key != 0x10) return;
+		if (!is_valid_key(key, battle_space_barcodes.size()))return;
 
 		//SELECT BUTTON
 		if (key == 0x10)
-			current_barcode_index = ++current_barcode_index % monster_maker_barcodes.size();
+			current_barcode_index = (current_barcode_index + 1)  % monster_maker_barcodes.size();
 		else
 			current_barcode_index = key;
 
@@ -202,11 +206,11 @@ void barcodeboy::handle_special_hotkey(int key) {
 	}
 	if (!strcmp(this->cart_name, "KATTOBI ROAD"))
 	{
-		if (key >= kattobi_road_barcodes.size() && key != 0x10) return;
+		if (!is_valid_key(key, battle_space_barcodes.size()))return;
 
 		//SELECT BUTTON
 		if (key == 0x10)
-			current_barcode_index = ++current_barcode_index % kattobi_road_barcodes.size();
+			current_barcode_index = (current_barcode_index + 1) % kattobi_road_barcodes.size();
 		else
 			current_barcode_index = key;
 
@@ -217,11 +221,11 @@ void barcodeboy::handle_special_hotkey(int key) {
 	}
 	if (!strcmp(this->cart_name, "FAMISTA3"))
 	{
-		if (key >= famista3_barcodes.size() && key != 0x10) return;
+		if (!is_valid_key(key, battle_space_barcodes.size())) return;
 
 		//SELECT BUTTON
 		if (key == 0x10)
-			current_barcode_index = ++current_barcode_index % famista3_barcodes.size();
+			current_barcode_index = (current_barcode_index + 1) % famista3_barcodes.size();
 		else
 			current_barcode_index = key;
 
@@ -232,11 +236,11 @@ void barcodeboy::handle_special_hotkey(int key) {
 	}
 	if (!strcmp(this->cart_name, "FAMILY JOCKEY2"))
 	{
-		if (key >= familiy_jockey2_barcodes.size() && key != 0x10) return;
+		if (!is_valid_key(key, battle_space_barcodes.size())) return;
 
 		//SELECT BUTTON
 		if (key == 0x10)
-			current_barcode_index = ++current_barcode_index % familiy_jockey2_barcodes.size();
+			current_barcode_index = (current_barcode_index + 1)  % familiy_jockey2_barcodes.size();
 		else
 			current_barcode_index = key;
 

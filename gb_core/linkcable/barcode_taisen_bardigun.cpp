@@ -89,7 +89,8 @@ void barcode_taisen_bardigun::set_barcode()
 void barcode_taisen_bardigun::handle_special_hotkey(int key)
 {
 	if (key == 0x10) {
-		current_barcode_index = ++current_barcode_index % 9;
+		++current_barcode_index;
+		current_barcode_index %= 9;
 		set_barcode();
 		return;
 	}

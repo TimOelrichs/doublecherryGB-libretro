@@ -30,10 +30,10 @@
 
 #include "libretro-common/include/retro_timers.h"
 
-	#define SLEEP_MS(ms) retro_sleep(ms)
+#define SLEEP_MS(ms) retro_sleep(ms)
 
-	#include <thread>
-	#include <chrono>
+#include <thread>
+#include <chrono>
 
 #define Z_FLAG 0x40
 #define H_FLAG 0x10
@@ -157,15 +157,15 @@ byte cpu::read_direct(word adr)
 	switch(adr>>13){
 	case 0:
 	case 1:
-		return ref_gb->get_rom()->get_rom()[adr];//ROM領域 // ROM area
+		return ref_gb->get_rom()->get_rom()[adr];
 	case 2:
 	case 3:
-		return ref_gb->get_mbc()->get_rom()[adr];//バンク可能ROM // ROM bank
+		return ref_gb->get_mbc()->get_rom()[adr];
 	case 4:
-		return vram_bank[adr&0x1FFF];//8KBVRAM
+		return vram_bank[adr&0x1FFF];
 	case 5:
 		if (ref_gb->get_mbc()->is_ext_ram())
-			return ref_gb->get_mbc()->get_sram()[adr&0x1FFF];//カートリッジRAM // cartridge RAM
+			return ref_gb->get_mbc()->get_sram()[adr&0x1FFF];
 		else
 			return ref_gb->get_mbc()->ext_read(adr);
 	case 6:
@@ -181,19 +181,24 @@ byte cpu::read_direct(word adr)
 				return ram[adr&0x0fff];
 		}
 		else if (adr<0xFEA0)
-			return oam[adr-0xFE00];//object attribute memory
-		else if (adr<0xFF00)
-			return spare_oam[(((adr-0xFFA0)>>5)<<3)|(adr&7)];
+			return oam[adr-0xFE00];
+		else if (adr<0xFF00) {
+			// Spars_oam Bereich - eigentlich nicht zugreifbar
+			// Aber für Kompatibilität:
+			if (adr >= 0xFEA0 && adr < 0xFEA0 + 0x18) {
+				return spare_oam[adr - 0xFEA0];
+			}
+			return 0xFF; // Ungültiger Zugriff
+		}
 		else if (adr<0xFF80)
-			return io_read(adr);//I/O
+			return io_read(adr);
 		else if (adr<0xFFFF)
-			return stack[adr-0xFF80];//stack
+			return stack[adr-0xFF80];
 		else
-			return io_read(adr);//I/O
+			return io_read(adr);
 	}
 	return 0;
 }
-
 void cpu::write(word adr,byte dat)
 {
 	switch(adr>>13){
@@ -208,7 +213,7 @@ void cpu::write(word adr,byte dat)
 		break;
 	case 5:
 		if (ref_gb->get_mbc()->is_ext_ram())
-			ref_gb->get_mbc()->get_sram()[adr&0x1FFF]=dat;//カートリッジRAM // cartridge RAM
+			ref_gb->get_mbc()->get_sram()[adr&0x1FFF]=dat;
 		else
 			ref_gb->get_mbc()->ext_write(adr,dat);
 		break;
@@ -227,8 +232,13 @@ void cpu::write(word adr,byte dat)
 		}
 		else if (adr<0xFEA0)
 			oam[adr-0xFE00]=dat;
-		else if (adr<0xFF00)
-			spare_oam[(((adr-0xFFA0)>>5)<<3)|(adr&7)]=dat;
+		else if (adr<0xFF00) {
+			// Spars_oam Bereich: 0xFEA0 - 0xFEB7 (nur 24 Bytes)
+			if (adr >= 0xFEA0 && adr < 0xFEA0 + 0x18) {
+				spare_oam[adr - 0xFEA0] = dat;
+			}
+			// Bereich 0xFEB8 - 0xFEFF ist nicht verwendbar
+		}
 		else if (adr<0xFF80)
 			io_write(adr,dat);//I/O
 		else if (adr<0xFFFF)
@@ -238,7 +248,6 @@ void cpu::write(word adr,byte dat)
 		break;
 	}
 }
-
 byte cpu::io_read(word adr)
 {
 	byte ret;

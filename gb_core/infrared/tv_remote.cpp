@@ -93,7 +93,7 @@ void tv_remote::handle_special_hotkey(int key)
 		return;
 	}
 
-	byte command = key_2_remote_command(key);
+	int command = key_2_remote_command(key);
 	if (command == -1) return; 
 
 	display_message_alt(get_remote_name() +
@@ -537,7 +537,7 @@ std::string tv_remote::get_remote_name()
 	return remotes[current_predefined_remote]->remote_name;
 }
 
-byte tv_remote::key_2_remote_command(int key)
+int tv_remote::key_2_remote_command(int key)
 {
 	//translate key to command
 	switch (key)

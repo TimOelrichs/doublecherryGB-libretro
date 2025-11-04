@@ -125,7 +125,7 @@ void dmg07::log_save_state(char* data, size_t size)
 			std::string filePath = "./dmg07_savesate_log.bin";
 			std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
 
-			for (int i = 0; i < size; i++)
+			for (size_t i = 0; i < size; i++)
 			{
 				ofs << data[i];
 			}
@@ -160,8 +160,8 @@ void dmg07::restart_pingphase()
 	phase_byte_count = 0;
 	delay = 0;
 
-	int delay_between_bytes_in_clocks = delay_between_bytes_in_clocks_default;
-	int delay_between_packages_in_clocks = delay_between_packages_in_clocks_default;
+	delay_between_bytes_in_clocks = delay_between_bytes_in_clocks_default;
+	delay_between_packages_in_clocks = delay_between_packages_in_clocks_default;
 
 	bytes_to_send = std::vector<byte>();
 
@@ -630,7 +630,7 @@ void dmg07::fill_buffer_for_less_than_4p()
 {
 	if (v_gb.size() < 4)
 	{
-		for (int i = 0; i < 4 - v_gb.size(); i++)
+		for (size_t i = 0; i < 4 - v_gb.size(); i++)
 		{
 			for (int j = 0; j < current_packet_size; j++)
 			{

@@ -115,7 +115,7 @@ void retro_init(void)
     }
 
     // Sensor Interface anfordern
-    bool sensors_available = true;
+    //bool sensors_available = true;
     if (environ_cb(RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE, &sensor_interface)) {
         set_sensor_state = sensor_interface.set_sensor_state;
         get_sensor_input = sensor_interface.get_sensor_input;
@@ -287,7 +287,7 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
         return true;
     }
 
-
+return false;
 }
 
 void retro_unload_game(void)
@@ -309,7 +309,7 @@ void retro_unload_game(void)
 
 void retro_reset(void)
 {
-    for (int i = 0; i < emulated_gbs; ++i)
+    for (size_t i = 0; i < emulated_gbs; ++i)
     {
         if (v_gb[i])
             v_gb[i]->reset();
@@ -319,7 +319,7 @@ void retro_reset(void)
         master_link->reset();
         */
 
-    for (int i = 0; i < v_serializable_devices.size(); i++)
+    for (size_t i = 0; i < v_serializable_devices.size(); i++)
     {
         v_serializable_devices[i]->reset();
     }
@@ -366,7 +366,7 @@ void retro_run(void)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
 
-        for (int i = 0; i < emulated_gbs; i++)
+        for (size_t i = 0; i < emulated_gbs; i++)
         {
             v_gb[i]->run();
         }
@@ -397,8 +397,9 @@ void *retro_get_memory_data(unsigned id)
         case RETRO_MEMORY_SYSTEM_RAM:
             return v_gb[id]->get_cpu()->get_ram();
         default:
-            break;
+            return NULL;
         }
+            break;
     }
     case MODE_DUAL_GAME:
     {
@@ -413,8 +414,9 @@ void *retro_get_memory_data(unsigned id)
         case RETRO_MEMORY_GAMEBOY_2_RTC:
             return &(render[id]->fixed_time);
         default:
-            break;
+            return NULL;
         }
+            break;
     }
     }
     return NULL;
@@ -444,6 +446,8 @@ size_t retro_get_memory_size(unsigned id)
         default:
             break;
         }
+
+            break;
     }
     case MODE_DUAL_GAME:
     {
@@ -460,6 +464,8 @@ size_t retro_get_memory_size(unsigned id)
         default:
             break;
         }
+
+            break;
     }
     }
     return 0;
@@ -471,7 +477,7 @@ size_t retro_serialize_size(void)
 {
     size_t _all_size = 0;
 
-    for (int i = 0; i < emulated_gbs; ++i)
+    for (size_t i = 0; i < emulated_gbs; ++i)
     {
         if (v_gb[i])
         {
@@ -496,10 +502,10 @@ bool retro_serialize(void *data, size_t size)
 {
     // if (size == retro_serialize_size())
     {
-        unsigned i;
+
         uint8_t *ptr = (uint8_t *)data;
 
-        for (int i = 0; i < emulated_gbs; ++i)
+        for (size_t i = 0; i < emulated_gbs; ++i)
         {
             if (v_gb[i])
             {
@@ -551,7 +557,7 @@ bool retro_unserialize(const void *data, size_t size)
 
 void retro_cheat_reset(void)
 {
-    for (int i = 0; i < emulated_gbs; ++i)
+    for (size_t i = 0; i < emulated_gbs; ++i)
     {
         if (v_gb[i])
             v_gb[i]->get_cheat()->clear();

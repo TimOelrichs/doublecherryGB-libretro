@@ -234,7 +234,7 @@ dmg07x4::dmg07x4(std::vector<gb*> v_gb, int players) {
 	
 	}
 
-	for (int i = 0; i < v_dmg07.size(); i++)
+	for (size_t i = 0; i < v_dmg07.size(); i++)
 	{
 		v_dmg07[i]->use_v_gb_size = true; 
 	}
@@ -243,7 +243,7 @@ dmg07x4::dmg07x4(std::vector<gb*> v_gb, int players) {
 
 void dmg07x4::process() {
 		
-	for (int i = 0; i < v_dmg07.size(); i++)
+	for (size_t i = 0; i < v_dmg07.size(); i++)
 	{
 		v_dmg07[i]->process();
 	}	
@@ -251,7 +251,7 @@ void dmg07x4::process() {
 
 void dmg07x4::reset() {
 
-	for (int i = 0; i < v_dmg07.size(); i++)
+	for (size_t i = 0; i < v_dmg07.size(); i++)
 	{
 		v_dmg07[i]->reset();
 	}

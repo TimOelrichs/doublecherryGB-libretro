@@ -33,210 +33,221 @@ gameboy_printer::gameboy_printer()
 
 byte gameboy_printer::receive_from_linkcable(byte data)
 {
-	//Check for magic bytes at any time during initial transfer
-	//Pokemon Pinball sometimes sends 0x10 0x33. Needs hardware verification on how this works. Treat it as valid for now.
-	if (((last_transfer == 0x88) || (last_transfer == 0x10)) && (data == 0x33) && (packet_size <= 6))
-	{
-		current_state = GBP_AWAITING_PACKET;
-		packet_buffer.clear();
-		packet_buffer.push_back(0x88);
-		packet_size = 1;
-	}
+    byte return_value = 0x0; // Standard-Rückgabewert
 
-	switch (current_state)
-	{
-		//Receive packet data
-	case GBP_AWAITING_PACKET:
-	{
-		//Push data to packet buffer	
-		packet_buffer.push_back(data);
-		packet_size++;
+    //Check for magic bytes at any time during initial transfer
+    //Pokemon Pinball sometimes sends 0x10 0x33. Needs hardware verification on how this works. Treat it as valid for now.
+    if (((last_transfer == 0x88) || (last_transfer == 0x10)) && (data == 0x33) && (packet_size <= 6))
+    {
+        current_state = GBP_AWAITING_PACKET;
+        packet_buffer.clear();
+        packet_buffer.push_back(0x88);
+        packet_size = 1;
+    }
 
-		//Check for magic number 0x88 0x33
-		if ((packet_size == 2) && (packet_buffer[0] == 0x88) && (packet_buffer[1] == 0x33))
-		{
-			//Move to the next state
-			current_state = GBP_RECEIVE_COMMAND;
-		}
+    switch (current_state)
+    {
+        //Receive packet data
+        case GBP_AWAITING_PACKET:
+        {
+            //Push data to packet buffer
+            packet_buffer.push_back(data);
+            packet_size++;
 
-		//If magic number not found, reset
-		else if (packet_size == 2)
-		{
-			packet_size = 1;
-			byte temp = packet_buffer[1];
-			packet_buffer.clear();
-			packet_buffer.push_back(temp);
-		}
+            //Check for magic number 0x88 0x33
+            if ((packet_size == 2) && (packet_buffer[0] == 0x88) && (packet_buffer[1] == 0x33))
+            {
+                //Move to the next state
+                current_state = GBP_RECEIVE_COMMAND;
+            }
 
-		//Send data back to GB + IRQ
-		return 0x0;
-		break;
-	}
-	//Receive command
-	case GBP_RECEIVE_COMMAND:
+            //If magic number not found, reset
+            else if (packet_size == 2)
+            {
+                packet_size = 1;
+                byte temp = packet_buffer[1];
+                packet_buffer.clear();
+                packet_buffer.push_back(temp);
+            }
 
-		//Push data to packet buffer
-		packet_buffer.push_back(data);
-		packet_size++;
+            //Send data back to GB + IRQ
+            return_value = 0x0;
+            break;
+        }
+        //Receive command
+        case GBP_RECEIVE_COMMAND:
 
-		//Grab command. Check to see if the value is a valid command
-		command = packet_buffer.back();
+            //Push data to packet buffer
+            packet_buffer.push_back(data);
+            packet_size++;
 
-		//Abort if invalid command, wait for a new packet
-		if ((command != 0x1) && (command != 0x2) && (command != 0x4) && (command != 0xF)
-			&& (command != 0x88) && (command != 0x10))
-		{
-			//std::cout << "SIO::Warning - Invalid command sent to GB Printer -> 0x" << std::hex << (unsigned int)command << "\n";
-			current_state = GBP_AWAITING_PACKET;
-		}
+            //Grab command. Check to see if the value is a valid command
+            command = packet_buffer.back();
 
-		else
-		{
-			//Move to the next state
-			current_state = GBP_RECEIVE_COMPRESSION_FLAG;
-		}
+            //Abort if invalid command, wait for a new packet
+            if ((command != 0x1) && (command != 0x2) && (command != 0x4) && (command != 0xF)
+                && (command != 0x88) && (command != 0x10))
+            {
+                //std::cout << "SIO::Warning - Invalid command sent to GB Printer -> 0x" << std::hex << (unsigned int)command << "\n";
+                current_state = GBP_AWAITING_PACKET;
+            }
 
-		//Send data back to GB + IRQ
-		return 0x0;
-		break;
+            else
+            {
+                //Move to the next state
+                current_state = GBP_RECEIVE_COMPRESSION_FLAG;
+            }
 
-		//Receive compression flag
-	case GBP_RECEIVE_COMPRESSION_FLAG:
+            //Send data back to GB + IRQ
+            return_value = 0x0;
+            break;
 
-		//Push data to packet buffer
-		packet_buffer.push_back(data);
-		packet_size++;
+        //Receive compression flag
+        case GBP_RECEIVE_COMPRESSION_FLAG:
 
-		//Grab compression flag
-		compression_flag = packet_buffer.back();
+            //Push data to packet buffer
+            packet_buffer.push_back(data);
+            packet_size++;
 
-		//Move to the next state
-		current_state = GBP_RECEIVE_LENGTH;
+            //Grab compression flag
+            compression_flag = packet_buffer.back();
 
-		//Send data back to GB + IRQ
-		return 0x0;
-		break;
+            //Move to the next state
+            current_state = GBP_RECEIVE_LENGTH;
 
-		//Receive data length
-	case GBP_RECEIVE_LENGTH:
+            //Send data back to GB + IRQ
+            return_value = 0x0;
+            break;
 
-		//Push data to packet buffer
-		packet_buffer.push_back(data);
-		packet_size++;
+        //Receive data length
+        case GBP_RECEIVE_LENGTH:
 
-		//Grab LSB of data length
-		if (packet_size == 5)
-		{
-			data_length = 0;
-			data_length |= packet_buffer.back();
-		}
+            //Push data to packet buffer
+            packet_buffer.push_back(data);
+            packet_size++;
 
-		//Grab MSB of the data length, move to the next state
-		else if (packet_size == 6)
-		{
-			packet_size = 0;
-			data_length |= (packet_buffer.back() << 8);
+            //Grab LSB of data length
+            if (packet_size == 5)
+            {
+                data_length = 0;
+                data_length |= packet_buffer.back();
+            }
 
-			//Receive data only if the length is non-zero
-			if (data_length > 0) { current_state = GBP_RECEIVE_DATA; }
+            //Grab MSB of the data length, move to the next state
+            else if (packet_size == 6)
+            {
+                packet_size = 0;
+                data_length |= (packet_buffer.back() << 8);
 
-			//Otherwise, move on to grab the checksum
-			else { current_state = GBP_RECEIVE_CHECKSUM; }
-		}
+                //Receive data only if the length is non-zero
+                if (data_length > 0) { current_state = GBP_RECEIVE_DATA; }
 
-		//Send data back to GB + IRQ
-		return 0x0;
-		break;
+                //Otherwise, move on to grab the checksum
+                else { current_state = GBP_RECEIVE_CHECKSUM; }
+            }
 
-		//Receive data
-	case GBP_RECEIVE_DATA:
+            //Send data back to GB + IRQ
+            return_value = 0x0;
+            break;
 
-		//Push data to packet buffer
-		packet_buffer.push_back(data);
-		packet_size++;
+        //Receive data
+        case GBP_RECEIVE_DATA:
 
-		//Once the specified amount of data is transferred, move to the next stage
-		if (packet_size == data_length)
-		{
-			packet_size = 0;
-			current_state = GBP_RECEIVE_CHECKSUM;
-		}
+            //Push data to packet buffer
+            packet_buffer.push_back(data);
+            packet_size++;
 
-		//Send data back to GB + IRQ
-		return 0x0;
-		break;
+            //Once the specified amount of data is transferred, move to the next stage
+            if (packet_size == data_length)
+            {
+                packet_size = 0;
+                current_state = GBP_RECEIVE_CHECKSUM;
+            }
 
-		//Receive checksum
-	case GBP_RECEIVE_CHECKSUM:
+            //Send data back to GB + IRQ
+            return_value = 0x0;
+            break;
 
-		//Push data to packet buffer
-		packet_buffer.push_back(data);
-		packet_size++;
+        //Receive checksum
+        case GBP_RECEIVE_CHECKSUM:
 
-		//Grab LSB of checksum
-		if (packet_size == 1)
-		{
-			checksum = 0;
-			checksum |= packet_buffer.back();
-		}
+            //Push data to packet buffer
+            packet_buffer.push_back(data);
+            packet_size++;
 
-		//Grab MSB of the checksum, move to the next state
-		else if (packet_size == 2)
-		{
-			packet_size = 0;
-			checksum |= (packet_buffer.back() << 8);
-			current_state = GBP_ACKNOWLEDGE_PACKET;
+            //Grab LSB of checksum
+            if (packet_size == 1)
+            {
+                checksum = 0;
+                checksum |= packet_buffer.back();
+            }
 
-			word checksum_match = 0;
+            //Grab MSB of the checksum, move to the next state
+            else if (packet_size == 2)
+            {
+                packet_size = 0;
+                checksum |= (packet_buffer.back() << 8);
+                current_state = GBP_ACKNOWLEDGE_PACKET;
 
-			//Calculate checksum
-			for (unsigned int x = 2; x < (packet_buffer.size() - 2); x++)
-			{
-				checksum_match += packet_buffer[x];
-			}
+                word checksum_match = 0;
 
-			if (checksum_match != checksum) { status |= 0x1; }
-			else { status &= ~0x1; }
-		}
+                //Calculate checksum
+                for (unsigned int x = 2; x < (packet_buffer.size() - 2); x++)
+                {
+                    checksum_match += packet_buffer[x];
+                }
 
-		//Send data back to GB + IRQ
-		return 0x0;
-		break;
+                if (checksum_match != checksum) { status |= 0x1; }
+                else { status &= ~0x1; }
+            }
 
-		//Acknowledge packet and process command
-	case GBP_ACKNOWLEDGE_PACKET:
+            //Send data back to GB + IRQ
+            return_value = 0x0;
+            break;
 
-		//GB Printer expects 2 0x0s, only continue if given them
-		if (data == 0)
-		{
-			//Push data to packet buffer
-			packet_buffer.push_back(data);
-			packet_size++;
+        //Acknowledge packet and process command
+        case GBP_ACKNOWLEDGE_PACKET:
 
-			//Send back 0x81 to GB + IRQ on 1st 0x0
-			if (packet_size == 1)
-			{
-				return 0x81;
+            //GB Printer expects 2 0x0s, only continue if given them
+            if (data == 0)
+            {
+                //Push data to packet buffer
+                packet_buffer.push_back(data);
+                packet_size++;
 
-			}
+                //Send back 0x81 to GB + IRQ on 1st 0x0
+                if (packet_size == 1)
+                {
+                    return_value = 0x81;
+                }
 
-			//Send back current status to GB + IRQ on 2nd 0x0, begin processing command
-			else if (packet_size == 2)
-			{
-				execute_command();
+                //Send back current status to GB + IRQ on 2nd 0x0, begin processing command
+                else if (packet_size == 2)
+                {
+                    execute_command();
 
-				packet_buffer.clear();
-				packet_size = 0;
+                    packet_buffer.clear();
+                    packet_size = 0;
 
-				return status;
-			}
-		}
-		break;
-	}
-	last_transfer = data;
+                    return_value = status;
+                }
+            }
+            else
+            {
+                // Falls data != 0, einen Standardwert zurückgeben
+                return_value = 0x0;
+            }
+            break;
 
+        default:
+            // Für alle nicht behandelten Fälle einen Standardwert zurückgeben
+            return_value = 0x0;
+            break;
+    }
+
+    last_transfer = data;
+    return return_value; // Immer einen Wert zurückgeben
 }
-
 void gameboy_printer::execute_command()
 {
 	switch (command)
@@ -285,146 +296,145 @@ void gameboy_printer::execute_command()
 
 void gameboy_printer::data_process()
 {
-	unsigned int data_pointer = 6;
-	unsigned int pixel_counter = strip_count * 2560;
-	byte tile_pixel = 0;
+    unsigned int data_pointer = 6;
+    unsigned int pixel_counter = strip_count * 2560;
+    byte tile_pixel = 0;
 
-	if (strip_count >= 9)
-	{
-		for (unsigned int x = 0; x < 2560; x++) { scanline_buffer.push_back(0x0); }
-	}
+    if (strip_count >= 9)
+    {
+        for (unsigned int x = 0; x < 2560; x++) { scanline_buffer.push_back(0x0); }
+    }
 
-	//Process uncompressed dot data
-	if (!compression_flag)
-	{
-		//Cycle through all tiles given in the data, 40 in all
-		for (unsigned int x = 0; x < 40; x++)
-		{
-			//Grab 16-bytes representing each tile, 2 bytes at a time
-			for (unsigned int y = 0; y < 8; y++)
-			{
-				//Move pixel counter down one row in the tile
-				pixel_counter = (strip_count * 2560) + ((x % 20) * 8) + (160 * y);
-				if (x >= 20) { pixel_counter += 1280; }
+    //Process uncompressed dot data
+    if (!compression_flag)
+    {
+        //Cycle through all tiles given in the data, 40 in all
+        for (unsigned int x = 0; x < 40; x++)
+        {
+            //Grab 16-bytes representing each tile, 2 bytes at a time
+            for (unsigned int y = 0; y < 8; y++)
+            {
+                //Move pixel counter down one row in the tile
+                pixel_counter = (strip_count * 2560) + ((x % 20) * 8) + (160 * y);
+                if (x >= 20) { pixel_counter += 1280; }
 
-				//Grab 2-bytes representing 8x1 section
-				word tile_data = (packet_buffer[data_pointer + 1] << 8) | packet_buffer[data_pointer];
-				data_pointer += 2;
+                //Grab 2-bytes representing 8x1 section
+                word tile_data = (packet_buffer[data_pointer + 1] << 8) | packet_buffer[data_pointer];
+                data_pointer += 2;
 
-				//Determine color of each pixel in that 8x1 section
-				for (int z = 7; z >= 0; z--)
-				{
-					//Calculate raw value of the tile's pixel
-					tile_pixel = ((tile_data >> 8) & (1 << z)) ? 2 : 0;
-					tile_pixel |= (tile_data & (1 << z)) ? 1 : 0;
+                //Determine color of each pixel in that 8x1 section
+                for (int z = 7; z >= 0; z--)
+                {
+                    //Calculate raw value of the tile's pixel
+                    tile_pixel = ((tile_data >> 8) & (1 << z)) ? 2 : 0;
+                    tile_pixel |= (tile_data & (1 << z)) ? 1 : 0;
 
-					switch (tile_pixel)
-					{
-					case 0:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[0];
-						break;
+                    switch (tile_pixel)
+                    {
+                    case 0:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[0];
+                        break;
 
-					case 1:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[1];
-						break;
+                    case 1:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[1];
+                        break;
 
-					case 2:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[2];
-						break;
+                    case 2:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[2];
+                        break;
 
-					case 3:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[3];
-						break;
-					}
-				}
-			}
-		}
-	}
+                    case 3:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[3];
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
-	//Process compressed dot data
-	else
-	{
-		std::vector<byte> dot_data;
-		byte data = 0;
+    //Process compressed dot data
+    else
+    {
+        std::vector<byte> dot_data;
+        // byte data = 0; // Unused variable entfernt
 
-		//Cycle through all the compressed data and calculate the RLE
-		while (data_pointer < (data_length + 6))
-		{
-			//Grab MSB of 1st byte in the run, if 1 the run is compressed, otherwise it is an uncompressed run
-			byte data = packet_buffer[data_pointer++];
+        //Cycle through all the compressed data and calculate the RLE
+        while (data_pointer < static_cast<unsigned int>(data_length + 6))
+        {
+            //Grab MSB of 1st byte in the run, if 1 the run is compressed, otherwise it is an uncompressed run
+            byte data = packet_buffer[data_pointer++];
 
-			//Compressed run
-			if (data & 0x80)
-			{
-				byte length = (data & 0x7F) + 2;
-				data = packet_buffer[data_pointer++];
+            //Compressed run
+            if (data & 0x80)
+            {
+                byte length = (data & 0x7F) + 2;
+                data = packet_buffer[data_pointer++];
 
-				for (unsigned int x = 0; x < length; x++) { dot_data.push_back(data); }
-			}
+                for (unsigned int x = 0; x < length; x++) { dot_data.push_back(data); }
+            }
 
-			//Uncompressed run
-			else
-			{
-				byte length = (data & 0x7F) + 1;
+            //Uncompressed run
+            else
+            {
+                byte length = (data & 0x7F) + 1;
 
-				for (unsigned int x = 0; x < length; x++)
-				{
-					data = packet_buffer[data_pointer++];
-					dot_data.push_back(data);
-				}
-			}
-		}
+                for (unsigned int x = 0; x < length; x++)
+                {
+                    data = packet_buffer[data_pointer++];
+                    dot_data.push_back(data);
+                }
+            }
+        }
 
-		data_pointer = 0;
+        data_pointer = 0;
 
-		//Cycle through all tiles given in the data, 40 in all
-		for (unsigned int x = 0; x < 40; x++)
-		{
-			//Grab 16-bytes representing each tile, 2 bytes at a time
-			for (unsigned int y = 0; y < 8; y++)
-			{
-				//Move pixel counter down one row in the tile
-				pixel_counter = (strip_count * 2560) + ((x % 20) * 8) + (160 * y);
-				if (x >= 20) { pixel_counter += 1280; }
+        //Cycle through all tiles given in the data, 40 in all
+        for (unsigned int x = 0; x < 40; x++)
+        {
+            //Grab 16-bytes representing each tile, 2 bytes at a time
+            for (unsigned int y = 0; y < 8; y++)
+            {
+                //Move pixel counter down one row in the tile
+                pixel_counter = (strip_count * 2560) + ((x % 20) * 8) + (160 * y);
+                if (x >= 20) { pixel_counter += 1280; }
 
-				//Grab 2-bytes representing 8x1 section
-				word tile_data = (dot_data[data_pointer + 1] << 8) | dot_data[data_pointer];
-				data_pointer += 2;
+                //Grab 2-bytes representing 8x1 section
+                word tile_data = (dot_data[data_pointer + 1] << 8) | dot_data[data_pointer];
+                data_pointer += 2;
 
-				//Determine color of each pixel in that 8x1 section
-				for (int z = 7; z >= 0; z--)
-				{
-					//Calculate raw value of the tile's pixel
-					tile_pixel = ((tile_data >> 8) & (1 << z)) ? 2 : 0;
-					tile_pixel |= (tile_data & (1 << z)) ? 1 : 0;
+                //Determine color of each pixel in that 8x1 section
+                for (int z = 7; z >= 0; z--)
+                {
+                    //Calculate raw value of the tile's pixel
+                    tile_pixel = ((tile_data >> 8) & (1 << z)) ? 2 : 0;
+                    tile_pixel |= (tile_data & (1 << z)) ? 1 : 0;
 
-					switch (tile_pixel)
-					{
-					case 0:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[0];
-						break;
+                    switch (tile_pixel)
+                    {
+                    case 0:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[0];
+                        break;
 
-					case 1:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[1];
-						break;
+                    case 1:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[1];
+                        break;
 
-					case 2:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[2];
-						break;
+                    case 2:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[2];
+                        break;
 
-					case 3:
-						scanline_buffer[pixel_counter++] = DMG_BG_PAL[3];
-						break;
-					}
-				}
-			}
-		}
-	}
+                    case 3:
+                        scanline_buffer[pixel_counter++] = DMG_BG_PAL[3];
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
-	//Only increment strip count if we actually received data
-	if (data_length != 0) { strip_count++; }
+    //Only increment strip count if we actually received data
+    if (data_length != 0) { strip_count++; }
 }
-
 
 
 void gameboy_printer::print_image()
@@ -433,8 +443,8 @@ void gameboy_printer::print_image()
 	unsigned int img_size = 160 * height;
 
 	byte margin_top = (packet_buffer[7] & 0xF0);
-	byte margin_bottom = (packet_buffer[7] & 0x0F);
-	bool print_full_pix = (!margin_top && margin_bottom) ? true : false;
+	//byte margin_bottom = (packet_buffer[7] & 0x0F);
+	//bool print_full_pix = (!margin_top && margin_bottom) ? true : false;
 
 	//Clear full printer buffer if new strip detected or it gets way too large (50 160x144 strips)
 	if ((margin_top) || (full_buffer.size() >= 0x119400)) { full_buffer.clear(); }

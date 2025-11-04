@@ -68,6 +68,6 @@ private:
 
 	std::vector<gb*> v_gb;
 	byte in_data_buffer[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-	int master_id; 
+	int master_id;
 	ingame_state current_state; 
 };

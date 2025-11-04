@@ -66,7 +66,7 @@ void pokebuddy_gen1::handle_special_hotkey(int key) {
 			//SELECTBUTTON
 		case 0x10:
 		{
-			pkbuddy_selected_index = (++pkbuddy_selected_index % DATA_BLOCK.species_list_size);
+			pkbuddy_selected_index = ((pkbuddy_selected_index+1) % DATA_BLOCK.species_list_size);
 			std::string nick_name = convert_name_to_string(std::string((const char*)DATA_BLOCK.nicknames[pkbuddy_selected_index]));
 			std::string msg_str = "PKBuddy will trade " + nick_name;
 			display_message(msg_str);
@@ -99,7 +99,7 @@ void pokebuddy_gen1::handle_special_hotkey(int key) {
 			//SELECTBUTTON
 		case 0x10:
 		{
-			pkbuddy_selected_index = (++pkbuddy_selected_index % DATA_BLOCK_gen2.species_list_size);
+			pkbuddy_selected_index = ((pkbuddy_selected_index+1) % DATA_BLOCK_gen2.species_list_size);
 			std::string nick_name = convert_name_to_string(std::string((const char*)DATA_BLOCK_gen2.nicknames[pkbuddy_selected_index]));
 			std::string msg_str = "PKBuddy will trade " + nick_name;
 			display_message(msg_str);
@@ -152,380 +152,357 @@ byte pokebuddy_gen1::init_and_set_pkm_game_generation(byte data) {
 }
 
 byte pokebuddy_gen1::handle_gen1(byte data) {
+    switch (current_state)
+    {
+    case OPEN_LINK: //unreachable, already handled
+    case WAIT:
+    {
+        if (!events_were_added)
+        {
+            if (!has_owned_mew()) {
+                display_message("Get your Welcome Mew!");
+                pokemon mew = generate_pk_from_base_table(150, 5);
+                mew.iv[0] = 0x5A;
+                mew.iv[1] = 0xB5;
+                insert_pokemon_into_slot(mew, 0, "Mew");
+                DATA_BLOCK.species_list_size = 1;
+                memcpy(DATA_BLOCK.ot_names[0], convert_string_to_name("YOSHIRA").data(), 11);
+            }
+            else add_event_pokemon_to_datablock();
+            events_were_added = true;
+        }
 
-	switch (current_state)
-	{
-	case OPEN_LINK: //unreachable, already handled
-	case WAIT:
-	{
+        if (data == 0xD0) {
+            current_state = SELECT_OPTIONS;
+            return 0xD4;
+        }
+        return 0x60;
+    }
 
-		if (!events_were_added)
-		{
-			if (!has_owned_mew()) {
+    case SELECT_OPTIONS:
+    {
+        if (data == 0x00) return 0xfe;
+        if (data == 0xFE) current_state = TRADECENTER;
+        return 0x60;
+    }
 
-				display_message("Get your Welcome Mew!");
+    case TRADECENTER:
+    {
+        if (data == 0x60) current_state = TRADE_TABLE;
+        return 0xD4;
+    }
 
-				pokemon mew = generate_pk_from_base_table(150, 5);
-				mew.iv[0] = 0x5A;
-				mew.iv[1] = 0xB5;
-				insert_pokemon_into_slot(mew, 0, "Mew");
-				DATA_BLOCK.species_list_size = 1;
-				memcpy(DATA_BLOCK.ot_names[0], convert_string_to_name("YOSHIRA").data(), 11);
+    case TRADE_TABLE:
+    {
+        if (data == 0x60) current_state = WAIT_FOR_RANDOM_BYTES;
+        return 0x60;
+    }
 
-			}
-			else add_event_pokemon_to_datablock();
+    case WAIT_FOR_RANDOM_BYTES:
+    {
+        if (data == 0xfd || data == 0x60 || data == 0x00) return 0xfd;
 
-			events_were_added = true;
-		}
+        current_state = SEND_RANDOM_BYTES;
+        counter = -1;
+        [[fallthrough]]; // Explizit markieren
+    }
 
+    case SEND_RANDOM_BYTES:
+    {
+        counter++;
+        if (counter < 10) return RANDOM_BYTES_BLOCK[counter];
 
-		if (data == 0xD0) {
-			current_state = SELECT_OPTIONS;
-			return 0xD4;
-		}
-		return 0x60;
-	}
+        if (data == 0xfd) return 0xfd;
+        current_state = SEND_DATA_BLOCK;
+        counter = -1;
+        [[fallthrough]]; // Explizit markieren
+    }
 
-	case SELECT_OPTIONS:
-	{
-		if (data == 0x00) return 0xfe;
-		if (data == 0xFE) current_state = TRADECENTER;
-		return 0x60;
+    case SEND_DATA_BLOCK:
+    {
+        counter++;
+        if (counter < 415)
+        {
+            INCOMING_DATA_BLOCK.data[counter] = data;
+            return DATA_BLOCK.data[counter];
+        }
+        if (counter < 424) return counter < 418 ? 0xFF : 0xFD;
 
-	}
-	case TRADECENTER:
-	{
-		if (data == 0x60) current_state = TRADE_TABLE;
-		return 0xD4;
+        current_state = PATCH_DATA;
+        counter = 0;
+        return 0x00;
+    }
 
-	}
-	case TRADE_TABLE:
-	{
-		if (data == 0x60) current_state = WAIT_FOR_RANDOM_BYTES;
-		return 0x60;
-	}
-	case WAIT_FOR_RANDOM_BYTES:
-	{
-		if (data == 0xfd || data == 0x60 || data == 0x00) return 0xfd;
+    case PATCH_DATA:
+    {
+        switch (data)
+        {
+        case 0x00: return 0x00;
+        case 0xFF:
+        {
+            if (patch_part2) {
+                current_state = INIT_TRADE;
+                counter = 0;
+            }
+            patch_part2 = true;
+            return 0xFF;
+        }
+        default: // Any nonzero value will cause a patch
+            if (!patch_part2) {
+                /* Pt 1 is 0x00 - 0xFB */
+                //INCOMING_DATA_BLOCK.data[data - 1] = 0xFF;
+            }
+            else {
+                /* Pt 2 is 0xFC - 0x107
+                           0xFC + in - 1
+                */
+                //INCOMING_DATA_BLOCK.data[0xFB + data] = 0xFF;
+            }
+            return 0x00;
+        }
+    }
 
-		current_state = SEND_RANDOM_BYTES;
-		counter = -1;
-		//FALL TROUGH
-	}
-	case SEND_RANDOM_BYTES:
-	{
-		counter++;
-		if (counter < 10) return RANDOM_BYTES_BLOCK[counter];
+    case INIT_TRADE:
+    {
+        if (data == 0x00) return 0x00;
+        if (data >= 0x60 && data <= 0x65 && (player_selected_index == 255)) {
+            player_selected_index = data - 96;
+        }
 
-		if (data == 0xfd) return 0xfd;
-		current_state = SEND_DATA_BLOCK;
-		counter = -1;
+        if (counter++ < 13) return (0x60 | pkbuddy_selected_index);
 
-		//FALL TROUGH
-	}
-	case SEND_DATA_BLOCK:
-	{
-		counter++;
-		if (counter < 415)
-		{
-			INCOMING_DATA_BLOCK.data[counter] = data;
-			return DATA_BLOCK.data[counter];
-		}
-		//if(counter == 416) INCOMING_DATA_BLOCK.data[counter - 1] = data;
-		if (counter < 424) return counter < 418 ? 0xFF : 0xFD;
+        current_state = DO_TRADE;
+        counter = -1;
+        patch_part2 = false;
+        return 0x60;
+    }
 
-		current_state = PATCH_DATA;
-		counter = 0;
-		return 0x00;
-	}
-	case PATCH_DATA:
-	{
-		switch (data)
-		{
-		case 0x00: return 0x00;
-		case 0xFF:
-		{
-			if (patch_part2) {
-				current_state = INIT_TRADE;
-				counter = 0;
-			}
-			patch_part2 = true;
-			return 0xFF;
-		}
-		default: // Any nonzero value will cause a patch
-			if (!patch_part2) {
-				/* Pt 1 is 0x00 - 0xFB */
-				//INCOMING_DATA_BLOCK.data[data - 1] = 0xFF;
-			}
-			else {
-				/* Pt 2 is 0xFC - 0x107
-						   0xFC + in - 1
-				*/
-				//INCOMING_DATA_BLOCK.data[0xFB + data] = 0xFF;
-			}
-			return 0x00;
+    case DO_TRADE:
+    {
+        //cancel trade
+        if (data == 0x61) {
+            current_state = INIT_TRADE;
+            return 0x61;
+        }
 
-		}
-	}
-	case INIT_TRADE:
-	{
-		if (data == 0x00) return 0x00;
-		if (data >= 0x60 && data <= 0x65 && (player_selected_index == 255)) {
-			player_selected_index = data - 96;
-		}
+        if (data == 0xfd)
+        {
+            current_state = WAIT_FOR_RANDOM_BYTES;
 
-		if (counter++ < 13) return (0x60 | pkbuddy_selected_index);
+            //update DATABLOCK
+            DATA_BLOCK.species[pkbuddy_selected_index] = INCOMING_DATA_BLOCK.species[player_selected_index];
+            memcpy(DATA_BLOCK.pokemons[pkbuddy_selected_index].data, INCOMING_DATA_BLOCK.pokemons[player_selected_index].data, sizeof(DATA_BLOCK.pokemons[pkbuddy_selected_index].data));
 
-		current_state = DO_TRADE;
-		counter = -1;
-		patch_part2 = false;
+            for (int i = 0; i < 11; i++)
+            {
+                DATA_BLOCK.ot_names[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK.ot_names[player_selected_index][i];
+                DATA_BLOCK.nicknames[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK.nicknames[player_selected_index][i];
+            }
 
+            player_selected_index = 255;
+            return 0xfd;
+        }
 
-		return 0x60;
+        return data;
+    }
 
-
-	}
-	case DO_TRADE:
-	{
-		//cancel trade
-		if (data == 0x61) {
-
-			current_state = INIT_TRADE;
-			return 0x61;
-		}
-
-		if (data == 0xfd)
-		{
-			current_state = WAIT_FOR_RANDOM_BYTES;
-
-			//update DATABLOCK
-			DATA_BLOCK.species[pkbuddy_selected_index] = INCOMING_DATA_BLOCK.species[player_selected_index];
-
-			memcpy(DATA_BLOCK.pokemons[pkbuddy_selected_index].data, INCOMING_DATA_BLOCK.pokemons[player_selected_index].data, sizeof(DATA_BLOCK.pokemons[pkbuddy_selected_index].data));
-
-			for (int i = 0; i < 11; i++)
-			{
-				DATA_BLOCK.ot_names[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK.ot_names[player_selected_index][i];
-				DATA_BLOCK.nicknames[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK.nicknames[player_selected_index][i];
-			}
-
-			player_selected_index = 255;
-			//pkbuddy_selected_index = 0x00;
-
-
-			return 0xfd;
-		}
-
-		return data;
-	}
-
-	}
+    default:
+        // Fallback für alle nicht behandelten States
+        return 0x00;
+    }
 }
-
 byte pokebuddy_gen1::handle_gen2(byte data) {
+    //TODO implement gen2 handling
+    switch (current_state)
+    {
+    case OPEN_LINK: //unreachable, already handled
+    case WAIT:
+    {
+        if (!events_were_added)
+        {
+            generate_data_block_gen2();
 
-	//TODO implement gen2 handling
-	switch (current_state)
-	{
-	case OPEN_LINK: //unreachable, already handled
-	case WAIT:
-	{
+            if (!has_owned_mew_gen2() || !has_owned_celebi())
+            {
+                if (!has_owned_celebi())
+                {
+                    display_message("Get your Welcome Celebi!");
+                    pokemon_gen2 celebi = generate_pk_from_base_table_gen2(251, 5);
+                    celebi.move1 = 0x49;
+                    celebi.move2 = 0x5D;
+                    celebi.move3 = 0x69;
+                    celebi.move4 = 0xD7;
+                    insert_pokemon_into_slot_gen2(celebi, 0, "CELEBI");
+                    DATA_BLOCK_gen2.species_list_size = 1;
+                    memcpy(DATA_BLOCK_gen2.ot_names[0], convert_string_to_name("PKBuddy").data(), 11);
+                }
 
-		if (!events_were_added)
-		{
-			generate_data_block_gen2();
+                if (!has_owned_mew_gen2())
+                {
+                    display_message("Get your Welcome Mew!");
+                    pokemon_gen2 mew = generate_pk_from_base_table_gen2(151, 5);
+                    insert_pokemon_into_slot_gen2(mew, 1, "Mew");
+                    DATA_BLOCK_gen2.species_list_size = 2;
+                    memcpy(DATA_BLOCK_gen2.ot_names[1], convert_string_to_name("PKBuddy").data(), 11);
+                }
+            }
+            else add_event_pokemon_to_datablock_gen2();
 
-			if (!has_owned_mew_gen2() || !has_owned_celebi()) 
-			{
-				
-				if (!has_owned_celebi())
-				{
-					display_message("Get your Welcome Celebi!");
+            events_were_added = true;
+        }
 
-					pokemon_gen2 celebi = generate_pk_from_base_table_gen2(251, 5);
-					celebi.move1 = 0x49;
-					celebi.move2 = 0x5D;
-					celebi.move3 = 0x69;
-					celebi.move4 = 0xD7;
-					insert_pokemon_into_slot_gen2(celebi, 0, "CELEBI");
-					DATA_BLOCK_gen2.species_list_size = 1;
-					memcpy(DATA_BLOCK_gen2.ot_names[0], convert_string_to_name("PKBuddy").data(), 11);
+        if (data == 0xD1) {
+            current_state = SELECT_OPTIONS;
+            return 0xD1;
+        }
+        return 0x61;
+    }
 
-				}
+    case SELECT_OPTIONS:
+    {
+        if (data == 0xD1) return 0xD1;
+        if (data == 0x00) {
+            current_state = TRADECENTER;
+            return 0xfe;
+        }
+        return 0x00;
+    }
 
-				if (!has_owned_mew_gen2()) 
-				{
-					display_message("Get your Welcome Mew!");
-					pokemon_gen2 mew = generate_pk_from_base_table_gen2(151, 5);
-					insert_pokemon_into_slot_gen2(mew, 1, "Mew");
-					DATA_BLOCK_gen2.species_list_size = 2;
-					memcpy(DATA_BLOCK_gen2.ot_names[1], convert_string_to_name("PKBuddy").data(), 11);
-				}
+    case TRADECENTER:
+    {
+        if (data == 0x76) current_state = TRADE_TABLE;
+        return 0x75;
+    }
 
-			}
-			else add_event_pokemon_to_datablock_gen2();
+    case TRADE_TABLE:
+    {
+        if (data == 0x00) current_state = WAIT_FOR_RANDOM_BYTES;
+        return 0x76;
+    }
 
-			events_were_added = true;
-		}
+    case WAIT_FOR_RANDOM_BYTES:
+    {
+        if (data == 0xfd || data == 0xfe || data == 0x00) return 0xfd;
 
+        current_state = SEND_RANDOM_BYTES;
+        counter = -1;
+        [[fallthrough]]; // Explizit markieren
+    }
 
-		if (data == 0xD1) {
-			current_state = SELECT_OPTIONS;
-			return 0xD1;
-		}
-		return 0x61;
-	}
+    case SEND_RANDOM_BYTES:
+    {
+        counter++;
+        if (counter < 10) return RANDOM_BYTES_BLOCK[counter];
 
-	case SELECT_OPTIONS:
-	{
-		if (data == 0xD1) return 0xD1;
-		if (data == 0x00) {
-			current_state = TRADECENTER;
-			return 0xfe;
-		}
-		return 0x00;
+        if (data == 0xfd) return 0xfd;
+        current_state = SEND_DATA_BLOCK;
+        counter = -1;
+        [[fallthrough]]; // Explizit markieren
+    }
 
-	}
-	case TRADECENTER:
-	{
-		if (data == 0x76) current_state = TRADE_TABLE;
-		return 0x75;
+    case SEND_DATA_BLOCK:
+    {
+        counter++;
+        if (counter < 441)
+        {
+            INCOMING_DATA_BLOCK_gen2.data[counter] = data;
+            return DATA_BLOCK_gen2.data[counter];
+        }
+        if (counter < 445) return data;
+        current_state = PATCH_DATA;
+        counter = 0;
+        return 0x00;
+    }
 
-	}
-	case TRADE_TABLE:
-	{
-		if (data == 0x00) current_state = WAIT_FOR_RANDOM_BYTES;
-		return 0x76;
-	}
-	case WAIT_FOR_RANDOM_BYTES:
-	{
-		if (data == 0xfd || data == 0xfe || data == 0x00) return 0xfd;
+    case PATCH_DATA:
+    {
+        switch (data)
+        {
+        case 0x00: return 0x00;
+        case 0xFD: return 0xFD;
+        case 0xFF:
+        {
+            if (patch_part2) {
+                current_state = INIT_TRADE;
+                counter = 0;
+            }
+            patch_part2 = true;
+            return 0xFF;
+        }
+        default: // Any nonzero value will cause a patch
+            if (!patch_part2) {
+                /* Pt 1 is 0x00 - 0xFB */
+                //INCOMING_DATA_BLOCK.data[data - 1] = 0xFF;
+            }
+            else {
+                /* Pt 2 is 0xFC - 0x107
+                           0xFC + in - 1
+                */
+                //INCOMING_DATA_BLOCK.data[0xFB + data] = 0xFF;
+            }
+            return 0x00;
+        }
+    }
 
-		current_state = SEND_RANDOM_BYTES;
-		counter = -1;
-		//FALL TROUGH
-	}
-	case SEND_RANDOM_BYTES:
-	{
-		counter++;
-		if (counter < 10) return RANDOM_BYTES_BLOCK[counter];
+    case INIT_TRADE:
+    {
+        if (data >= 0x70 && data <= 0x75) {
+            player_selected_index = data - 0x70;
+            counter++;
+            return (0x70 | pkbuddy_selected_index);
+        }
 
-		if (data == 0xfd) return 0xfd;
-		current_state = SEND_DATA_BLOCK;
-		counter = -1;
+        if (counter >= 13)
+        {
+            current_state = DO_TRADE;
+            counter = -1;
+            patch_part2 = false;
+            gen2_trade_confirmed = false;
+        }
 
-		//FALL TROUGH
-	}
-	case SEND_DATA_BLOCK:
-	{
-		counter++;
-		if (counter < 441)
-		{
-			INCOMING_DATA_BLOCK_gen2.data[counter] = data;
-			return DATA_BLOCK_gen2.data[counter];
-		}
-		//if(counter == 416) INCOMING_DATA_BLOCK.data[counter - 1] = data;
-		//if (counter < 461) return counter < 418 ? 0xFF : 0xFD;
-		if (counter < 445) return data;
-		current_state = PATCH_DATA;
-		counter = 0;
-		return 0x00;
-	}
-	case PATCH_DATA:
-	{
-		switch (data)
-		{
-		case 0x00: return 0x00;
-		case 0xFD: return 0xFD;
-		case 0xFF:
-		{
-			if (patch_part2) {
-				current_state = INIT_TRADE;
-				counter = 0;
-			}
-			patch_part2 = true;
-			return 0xFF;
-		}
-		default: // Any nonzero value will cause a patch
-			if (!patch_part2) {
-				/* Pt 1 is 0x00 - 0xFB */
-				//INCOMING_DATA_BLOCK.data[data - 1] = 0xFF;
-			}
-			else {
-				/* Pt 2 is 0xFC - 0x107
-						   0xFC + in - 1
-				*/
-				//INCOMING_DATA_BLOCK.data[0xFB + data] = 0xFF;
-			}
-			return 0x00;
+        if (data == 0x00) return 0x00;
+        if (data == 0x20) return 0x20;
 
-		}
-	}
-	case INIT_TRADE:
-	{
+        // Fehlender return statement hinzugefügt
+        return 0x00;
+    }
 
-		if (data >= 0x70 && data <= 0x75) {
-			player_selected_index = data - 0x70;
-			counter++;
-			return (0x70 | pkbuddy_selected_index);
-		}
+    case DO_TRADE:
+    {
+        if (data == 0x72 && !gen2_trade_confirmed) gen2_trade_confirmed = true;
 
-		if (counter >= 13)
-		{
-			current_state = DO_TRADE;
-			counter = -1;
-			patch_part2 = false;
-			gen2_trade_confirmed = false;
-		}
+        //cancel trade
+        if (data == 0x71 && !gen2_trade_confirmed) {
+            current_state = INIT_TRADE;
+            return 0x71;
+        }
 
-		if (data == 0x00) return 0x00;
-		if (data == 0x20) return 0x20;
+        if (data == 0xfd)
+        {
+            current_state = WAIT_FOR_RANDOM_BYTES;
 
-	
+            //update DATABLOCK
+            DATA_BLOCK_gen2.species[pkbuddy_selected_index] = INCOMING_DATA_BLOCK_gen2.species[player_selected_index];
+            memcpy(DATA_BLOCK_gen2.pokemons[pkbuddy_selected_index].data, INCOMING_DATA_BLOCK_gen2.pokemons[player_selected_index].data, sizeof(DATA_BLOCK_gen2.pokemons[pkbuddy_selected_index].data));
 
+            for (int i = 0; i < 11; i++)
+            {
+                DATA_BLOCK_gen2.ot_names[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK_gen2.ot_names[player_selected_index][i];
+                DATA_BLOCK_gen2.nicknames[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK_gen2.nicknames[player_selected_index][i];
+            }
 
-	}
-	case DO_TRADE:
-	{
+            player_selected_index = 255;
+            return 0xfd;
+        }
 
-		if (data == 0x72 && !gen2_trade_confirmed) gen2_trade_confirmed = true; 
-		//cancel trade
-		
-		if (data == 0x71 && !gen2_trade_confirmed) {
+        return data;
+    }
 
-			current_state = INIT_TRADE;
-			return 0x71;
-		}
-		
-
-		if (data == 0xfd)
-		{
-			current_state = WAIT_FOR_RANDOM_BYTES;
-
-			//update DATABLOCK
-			DATA_BLOCK_gen2.species[pkbuddy_selected_index] = INCOMING_DATA_BLOCK_gen2.species[player_selected_index];
-
-			memcpy(DATA_BLOCK_gen2.pokemons[pkbuddy_selected_index].data, INCOMING_DATA_BLOCK_gen2.pokemons[player_selected_index].data, sizeof(DATA_BLOCK_gen2.pokemons[pkbuddy_selected_index].data));
-
-			for (int i = 0; i < 11; i++)
-			{
-				DATA_BLOCK_gen2.ot_names[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK_gen2.ot_names[player_selected_index][i];
-				DATA_BLOCK_gen2.nicknames[pkbuddy_selected_index][i] = INCOMING_DATA_BLOCK_gen2.nicknames[player_selected_index][i];
-			}
-
-			player_selected_index = 255;
-			//pkbuddy_selected_index = 0x00;
-
-
-			return 0xfd;
-		}
-
-		return data;
-	}
-
-	}
+    default:
+        // Fallback für alle nicht behandelten States
+        return 0x00;
+    }
 }
-
 size_t pokebuddy_gen1::get_state_size(void)
 {
 	size_t ret = 0;

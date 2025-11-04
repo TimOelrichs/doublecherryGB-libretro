@@ -64,7 +64,7 @@ bool BMPPrinter::print(const uint32_t* argb_pixels, int width, int height, Scale
 /*
 	
 
-	/*
+
 		if (!stbi_write_png(filepath.c_str(), new_width, new_height, 3, scaled_data.data(), new_width * 3)) {
 			display_message("Error writing PNG.");
 		}

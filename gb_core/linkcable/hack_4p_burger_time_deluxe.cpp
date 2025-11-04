@@ -115,13 +115,12 @@ void dmg07::serialize(serializer& s)
 void hack_4p_burger_time_deluxe::init_send_data_queue() {
 
 	//char start_sequence[11] = { 0xf0, 0xf0, 0xf0, 0xf0, 0xf2, 0xf2, 0xf0, 0xf0,0xf0 ,0xf0, 0xf0 };
-	//fill_send_data_queue(start_sequence);
+	//fill_send_data_queue(start_sequence, 11);
 
 }
 
-void hack_4p_burger_time_deluxe::fill_send_data_queue(char sequence[])
+void hack_4p_burger_time_deluxe::fill_send_data_queue(char sequence[], int len)
 {
-	int len = sizeof(sequence) / sizeof(char);
 
 	for (int i = 0; i < len; ++i) {
 		//send_data_queue.push(sequence[i]);
@@ -130,25 +129,27 @@ void hack_4p_burger_time_deluxe::fill_send_data_queue(char sequence[])
 
 void hack_4p_burger_time_deluxe::get_all_SC_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	int i = 0;
+	for (auto* gb_ptr : v_gb)
 	{
-		byte data = v_gb[i]->get_regs()->SC;
-		in_data_buffer[i] = data;
+		byte data = gb_ptr->get_regs()->SC;
+		in_data_buffer[i++] = data;
 	}
 };
 
 void hack_4p_burger_time_deluxe::get_all_SB_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	int i = 0;
+	for (auto* gb_ptr : v_gb)
 	{
-		byte data = v_gb[i]->get_regs()->SB;
-		in_data_buffer[i] = data;
+		byte data = gb_ptr->get_regs()->SB;
+		in_data_buffer[i++] = data;
 	}
 };
 
 bool hack_4p_burger_time_deluxe::is_expected_data(byte data)
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		if (in_data_buffer[i] != data) return false;
 	}
@@ -163,7 +164,7 @@ bool hack_4p_burger_time_deluxe::is_ready_to_process() {
 
 bool hack_4p_burger_time_deluxe::all_IE_are_handled()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		if ((v_gb[i]->get_regs()->IF & v_gb[i]->get_regs()->IE & INT_SERIAL)) return false;
 	}

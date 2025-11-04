@@ -19,10 +19,11 @@ public:
 
     virtual std::string name() const = 0;
     virtual bool print(const uint32_t* argb_pixels, int width, int height, ScaleTarget scale_target, Alignment alignment) = 0;
+
+
 };
 
-
-static std::string get_timestamped_filename() {
+inline std::string get_timestamped_filename() {
 	std::time_t now = std::time(nullptr);
 	std::tm* localTime = std::localtime(&now);
 

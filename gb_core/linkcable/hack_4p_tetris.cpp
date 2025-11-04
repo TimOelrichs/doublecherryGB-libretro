@@ -32,7 +32,7 @@
 #include <fstream>
 
 extern bool logging_allowed; 
-extern int emulated_gbs;
+extern size_t emulated_gbs;
 extern retro_environment_t environ_cb;
 extern unsigned libretro_msg_interface_version;
 
@@ -481,7 +481,7 @@ void hack_4p_tetris::broadcast_byte(byte dat)
 int hack_4p_tetris::player_alive_count() {
 	int alive_count = 0;
 
-	for (int i = 0; i < emulated_gbs; i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		if (players_state[i] == IS_ALIVE || players_state[i] == IS_SENDING_LINES)
 		{
@@ -496,7 +496,7 @@ int hack_4p_tetris::check_winner_id()
 	int alive_count = 0;
 	int last_alive_id = 0;
 
-	for (int i = 0; i < emulated_gbs; i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		if (players_state[i] == IS_ALIVE)
 		{
@@ -512,7 +512,7 @@ int hack_4p_tetris::check_winner_id()
 
 bool hack_4p_tetris::winner_winner_chicken_dinner() {
 
-	for (int i = 0; i < emulated_gbs; i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		if (win_counter[i] == 4) return true; 
 	}
@@ -523,7 +523,7 @@ void hack_4p_tetris::update_ingame_states()
 {
 	current_max_height = 0;
 
-	for (int i = 0; i < emulated_gbs; i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		switch (players_state[i])
 		{
@@ -668,7 +668,7 @@ void hack_4p_tetris::update_ingame_states()
 
 bool hack_4p_tetris::all_are_in_winnerscreen() {
 
-	for (int i = 0; i < emulated_gbs; i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		if (players_state[i] != IS_IN_WINNER_SCREEN) return false;
 	}
@@ -724,7 +724,7 @@ void hack_4p_tetris::send_ingame_bytes()
 
 	}
 
-	for (int i = 0; i < emulated_gbs; i++)
+	for (size_t i = 0; i < emulated_gbs; i++)
 	{
 		if (!next_bytes_to_send[i]) next_bytes_to_send[i] = current_max_height;
 		if (players_state[i] != IS_IN_WINNER_SCREEN) 	send_byte(i, next_bytes_to_send[i]);
@@ -799,51 +799,45 @@ void hack_4p_tetris::restore_state_mem(void* buf)
 	serializer s(buf, serializer::LOAD_BUF);
 	serialize(s);
 
-	int size;
-	byte* tmp;
-	out_height_blocks = std::vector<byte>();
-	out_falling_blocks = std::vector<byte>();
-	send_data_vec = std::vector<byte>();
-	lines_vec = std::vector<hack_4p_tetris_lines_packet>();
+	out_height_blocks.clear();
+	out_falling_blocks.clear();
+	send_data_vec.clear();
+	lines_vec.clear();
 
-	s_VAR(size);
-	if (size) {
-		tmp = new byte[size];
-		s_ARRAY(tmp);
+	int size = 0;
 
-		for (int i = 0; i < size; i++)
-			out_height_blocks.push_back(tmp[i]);
-	}
-	
+	// out_height_blocks
 	s_VAR(size);
-	if (size) {
-		tmp = new byte[size];
-		s_ARRAY(tmp);
-		for (int i = 0; i < size; i++)
-			out_falling_blocks.push_back(tmp[i]);
+	if (size > 0) {
+		std::vector<byte> tmp(size);
+		s_ARRAY(tmp.data());
+		out_height_blocks = std::move(tmp);
 	}
 
+	// out_falling_blocks
 	s_VAR(size);
-	if (size) {
-		tmp = new byte[size];
-		s_ARRAY(tmp);
-
-		for (int i = 0; i < size; i++)
-			send_data_vec.push_back(tmp[i]);
+	if (size > 0) {
+		std::vector<byte> tmp(size);
+		s_ARRAY(tmp.data());
+		out_falling_blocks = std::move(tmp);
 	}
 
-
+	// send_data_vec
 	s_VAR(size);
-	if (size) {
-		hack_4p_tetris_lines_packet* lp = new hack_4p_tetris_lines_packet[size];
-		s_ARRAY(lp);
-
-		for (int i = 0; i < size; i++)
-			lines_vec.push_back(lp[i]);
+	if (size > 0) {
+		std::vector<byte> tmp(size);
+		s_ARRAY(tmp.data());
+		send_data_vec = std::move(tmp);
 	}
-	
+
+	// lines_vec
+	s_VAR(size);
+	if (size > 0) {
+		std::vector<hack_4p_tetris_lines_packet> tmp(size);
+		s_ARRAY(tmp.data());
+		lines_vec = std::move(tmp);
+	}
 }
-
 
 void hack_4p_tetris::serialize(serializer& s)
 {

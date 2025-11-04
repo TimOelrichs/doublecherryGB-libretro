@@ -517,7 +517,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
     static byte joined_buf[160*144*2*2]; // two screens' worth of 16-bit data
     static byte joined_buf3[160 * 144 * 3 * 2]; // three screens' worth of 16-bit data
     static byte joined_buf4[160 * 144 * 4 * 2]; // four screens' worth of 16-bit data
-    static byte joined_buf8[160 * 144 * 8 * 2];
+    //static byte joined_buf8[160 * 144 * 8 * 2];
     static byte joined_buf9[160 * 144 * 9 * 2]; // three screens' worth of 16-bit data
     static byte joined_buf16[160 * 144 * 16 * 2];
 

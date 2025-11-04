@@ -123,7 +123,7 @@ int pokebuddy_gen1::pokemon_calculate_exp(pokemon_base_stats pkm_base, int level
 
 void pokebuddy_gen1::insert_pokemon_into_slot(pokemon pkm, unsigned char slot, std::string nickname) {
 
-	if (slot < 0 || slot > 5) return;
+	if (slot > 5) return;
 
 	DATA_BLOCK.species[slot] = pkm.species;
 	memcpy(DATA_BLOCK.pokemons[slot].data, pkm.data, sizeof(pkm.data));
@@ -253,7 +253,7 @@ pokemon_gen2 pokebuddy_gen1::generate_pk_from_base_table_gen2(int index_id, unsi
 
 void pokebuddy_gen1::insert_pokemon_into_slot_gen2(pokemon_gen2 pkm, unsigned char slot, std::string nickname) {
 
-	if (slot < 0 || slot > 5) return;
+	if (slot > 5) return;
 
 	DATA_BLOCK_gen2.species[slot] = pkm.species;
 	memcpy(DATA_BLOCK_gen2.pokemons[slot].data, pkm.data, sizeof(pkm.data));

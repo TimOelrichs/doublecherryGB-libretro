@@ -39,226 +39,173 @@ pikachu_2_gs::pikachu_2_gs(std::vector<gb*> gbs)
 
 void pikachu_2_gs::receive_ir_signal(ir_signal* signal)
 {
+    in_ir_signals.push_back(signal);
+    log_ir_traffic(signal, true);
+    if (log_answer_delay) log_ir_answer_delay();
 
-	in_ir_signals.push_back(signal);
-	log_ir_traffic(signal, true);
-	if (log_answer_delay) log_ir_answer_delay();
+    if (is_master)
+    {
+        switch (current_state)
+        {
+            case RECEIVE_HELLO:
+            {
+                if (in_ir_signals.size() == 3)
+                {
+                    if (got_hello_msg())
+                    {
+                        //ignore hello and send delayed hello, this will set the GBC in slave mode
+                        build_hello_msg();
+                        current_state = WAIT_FOR_HELLO;
+                        set_sending_delay(micro_seconds_to_clocks(1000000));
+                    }
+                    in_ir_signals.clear();
+                }
+                break;
+            }
+            case WAIT_FOR_HELLO:
+            {
+                if (in_ir_signals.size() == 3)
+                {
+                    if (got_hello_msg())
+                    {
+                        //BUILD LENGTH MSG
+                        bytes_out_for_msg.push_back(0x5A);
+                        bytes_out_for_msg.push_back(0x01);
+                        build_data_msg(bytes_out_for_msg);
 
-	if (is_master) 
-	{
-		switch (current_state)
-		{
-			case RECEIVE_HELLO:
-			{
-				if (in_ir_signals.size() == 3)
-				{
-					if (got_hello_msg())
-					{
-						//ignore hello and send delayed hello, this will set the GBC in slave mode
-						build_hello_msg();
-						current_state = WAIT_FOR_HELLO;
-						set_sending_delay(micro_seconds_to_clocks(1000000));
-					
+                        all_bytes_out_for_checksum.insert(all_bytes_out_for_checksum.end(), bytes_out_for_msg.begin(), bytes_out_for_msg.end());
+                        bytes_out_for_msg.clear();
 
-					}
+                        //BUILD DATA MSG
+                        bytes_out_for_msg.push_back(0x97);
+                        build_data_msg(bytes_out_for_msg);
 
-					in_ir_signals.clear();
-				}
-				break;
-			}
-			case WAIT_FOR_HELLO:
-			{
-				if (in_ir_signals.size() == 3)
-				{
-					if (got_hello_msg())
-					{
-	
-						//BUILD LENGTH MSG
-						bytes_out_for_msg.push_back(0x5A);
-						bytes_out_for_msg.push_back(0x01);
-						build_data_msg(bytes_out_for_msg);
+                        all_bytes_out_for_checksum.insert(all_bytes_out_for_checksum.end(), bytes_out_for_msg.begin(), bytes_out_for_msg.end());
+                        bytes_out_for_msg.clear();
 
-						all_bytes_out_for_checksum.insert(all_bytes_out_for_checksum.end(), bytes_out_for_msg.begin(), bytes_out_for_msg.end());
-						bytes_out_for_msg.clear();
+                        //BUILD CHECKSUM
+                        //word checksum = calc_checksum();
+                        // byte low = (byte) checksum;    // Unused variable
+                        // byte high = (byte)(checksum >> 8); // Unused variable
+                        bytes_out_for_msg.push_back(0xF1);
+                        bytes_out_for_msg.push_back(0x01);
+                        build_data_msg(bytes_out_for_msg);
+                        bytes_out_for_msg.clear();
 
-						//BUILD DATA MSG
-						bytes_out_for_msg.push_back(0x97);
-						build_data_msg(bytes_out_for_msg);
-					
-						all_bytes_out_for_checksum.insert(all_bytes_out_for_checksum.end(), bytes_out_for_msg.begin(), bytes_out_for_msg.end());
-						bytes_out_for_msg.clear();
+                        current_state = WAIT_FOR_ACK;
+                        set_sending_delay(12925);
+                    }
+                    in_ir_signals.clear();
+                }
+                break;
+            }
+            case WAIT_FOR_ACK:
+            {
+                if (in_ir_signals.size() == 19)
+                {
+                    current_state = RECEIVE_HELLO;
+                    is_master = false;
+                    in_ir_signals.clear();
 
-						//BUILD CHECKSUM
-						word checksum = calc_checksum();
-						byte low = (byte) checksum;
-						byte high = (byte)(checksum >> 8);
+                    //Build Empty Packets
+                    add_preamble_to_out_signals();
+                    add_byte_to_out_ir_signals(0x5A);
+                    add_byte_to_out_ir_signals(0x01);
+                    add_postamble_to_out_signals();
 
-						//bytes_out_for_msg.push_back(low);
-						//bytes_out_for_msg.push_back(high);
-						bytes_out_for_msg.push_back(0xF1);
-						bytes_out_for_msg.push_back(0x01);
-						build_data_msg(bytes_out_for_msg);
-						bytes_out_for_msg.clear();
+                    add_preamble_to_out_signals();
+                    add_postamble_to_out_signals();
 
+                    add_preamble_to_out_signals();
+                    add_byte_to_out_ir_signals(0x5A);
+                    add_byte_to_out_ir_signals(0x01);
+                    add_postamble_to_out_signals();
 
-						/*
-						//BUILD LENGTH MSG
-						bytes_out_for_msg.push_back(0x5A);
-						bytes_out_for_msg.push_back(0x00);
-						build_data_msg(bytes_out_for_msg);
-
-						all_bytes_out_for_checksum.insert(all_bytes_out_for_checksum.end(), bytes_out_for_msg.begin(), bytes_out_for_msg.end());
-						bytes_out_for_msg.clear();
-
-						//BUILD DATA MSG
-						bytes_out_for_msg.push_back(0x00);
-						build_data_msg(bytes_out_for_msg);
-
-						all_bytes_out_for_checksum.insert(all_bytes_out_for_checksum.end(), bytes_out_for_msg.begin(), bytes_out_for_msg.end());
-						bytes_out_for_msg.clear();
-
-						//BUILD CHECKSUM
-						checksum = calc_checksum();
-						low = (byte)checksum;
-						high = (byte)(checksum >> 8);
-						bytes_out_for_msg.push_back(low);
-						bytes_out_for_msg.push_back(high);
-						build_data_msg(bytes_out_for_msg);
-						bytes_out_for_msg.clear();
-
-						*/
-					
-						current_state = WAIT_FOR_ACK;
-						//set_sending_delay(micro_seconds_to_clocks(1000));
-						set_sending_delay(12925);
-					
-						
-					}
-
-					in_ir_signals.clear();
-				}
-				break; 
-			}
-			case WAIT_FOR_ACK:
-			{
-				if (in_ir_signals.size() == 19)
-				{
-					current_state = RECEIVE_HELLO;
-					is_master = false; 
-					in_ir_signals.clear();
-
-					//Build Empty Packets
-					add_preamble_to_out_signals();
-					add_byte_to_out_ir_signals(0x5A);
-					add_byte_to_out_ir_signals(0x01);
-					add_postamble_to_out_signals();
-
-					add_preamble_to_out_signals();
-					add_postamble_to_out_signals();
-
-					add_preamble_to_out_signals();
-					add_byte_to_out_ir_signals(0x5A);
-					add_byte_to_out_ir_signals(0x01);
-					add_postamble_to_out_signals();
-
-
-					set_sending_delay(155430);
-
-				}
-				break;
-
-			case SEND_EMPTY_PACKETS:
-			{
-				
-				break;
-				}
-			}
-		}
-	}
-	//i implemented SLAVE MODE only for research purposes
-	//in prod it will always acts as a master cause this make bypassing the region-lock possible
-	else
-	{
-		switch (current_state)
-		{
-		case RECEIVE_HELLO:
-		{
-			if (in_ir_signals.size() == 3)
-			{
-				if (got_hello_msg())
-				{
-					build_hello_msg();
-					current_state = RECEIVE_DATA_LENGTH;
-					set_sending_delay(micro_seconds_to_clocks(3500));
-
-				}
-
-				in_ir_signals.clear();
-			}
-			break;
-		}
-		case RECEIVE_DATA_LENGTH:
-		{
-			//2 Byte -> (16 Bits * 2 Signals each) + 2 PRE AND 2 POSTAMBLE = 36
-			if (in_ir_signals.size() == 36)
-			{
-				//translate_signals_to_bytes();
-				//in_data_length = in_bytes[1];
-				in_data_length = 1;
-				current_state = RECEIVE_DATA;
-				in_ir_signals.clear();
-			};
-
-			break;
-		}
-		case RECEIVE_DATA:
-		{
-			//DATA LENGTH * 8 Bits * 2 +  2 PRE AND 2 POSTAMBLE
-			if (in_ir_signals.size() == ((in_data_length * 8 * 2) + 4))
-			{
-				//translate_signals_to_bytes();
-				current_state = RECEIVE_DATA_CHECKSUM;
-				in_ir_signals.clear();
-			}
-			break;
-		}
-		case RECEIVE_DATA_CHECKSUM:
-		{
-			//DATA LENGTH * 8 Bits * 2 +  2 PRE AND 1 POSTAMBLE (0 not send) = 35
-			if (in_ir_signals.size() == 35)
-			{
-				//translate_signals_to_bytes();
-				current_state = RECEICE_DATA_EMPTY;
-				in_ir_signals.clear();
-
-				build_ack_msg();
-
-			}
-			break;
-		}
-		case RECEICE_DATA_EMPTY:
-		{
-			//DATA LENGTH * 8 Bits * 2 +  2 PRE AND 1 POSTAMBLE (0 not send) = 35
-			if (in_ir_signals.size() == 74)
-			{
-				//translate_signals_to_bytes();
-				//current_state = RECEICE_DATA_EMPTY;
-				in_ir_signals.clear();
-
-				build_ack_msg();
-
-			}
-			break;
-			break;
-		}
-		default:
-			break;
-		}
-
-	}
-
+                    set_sending_delay(155430);
+                }
+                break;
+            }
+            case SEND_EMPTY_PACKETS:
+            {
+                // Code für SEND_EMPTY_PACKETS
+                break;
+            }
+            default:
+                // Handle unbekannte states
+                break;
+        }
+    }
+    // Slave mode implementation for research purposes
+    else
+    {
+        switch (current_state)
+        {
+            case RECEIVE_HELLO:
+            {
+                if (in_ir_signals.size() == 3)
+                {
+                    if (got_hello_msg())
+                    {
+                        build_hello_msg();
+                        current_state = RECEIVE_DATA_LENGTH;
+                        set_sending_delay(micro_seconds_to_clocks(3500));
+                    }
+                    in_ir_signals.clear();
+                }
+                break;
+            }
+            case RECEIVE_DATA_LENGTH:
+            {
+                //2 Byte -> (16 Bits * 2 Signals each) + 2 PRE AND 2 POSTAMBLE = 36
+                if (in_ir_signals.size() == 36)
+                {
+                    //translate_signals_to_bytes();
+                    //in_data_length = in_bytes[1];
+                    in_data_length = 1;
+                    current_state = RECEIVE_DATA;
+                    in_ir_signals.clear();
+                }
+                break;
+            }
+            case RECEIVE_DATA:
+            {
+                //DATA LENGTH * 8 Bits * 2 +  2 PRE AND 2 POSTAMBLE
+                if (in_ir_signals.size() == static_cast<size_t>((in_data_length * 8 * 2) + 4))
+                {
+                    //translate_signals_to_bytes();
+                    current_state = RECEIVE_DATA_CHECKSUM;
+                    in_ir_signals.clear();
+                }
+                break;
+            }
+            case RECEIVE_DATA_CHECKSUM:
+            {
+                //DATA LENGTH * 8 Bits * 2 +  2 PRE AND 1 POSTAMBLE (0 not send) = 35
+                if (in_ir_signals.size() == 35)
+                {
+                    //translate_signals_to_bytes();
+                    current_state = RECEICE_DATA_EMPTY;
+                    in_ir_signals.clear();
+                    build_ack_msg();
+                }
+                break;
+            }
+            case RECEICE_DATA_EMPTY:
+            {
+                //DATA LENGTH * 8 Bits * 2 +  2 PRE AND 1 POSTAMBLE (0 not send) = 35
+                if (in_ir_signals.size() == 74)
+                {
+                    //translate_signals_to_bytes();
+                    in_ir_signals.clear();
+                    build_ack_msg();
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
 }
-
 void pikachu_2_gs::send_ir_signal(ir_signal* signal)
 {
 	v_gb[0]->receive_ir_signal(signal);
@@ -338,7 +285,7 @@ void pikachu_2_gs::build_ack_msg()
 void pikachu_2_gs::build_data_msg(std::vector<byte> bytes)
 {
 	add_preamble_to_out_signals();
-	for (int i = 0; i < bytes.size(); i++)
+	for (size_t i = 0; i < bytes.size(); i++)
 	{
 		add_byte_to_out_ir_signals(bytes[i]);
 	}
@@ -377,7 +324,7 @@ void pikachu_2_gs::translate_signals_to_bytes() {
 	byte received_byte = 0x00;
 	int bit_shift_count = 0;
 
-	for (int i = 1; i < in_ir_signals.size(); i++)
+	for (size_t i = 1; i < in_ir_signals.size(); i++)
 	{
 		//ignore PRE and POSTAMBLE
 		if (in_ir_signals[i]->duration >= micro_seconds_to_clocks(580)) 
@@ -445,7 +392,7 @@ bool pikachu_2_gs::is_waiting_for_delay()
 word pikachu_2_gs::calc_checksum()
 {
 	word checksum = 0;
-	for (int i = 0; i < all_bytes_out_for_checksum.size(); i++)
+	for (size_t i = 0; i < all_bytes_out_for_checksum.size(); i++)
 	{
 		checksum += all_bytes_out_for_checksum[i];
 	}
@@ -486,7 +433,7 @@ void pikachu_2_gs::log_ir_received_bytes()
 	std::string filePath = "./ir_bytes.txt";
 	std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
 
-	for (int i = 0; i < in_bytes.size(); i++)
+	for (size_t i = 0; i < in_bytes.size(); i++)
 	{
 		ofs << std::hex << in_bytes[i];
 		ofs << std::endl;

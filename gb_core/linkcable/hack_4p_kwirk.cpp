@@ -28,7 +28,7 @@
 hack_4p_kwirk::hack_4p_kwirk(std::vector<gb*> g_gb)
 {
 	v_gb = g_gb;
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		v_gb[i]->set_linked_target(this);
 	}
@@ -63,7 +63,7 @@ byte hack_4p_kwirk::receive_from_linkcable(byte data)
 	{
 		get_all_SC_reg_data();
 
-		for (int i = 0; i < v_gb.size(); i++)
+		for (size_t i = 0; i < v_gb.size(); i++)
 		{
 			if (in_data_buffer[i] == 0x81) master_id = i;
 			log_traffic(i, in_data_buffer[i]);
@@ -73,7 +73,7 @@ byte hack_4p_kwirk::receive_from_linkcable(byte data)
 	get_all_SB_reg_data();
 
 	//check who is master, who send 0x66 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		log_traffic(i, in_data_buffer[i]);
 	}
@@ -83,7 +83,7 @@ byte hack_4p_kwirk::receive_from_linkcable(byte data)
 	case TITLE_SCREEN:
 	{
 
-		bool all_are_ready = true;
+		//bool all_are_ready = true;
 
 		redirect_data(data);
 		current_state = SELECT_SCREEN;
@@ -179,7 +179,7 @@ byte hack_4p_kwirk::receive_from_linkcable(byte data)
 
 void hack_4p_kwirk::get_all_SB_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		byte data = v_gb[i]->get_regs()->SB;
 		in_data_buffer[i] = data;
@@ -188,7 +188,7 @@ void hack_4p_kwirk::get_all_SB_reg_data()
 
 void hack_4p_kwirk::get_all_SC_reg_data()
 {
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		byte data = v_gb[i]->get_regs()->SC;
 		in_data_buffer[i] = data;
@@ -198,9 +198,9 @@ void hack_4p_kwirk::get_all_SC_reg_data()
 void hack_4p_kwirk::redirect_data(byte data)
 {
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
-		if (i == master_id)
+		if (static_cast<int>(i) == master_id)
 		{
 			log_traffic(i, data);
 			continue;	
@@ -218,7 +218,7 @@ byte hack_4p_kwirk::get_max_level()
 	get_all_SB_reg_data();
 	byte max_value = 0;
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		if (in_data_buffer[i] > max_value) max_value = in_data_buffer[i];
 	}
@@ -229,7 +229,7 @@ byte hack_4p_kwirk::get_second_level()
 {
 	byte max = get_max_level();
 	byte second = 0;
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		if (in_data_buffer[i] > second && in_data_buffer[i] < max) second = in_data_buffer[i];
 	}
@@ -240,7 +240,7 @@ bool hack_4p_kwirk::has_draw_max_level()
 {
 	byte max = get_max_level();
 	byte count = 0;
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		if (in_data_buffer[i] == max) count++;
 		if (count >= 2) return true; 
@@ -255,9 +255,9 @@ byte hack_4p_kwirk::send_current_levels() {
 	byte second = get_second_level();
 	byte my_level = 0;
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
-		if (i == master_id) continue;
+		if (static_cast<int>(i) == master_id) continue;
 
 		my_level = in_data_buffer[i];
 		if (my_level < max) v_gb[i]->receive_from_linkcable(max);
@@ -278,7 +278,7 @@ byte hack_4p_kwirk::send_current_levels() {
 
 byte hack_4p_kwirk::get_winner_id(byte data) {
 	
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 		if (in_data_buffer[i] == 0x71) return i + 1;
 	}
@@ -295,9 +295,9 @@ byte hack_4p_kwirk::handle_winner(int winner_id) {
 
 		v_gb[winner_id-1]->receive_from_linkcable(0x72);
 
-		for (int i = 0; i < v_gb.size(); i++)
+		for (size_t i = 0; i < v_gb.size(); i++)
 		{
-			if (i == master_id || winner_id == (i+1)) continue;
+			if (static_cast<int>(i) == master_id || winner_id == static_cast<int>(i+1)) continue;
 			v_gb[i]->receive_from_linkcable(0x71);
 		}
 	}
@@ -309,7 +309,7 @@ void hack_4p_kwirk::handle_loser() {
 
 	get_all_SB_reg_data();
 
-	for (int i = 0; i < v_gb.size(); i++)
+	for (size_t i = 0; i < v_gb.size(); i++)
 	{
 			v_gb[i]->receive_from_linkcable(0x71);
 	}

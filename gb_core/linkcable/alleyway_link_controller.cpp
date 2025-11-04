@@ -132,11 +132,14 @@ byte alleyway_link_controller::receive_from_linkcable(byte in_data)
 
         switch (AlleywayControlsMode)
         {
+
         case Alleyway_Controls_Mode::ANALOG_STICK:
             return get_paddle_value(0);
         case Alleyway_Controls_Mode::MOUSE:
         case Alleyway_Controls_Mode::TOUCHSCREEN:
             return get_paddle_from_mouse(0);
+        case Alleyway_Controls_Mode::NORMAL:
+        default: return 0;
         }
 	
 	}

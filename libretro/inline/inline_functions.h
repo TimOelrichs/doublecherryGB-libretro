@@ -47,9 +47,10 @@ static void netpacket_receive(const void* buf, size_t len, unsigned short client
     
     bool isMaster = (v_gb[0]->get_regs()->SC & 0x01) == 1;
     if (!isMaster) {
-        byte retbuf[1] = { v_gb[0]->receive_from_linkcable(data[0]) };
-        //netpacket_send(client_id, retbuf, 1);
 
+        //byte retbuf[1] = { v_gb[0]->receive_from_linkcable(data[0]) };
+        //netpacket_send(client_id, retbuf, 1);
+        v_gb[0]->receive_from_linkcable(data[0]);
 
         return;
     }
@@ -61,9 +62,8 @@ static void netpacket_receive(const void* buf, size_t len, unsigned short client
 
 // Ensure we do not have too many clients for the type of connection used.
 static bool netpacket_connected(unsigned short client_id) {
-    int max_clients = 1;
 
-    if (num_clients >= max_clients)
+    if (num_clients >= max_gbs)
         return false;
 
     num_clients++;
@@ -1084,7 +1084,7 @@ void log_save_state(uint8_t* data, size_t size)
         std::string filePath = "./dmg07_savesate_log.bin";
         std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
 
-        for (int i = 0; i < size; i++)
+        for (size_t i = 0; i < size; i++)
         {
             ofs << data[i];
         }

@@ -264,11 +264,19 @@ else ifeq ($(platform), ctr)
 
 	CFLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard
 	CFLAGS += -Wall -mword-relocations -fomit-frame-pointer -ffast-math
-	CFLAGS += -DARM11 -D_3DS
+	CFLAGS += -DARM11 -D_3DS -DHAVE_3DS_HEADERS
+	CFLAGS += -I$(DEVKITPRO)/libctru/include
+
+	# Prüfe ob DEVKITPRO verfügbar ist
+	ifneq ($(DEVKITPRO),)
+		CFLAGS += -I$(DEVKITPRO)/libctru/include
+	else
+		# Fallback für Build-Bot
+		$(warning DEVKITPRO not set, 3DS support limited)
+	endif
 
 	CXXFLAGS += $(CFLAGS)
 	STATIC_LINKING = 1
-
 # Nintendo Switch (libtransistor)
 else ifeq ($(platform), switch)
 	EXT=a

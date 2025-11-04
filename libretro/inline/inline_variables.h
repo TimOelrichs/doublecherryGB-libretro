@@ -8,8 +8,8 @@
 
 #define RETRO_GAME_TYPE_GAMEBOY_LINK_2P 0x101
 
-unsigned int num_clients = 0;
-unsigned short my_client_id = -1; 
+size_t num_clients = 0;
+unsigned short my_client_id = -1;
 static retro_netpacket_send_t netpacket_send_fn_ptr = NULL;
 static retro_netpacket_poll_receive_t netpacket_pollrcv_fn_ptr = NULL;
 
@@ -175,7 +175,7 @@ bool use_tetris_4p_hack = false;
 bool log_2p_link = false;
 bool logging_allowed = true; 
 bool detect_gba = false; 
-int max_gbs = 16;
+unsigned short max_gbs = 16;
 
 
 retro_log_printf_t log_cb;
@@ -189,12 +189,12 @@ retro_input_state_t input_state_cb;
 bool _screen_vertical = false;
 bool _screen_4p_split = false;
 bool _screen_switched = false;
-int _show_player_screen = 1;
+unsigned int _show_player_screen = 1;
 int _number_of_local_screens = 1;
 static size_t _serialize_size[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 bool gblink_enable = false;
-int emulated_gbs = 1;
+size_t emulated_gbs = 1;
 char cart_name[18];
 
 int audio_2p_mode = 0;

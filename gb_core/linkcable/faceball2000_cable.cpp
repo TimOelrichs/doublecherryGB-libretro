@@ -22,7 +22,7 @@
 
 #include "./include/faceball2000_cable.hpp"
 
-extern int emulated_gbs; 
+extern size_t emulated_gbs;
 
 faceball2000_cable::faceball2000_cable(const std::vector<gb*>& g_gb)
     : v_gb(g_gb) 

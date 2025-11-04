@@ -1,5 +1,4 @@
-﻿#pragma once
-#include "./include/image_scaler.hpp"
+﻿#include "./include/image_scaler.hpp"
 #include <algorithm>
 #include <cstring>
 #include <cstdint>
@@ -24,7 +23,7 @@ ScaledImage ImageScaler::scale(
     ScaleTarget target,
     Alignment alignment
 ) {
-    int target_width, target_height;
+    int target_width = 0, target_height = 0;
     calculate_target_dimensions(target, width, height, target_width, target_height);
 
     // Bei NONE keine Skalierung, direkte Übergabe
