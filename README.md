@@ -3,17 +3,37 @@
 <img src="/assets/readme/header.png">
 
 
+[![Double Cherry GB Latest Release][dcgb-release-badge]][dcgb-latest-release]
+[![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/libretro%2FdoublecherryGB-libretro?gitlab_url=https%3A%2F%2Fgit.libretro.com%2F&branch=master&style=for-the-badge&logo=gitlab&label=Libretro%20Build)](https://git.libretro.com/libretro/doublecherryGB-libretro/-/pipelines)
+
 
 **author:** Tim Oelrichs<br>
 **email:** timoelrichs@gmail.com<br>
 
 
 > DoubleCherryGB is an open source (GPLv3) GB/GBC emulator with up to 16 Player support, based on the TGBDual libretro core by GIGO and Hii.
-> It emulates the GAMEBOY 4 PLAYER ADAPTER (DMG-07) and also adds 3-16 Player Link Hacks for two-player games.
+> It emulates the GAMEBOY 4 PLAYER ADAPTER (DMG-07), adds 3-16 Player Link Hacks for two-player games, enables Pokemon-Trading and much more.
 > It's named after the Double Cherry Item from Super Mario 3D World.
 
 
-<br>
+<hr>
+
+# Installation
+
+Installation instructions may vary depending on your chosen libretro frontend.
+
+## RetroArch
+
+You can install DoubleCherryGB through the built-in core downloader where supported.
+If your build of RetroArch doesn't include it (e.g. Steam)
+or if you want to use a development build,
+you can install it [RetroArch][retroarch] manually like so:
+
+1. Place `DoubleCherryGB_libretro.dll` (or `.so` or `.dylib`, depending on the platform) in RetroArch's `cores` directory.
+2. Place `DoubleCherryGB_libretro.info` in the same directory as the other `.info` files,
+   which is usually `cores` or `info` depending on the platform.
+
+<hr>
 
 ## Features
 
@@ -249,4 +269,6 @@ Original sources from
 This project is licensed under the **GNU General Public License v3.0**.  
 See the [LICENSE](LICENSE) file for details.
 
-
+[retroarch]: https://www.retroarch.com
+[dcgb-release-badge]: https://img.shields.io/github/v/release/TimOelrichs/doublecherryGB-libretro?style=for-the-badge&&logo=github&label=Double%20Cherry%20GB&link=https%3A%2F%2Fgithub.com%2FTimOelrichs%2FdoublecherryGB-libretro%2Freleases%2Flatest
+[dcgb-latest-release]: https://github.com/TimOelrichs/doublecherryGB-libretro/releases/latest
