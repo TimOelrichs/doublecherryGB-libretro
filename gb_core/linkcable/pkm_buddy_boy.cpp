@@ -324,7 +324,7 @@ byte pkm_buddy_boy::handle_gen2(byte data) {
         {
             generate_data_block_gen2();
 
-            if (!has_owned_mew_gen2() || !has_owned_celebi())
+            if ((!has_owned_mew_gen2() || !has_owned_celebi()) && option_auto_mew_enabled)
             {
                 if (!has_owned_celebi())
                 {
@@ -348,7 +348,8 @@ byte pkm_buddy_boy::handle_gen2(byte data) {
                     memcpy(DATA_BLOCK_gen2.ot_names[1], convert_string_to_name("PKBuddy").data(), 11);
                 }
             }
-            else add_event_pokemon_to_datablock_gen2();
+            else if (option_auto_pokemondistributions_enabled)
+            	add_event_pokemon_to_datablock_gen2();
 
             events_were_added = true;
         }
