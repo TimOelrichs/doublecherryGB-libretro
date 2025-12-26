@@ -275,7 +275,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
          { NULL, NULL }
 
       },
-      "Mouse",
+      "Off",
 },
 {
      "dcgb_gb_printer_png_alignment",
@@ -300,27 +300,26 @@ static struct retro_core_option_v2_definition core_options_us[] = {
      NULL,
      "Linkcable",
      {
-         {"auto", NULL},
-         {"Off", NULL},
-         { NULL, NULL }
+                 {"0", "Off"},
+              {"1", "auto"},
+              {NULL, NULL}
 
       },
-      "auto",
+      "1",
 },
 {
-     "dcgb_pkmbuddyboy_weekly_distributions events",
+     "dcgb_pkmbuddyboy_weekly_distributions_events",
      "PKBuddy Boy Weekly offline Pokemon Distribution Events",
      NULL,
      "PKBuddy Boy Weekly Pokemon Distribution Events",
      NULL,
      "Linkcable",
      {
-         {"Off", NULL},
-         {"auto", NULL},
-         { NULL, NULL }
-
+                   {"0", "Off"},
+                  {"1", "auto"},
+                  {NULL, NULL}
       },
-      "auto",
+      "1",
 },
 {
      "dcgb_power_antenna_use_rumble",

@@ -32,6 +32,9 @@
 extern bool logging_allowed;
 extern char cart_name[18];
 
+extern bool option_auto_mew_enabled;
+extern bool option_auto_pokemondistributions_enabled;
+
 enum pkm_generation {
 	GEN_1,
 	GEN_2

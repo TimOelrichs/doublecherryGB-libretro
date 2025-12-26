@@ -159,7 +159,7 @@ byte pkm_buddy_boy::handle_gen1(byte data) {
     {
         if (!events_were_added)
         {
-            if (!has_owned_mew()) {
+            if (!has_owned_mew() && option_auto_mew_enabled) {
                 display_message("Get your Welcome Mew!");
                 pokemon mew = generate_pk_from_base_table(150, 5);
                 mew.iv[0] = 0x5A;
@@ -168,7 +168,9 @@ byte pkm_buddy_boy::handle_gen1(byte data) {
                 DATA_BLOCK.species_list_size = 1;
                 memcpy(DATA_BLOCK.ot_names[0], convert_string_to_name("YOSHIRA").data(), 11);
             }
-            else add_event_pokemon_to_datablock();
+            else if (option_auto_pokemondistributions_enabled)
+            	add_event_pokemon_to_datablock();
+
             events_were_added = true;
         }
 
