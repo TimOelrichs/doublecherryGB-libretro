@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "libretro.h"
+#include "linkcable/include/pkm_buddy_boy.hpp"
 
 #if defined(__PSP__)
 extern "C" uint64_t sceKernelGetSystemTimeWide(void);
@@ -231,17 +232,19 @@ void auto_config_1p_link() {
     //Pokemon Stuff
     if (!strncmp(cart_name, "POKEMON", 7 ) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
-        
-        pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
-        hotkey_target = pkbuddy;
-        v_serializable_devices.push_back(pkbuddy);
+        if ( option_auto_pokemondistributions_enabled)
+        {
+            pkm_buddy_boy* pkbuddy = new pkm_buddy_boy(v_gb);
+            hotkey_target = pkbuddy;
+            v_serializable_devices.push_back(pkbuddy);
 
-        //v_gb[0]->set_linked_target(pkbuddy);
-        linkHUB->set_default_link_target(pkbuddy);
+            //v_gb[0]->set_linked_target(pkbuddy);
+            linkHUB->set_default_link_target(pkbuddy);
 
-        display_message("PKMBUDDY BOY plugged in");
-        display_message("Check out the CABLE CLUB for weekly Distributions!");
-        
+
+            display_message("PKMBUDDY BOY plugged in");
+            display_message("Check out the CABLE CLUB for weekly Distributions!");
+        }
         //Mytery Gift Maschine WIP - Not working yet
         
         //TODO IR ONLY  for GEN2
@@ -677,6 +680,7 @@ static void check_variables(void)
 
 
 
+
     var.key = "dcgb_light_temperature";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -753,6 +757,24 @@ static void check_variables(void)
             alleyway_analog_controller_enabled = true;
     }
     */
+
+    var.key = "dcgb_pkmbuddyboy_auto_mew";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        option_auto_mew_enabled = (bool)value;
+
+    }
+
+    var.key = "dcgb_pkmbuddyboy_weekly_distributions_events";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        option_auto_pokemondistributions_enabled = (bool)value;
+
+    }
 
     var.key = "dcgb_power_antenna_use_rumble";
     var.value = NULL;

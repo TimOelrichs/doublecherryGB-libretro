@@ -21,19 +21,19 @@
 */
 
 
-#include "./include/pokebuddy_gen1.hpp"
+#include "./include/pkm_buddy_boy.hpp"
 #include "./include/PKBuddy/inline_pkbuddy_dist_events.h"
 
 
 
-pokebuddy_gen1::pokebuddy_gen1(std::vector<gb*> gbs) {
+pkm_buddy_boy::pkm_buddy_boy(std::vector<gb*> gbs) {
   
 	v_gb.insert(v_gb.begin(), std::begin(gbs), std::end(gbs));
 
 	reset();
 }
 
-byte pokebuddy_gen1::receive_from_linkcable(byte data)
+byte pkm_buddy_boy::receive_from_linkcable(byte data)
 {
 	if (current_state == OPEN_LINK)
 		return init_and_set_pkm_game_generation(data);
@@ -41,7 +41,7 @@ byte pokebuddy_gen1::receive_from_linkcable(byte data)
 	return generation == GEN_1 ? handle_gen1(data) : handle_gen2(data);	
 }
 
-void pokebuddy_gen1::reset() {
+void pkm_buddy_boy::reset() {
 
 	patch_part2 = false; 
 	current_state = OPEN_LINK;
@@ -56,7 +56,7 @@ void pokebuddy_gen1::reset() {
 
 }
 
-void pokebuddy_gen1::handle_special_hotkey(int key) {
+void pkm_buddy_boy::handle_special_hotkey(int key) {
 
 	if (current_state == OPEN_LINK) return;
 	if (generation == GEN_1)
@@ -132,7 +132,7 @@ void pokebuddy_gen1::handle_special_hotkey(int key) {
 
 }
 
-byte pokebuddy_gen1::init_and_set_pkm_game_generation(byte data) {
+byte pkm_buddy_boy::init_and_set_pkm_game_generation(byte data) {
 
 	if (data == 0x01) {
 		events_were_added = false;
@@ -151,7 +151,7 @@ byte pokebuddy_gen1::init_and_set_pkm_game_generation(byte data) {
 	return 0xfe;
 }
 
-byte pokebuddy_gen1::handle_gen1(byte data) {
+byte pkm_buddy_boy::handle_gen1(byte data) {
     switch (current_state)
     {
     case OPEN_LINK: //unreachable, already handled
@@ -159,7 +159,7 @@ byte pokebuddy_gen1::handle_gen1(byte data) {
     {
         if (!events_were_added)
         {
-            if (!has_owned_mew()) {
+            if (!has_owned_mew() && option_auto_mew_enabled) {
                 display_message("Get your Welcome Mew!");
                 pokemon mew = generate_pk_from_base_table(150, 5);
                 mew.iv[0] = 0x5A;
@@ -168,7 +168,9 @@ byte pokebuddy_gen1::handle_gen1(byte data) {
                 DATA_BLOCK.species_list_size = 1;
                 memcpy(DATA_BLOCK.ot_names[0], convert_string_to_name("YOSHIRA").data(), 11);
             }
-            else add_event_pokemon_to_datablock();
+            else if (option_auto_pokemondistributions_enabled)
+            	add_event_pokemon_to_datablock();
+
             events_were_added = true;
         }
 
@@ -311,7 +313,7 @@ byte pokebuddy_gen1::handle_gen1(byte data) {
         return 0x00;
     }
 }
-byte pokebuddy_gen1::handle_gen2(byte data) {
+byte pkm_buddy_boy::handle_gen2(byte data) {
     //TODO implement gen2 handling
     switch (current_state)
     {
@@ -503,7 +505,13 @@ byte pokebuddy_gen1::handle_gen2(byte data) {
         return 0x00;
     }
 }
-size_t pokebuddy_gen1::get_state_size(void)
+
+bool pkm_buddy_boy::is_pokemon_yellow_cartdrige()
+{
+	return (strcmp(cart_name, "POKEMON YELLOW") == 0);
+}
+
+size_t pkm_buddy_boy::get_state_size(void)
 {
 	size_t ret = 0;
 	serializer s(&ret, serializer::COUNT);
@@ -512,13 +520,13 @@ size_t pokebuddy_gen1::get_state_size(void)
 }
 
 
-void pokebuddy_gen1::save_state_mem(void* buf)
+void pkm_buddy_boy::save_state_mem(void* buf)
 {
 	serializer s(buf, serializer::SAVE_BUF);
 	serialize(s);
 }
 
-void pokebuddy_gen1::restore_state_mem(void* buf)
+void pkm_buddy_boy::restore_state_mem(void* buf)
 {
 	serializer s(buf, serializer::LOAD_BUF);
 	serialize(s);
@@ -526,7 +534,7 @@ void pokebuddy_gen1::restore_state_mem(void* buf)
 
 
 
-void pokebuddy_gen1::serialize(serializer& s)
+void pkm_buddy_boy::serialize(serializer& s)
 {
 
 	s_VAR(player_selected_index);

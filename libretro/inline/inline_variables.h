@@ -160,7 +160,8 @@ bool useDmgGhosting = true;
 
 enum color_correction_mode gbc_cc_mode = GAMBATTE_ACCURATE;
 
-
+bool option_auto_mew_enabled = true;
+bool option_auto_pokemondistributions_enabled = true;
 
 std::vector<gb*> v_gb;
 std::vector <dmy_renderer*> render;
