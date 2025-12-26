@@ -54,7 +54,7 @@ set(SOURCES
     ${CORE_DIR}/gb_core/linkcable/gameboy_printer.cpp
     ${CORE_DIR}/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp
     ${CORE_DIR}/gb_core/linkcable/power_antenna.cpp
-    ${CORE_DIR}/gb_core/linkcable/pokebuddy_gen1.cpp
+    ${CORE_DIR}/gb_core/linkcable/pkm_buddy_boy.cpp
     
     ${CORE_DIR}/gb_core/infrared/pikachu_2_gs.cpp
     ${CORE_DIR}/gb_core/infrared/ubikey_unlocker.cpp

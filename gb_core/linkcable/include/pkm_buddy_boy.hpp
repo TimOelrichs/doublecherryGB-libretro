@@ -38,10 +38,10 @@ enum pkm_generation {
 };
 
 
-class pokebuddy_gen1 final : public I_linkcable_target, public I_dcgb_hotkey_target, public I_savestate {
+class pkm_buddy_boy final : public I_linkcable_target, public I_dcgb_hotkey_target, public I_savestate {
 
 public:
-	pokebuddy_gen1(std::vector<gb*> gbs);
+	pkm_buddy_boy(std::vector<gb*> gbs);
 
 	byte receive_from_linkcable(byte data) override;
 	void reset();
@@ -104,6 +104,7 @@ private:
 	bool has_owned_mew();
 	bool has_owned_mew_gen2();
 	bool has_owned_celebi();
+	bool is_pokemon_yellow_cartdrige();
 
 	void add_event_pokemon_to_datablock();
 	void add_event_pokemon_to_datablock_gen2();

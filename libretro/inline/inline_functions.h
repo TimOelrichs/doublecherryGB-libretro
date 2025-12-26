@@ -232,7 +232,7 @@ void auto_config_1p_link() {
     if (!strncmp(cart_name, "POKEMON", 7 ) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
         
-        pokebuddy_gen1* pkbuddy = new pokebuddy_gen1(v_gb);
+        pkm_buddy_boy* pkbuddy = new pkm_buddy_boy(v_gb);
         hotkey_target = pkbuddy;
         v_serializable_devices.push_back(pkbuddy);
 

@@ -308,7 +308,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
       "auto",
 },
 {
-     "dcgb_pkmbuddyboy_weekly_dtistributions events",
+     "dcgb_pkmbuddyboy_weekly_distributions events",
      "PKBuddy Boy Weekly offline Pokemon Distribution Events",
      NULL,
      "PKBuddy Boy Weekly Pokemon Distribution Events",

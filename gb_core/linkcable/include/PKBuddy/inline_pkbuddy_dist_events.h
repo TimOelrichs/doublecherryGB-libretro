@@ -2,7 +2,7 @@
 #include "inline_pkbuddy_generator.h"
 #include "inline_pkbuddy_generator_gen2.h"
 
-void pokebuddy_gen1::add_event_pokemon_to_datablock() {
+void pkm_buddy_boy::add_event_pokemon_to_datablock() {
 
 	time_t now = time(0);
 	tm* ltm = localtime(&now);
@@ -1605,7 +1605,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock() {
 
 }
 
-void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
+void pkm_buddy_boy::add_event_pokemon_to_datablock_gen2() {
 
 	time_t now = time(0);
 	tm* ltm = localtime(&now);
