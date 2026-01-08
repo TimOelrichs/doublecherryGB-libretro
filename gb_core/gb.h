@@ -67,6 +67,7 @@ enum color_correction_mode {
 	OFF = 0,
 	GAMBATTE_SIMPLE = 1,
 	GAMBATTE_ACCURATE = 2
+
 };
 
 

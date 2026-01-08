@@ -2,6 +2,11 @@
 
 struct retro_core_option_v2_category option_cats_us[] = {
 
+    {
+        "System",
+        "System",
+        "Game Boy System settings"
+        },
       {
 	  "DotMatrixGrid",
 	  "Game Boy LCD",
@@ -36,6 +41,22 @@ struct retro_core_option_v2_category option_cats_us[] = {
 
 static struct retro_core_option_v2_definition core_options_us[] = {
 
+    //********************LCD OPTIONS START*********************************
+    {
+        "dcgb_gbc_detect_as_GBA",
+        "detect as played on Game Boy Advance",
+        NULL,
+        "Some Game Boy Color Games offers GBA Enhanced feature, when played on a Game Boy Advance.",
+        NULL,
+        "System",
+        {
+              {"0", "Off"},
+              {"1", "On"},
+              {NULL, NULL}
+
+        },
+        "1",
+     },
     //********************LCD OPTIONS START*********************************
    {
       "dcgb_gb_lcd_ghosting",

@@ -572,6 +572,18 @@ static void check_variables(void)
 
     struct retro_variable var;
 
+
+    var.key = "dcgb_gbc_detect_as_GBA";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+
+        int value = atoi(var.value);
+        detect_as_gba= (bool)value;
+
+
+    }
+
    // { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off" },
     var.key = "dcgb_gbc_lcdcolor_correction";
     var.value = NULL;

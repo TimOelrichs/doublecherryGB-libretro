@@ -42,6 +42,7 @@ extern int _number_of_local_screens;
 extern bool gbc_color_correction_enabled;
 extern bool is_gbc_rom; 
 extern enum color_correction_mode gbc_cc_mode;
+extern bool detect_as_gba;
 
 extern bool gbc_lcd_interlacing_enabled;
 extern bool gbc_lcd_interfacing_fast;
@@ -206,6 +207,8 @@ word dmy_renderer::get_sensor(bool x_y) {    // Libretro Input State abfragen
     }
 }
 
+
+
 word dmy_renderer::map_color(word gb_col)
 {
     if (is_gbc_rom && gbc_color_correction_enabled)
@@ -220,84 +223,46 @@ word dmy_renderer::map_color(word gb_col)
 
         switch (gbc_cc_mode)
         {
-        case GAMBATTE_SIMPLE:
-        {
-
-            rFinal = ((r * 13) + (g * 2) + b) >> 4;
-            gFinal = ((g * 3) + b) >> 2;
-            bFinal = ((r * 3) + (g * 2) + (b * 11)) >> 4;
-
-            break;
-        }
-        case GAMBATTE_ACCURATE:
-        {
-            /*  //disable cclut for now, because it crashes on the miyoo mini
-            static bool lutAvailable = false;
-            static bool lutChecked = false;
-
-            // Nur einmal prüfen, ob die LUT in den Speicher passt
-            if (!lutChecked)
+            case GAMBATTE_SIMPLE:
             {
-                lutChecked = true;
-
-                // Versuche Test-Allokation für eine 32x32x32 LUT
-                try {
-                    constexpr size_t LUT_SIZE = 32 * 32 * 32 * sizeof(uint16_t);
-                    std::unique_ptr<uint16_t[]> testLut(new uint16_t[32 * 32 * 32]);
-                    memset(testLut.get(), 0, LUT_SIZE); // Sicherheitstest
-                    lutAvailable = true;
-                }
-                catch (const std::bad_alloc&) {
-                    lutAvailable = false;
-                }
+                rFinal = ((r * 13) + (g * 2) + b) >> 4;
+                gFinal = ((g * 3) + b) >> 2;
+                bFinal = ((r * 3) + (g * 2) + (b * 11)) >> 4;
+                break;
             }
-
-            if (lutAvailable)
+            case GAMBATTE_ACCURATE:
             {
-                // --- LUT-Version ---
-                uint16_t corrected = gbc_lut_accurate[gb_col];
+                // Werte für GBA Enhanced Mode
+                bool gba_enhanced = detect_as_gba; // eigene bool Variable
+                float ccLum, ccR, ccG, ccB, ccRG, ccRB, ccGR, ccGB, ccBR, ccBG;
+                float adjustedGamma;
+                constexpr float CC_TARGET_GAMMA = 2.2f;
+                constexpr float rgbMax = 31.0f;
+                constexpr float rgbMaxInv = 1.0f / rgbMax;
+                constexpr float displayGammaInv = 1.0f / CC_TARGET_GAMMA;
 
-                if (rgb565) {
-                    rFinal = (corrected >> 11) & 0x1F;
-                    gFinal = (corrected >> 6) & 0x1F;
-                    bFinal = (corrected >> 0) & 0x1F;
+                if (gba_enhanced)
+                {
+                    ccLum = 0.94f; ccR = 0.82f; ccG = 0.665f; ccB = 0.73f;
+                    ccRG = 0.125f; ccRB = 0.195f; ccGR = 0.24f; ccGB = 0.075f;
+                    ccBR = -0.06f; ccBG = 0.21f;
+                    adjustedGamma = CC_TARGET_GAMMA + 1.0f; // GBA_CC_GAMMA_ADJ
                 }
-                else {
-                    bFinal = (corrected >> 10) & 0x1F;
-                    gFinal = (corrected >> 5) & 0x1F;
-                    rFinal = (corrected >> 0) & 0x1F;
+                else
+                {
+                    ccLum = 0.94f; ccR = 0.82f; ccG = 0.665f; ccB = 0.73f;
+                    ccRG = 0.125f; ccRB = 0.195f; ccGR = 0.24f; ccGB = 0.075f;
+                    ccBR = -0.06f; ccBG = 0.21f;
+                    adjustedGamma = CC_TARGET_GAMMA - 0.5f; // GBC_CC_GAMMA_ADJ
                 }
-            }
-            else
-            */
-            {
-                // --- Fallback: Farbkorrektur per Berechnung ---
-                #define GBC_CC_LUM 0.94f
-                #define GBC_CC_R   0.82f
-                #define GBC_CC_G   0.665f
-                #define GBC_CC_B   0.73f
-                #define GBC_CC_RG  0.125f
-                #define GBC_CC_RB  0.195f
-                #define GBC_CC_GR  0.24f
-                #define GBC_CC_GB  0.075f
-                #define GBC_CC_BR  -0.06f
-                #define GBC_CC_BG  0.21f
 
-                static const float rgbMax = 31.0f;
-                static const float rgbMaxInv = 1.0f / rgbMax;
-                float colorCorrectionBrightness = 0.5f;
-
-                static const float targetGamma = 2.2f;
-                static const float displayGammaInv = 1.0f / targetGamma;
-
-                float adjustedGamma = targetGamma - colorCorrectionBrightness;
                 float rFloat = std::pow(static_cast<float>(r) * rgbMaxInv, adjustedGamma);
                 float gFloat = std::pow(static_cast<float>(g) * rgbMaxInv, adjustedGamma);
                 float bFloat = std::pow(static_cast<float>(b) * rgbMaxInv, adjustedGamma);
 
-                float rCorrect = GBC_CC_LUM * ((GBC_CC_R * rFloat) + (GBC_CC_GR * gFloat) + (GBC_CC_BR * bFloat));
-                float gCorrect = GBC_CC_LUM * ((GBC_CC_RG * rFloat) + (GBC_CC_G * gFloat) + (GBC_CC_BG * bFloat));
-                float bCorrect = GBC_CC_LUM * ((GBC_CC_RB * rFloat) + (GBC_CC_GB * gFloat) + (GBC_CC_B * bFloat));
+                float rCorrect = ccLum * ((ccR * rFloat) + (ccGR * gFloat) + (ccBR * bFloat));
+                float gCorrect = ccLum * ((ccRG * rFloat) + (ccG * gFloat) + (ccBG * bFloat));
+                float bCorrect = ccLum * ((ccRB * rFloat) + (ccGB * gFloat) + (ccB * bFloat));
 
                 rCorrect = std::clamp(rCorrect, 0.0f, 1.0f);
                 gCorrect = std::clamp(gCorrect, 0.0f, 1.0f);
@@ -314,62 +279,34 @@ word dmy_renderer::map_color(word gb_col)
                 rFinal = static_cast<unsigned>((rCorrect * rgbMax) + 0.5f) & 0x1F;
                 gFinal = static_cast<unsigned>((gCorrect * rgbMax) + 0.5f) & 0x1F;
                 bFinal = static_cast<unsigned>((bCorrect * rgbMax) + 0.5f) & 0x1F;
+                break;
             }
-
-            break;
+            default:
+                break;
         }
 
-        default:
-            break;
-        }
-
+        // Licht-Temperatur anwenden
         if (light_temperature != 0.0) {
-            // Konvertiere 5-Bit zu float [0.0, 1.0]
             double rf = static_cast<double>(rFinal) / 31.0;
             double gf = static_cast<double>(gFinal) / 31.0;
             double bf = static_cast<double>(bFinal) / 31.0;
 
-            // Tönung berechnen
             double tint_r, tint_g, tint_b;
             temperature_tint(light_temperature, &tint_r, &tint_g, &tint_b);
 
-            // Tönung anwenden
-            rf *= tint_r;
-            gf *= tint_g;
-            bf *= tint_b;
+            rf *= tint_r; gf *= tint_g; bf *= tint_b;
 
-            // Clampen + zurück nach 5-Bit
             rFinal = static_cast<unsigned>(std::round(std::clamp(rf, 0.0, 1.0) * 31.0)) & 0x1F;
             gFinal = static_cast<unsigned>(std::round(std::clamp(gf, 0.0, 1.0) * 31.0)) & 0x1F;
             bFinal = static_cast<unsigned>(std::round(std::clamp(bf, 0.0, 1.0) * 31.0)) & 0x1F;
         }
 
-
         if (rgb565) return rFinal << 11 | gFinal << 6 | bFinal;
         return bFinal << 10 | gFinal << 5 | rFinal;
-
-
     }
 
-
-
-#ifndef SKIP_COLOR_CORRECTION
-#ifndef FRONTEND_SUPPORTS_RGB565
-    if (rgb565)
-    {
-#endif
-        return ((gb_col & 0x7C00) >> 10) |      // blue 5
-            ((gb_col & 0x03E0) << 1) |      // green 6
-            ((gb_col & 0x001F) << 11);       // red 5
-#ifndef FRONTEND_SUPPORTS_RGB565
-    }
-    return ((gb_col & 0x001f) << 10) |
-        ((gb_col & 0x03e0)) |
-        ((gb_col & 0x7c00) >> 10);
-#endif
-#else
+    // Fallback
     return gb_col;
-#endif
 }
 
 word dmy_renderer::unmap_color(word gb_col)

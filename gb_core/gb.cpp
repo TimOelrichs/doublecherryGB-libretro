@@ -24,6 +24,8 @@
 #include "gb.h"
 #include <stdlib.h>
 
+extern bool detect_as_gba;
+
 gb::gb(renderer *ref,bool b_lcd,bool b_apu)
 {
 	m_renderer=ref;
@@ -81,7 +83,7 @@ void gb::reset()
 	memset(&c_regs,0,sizeof(c_regs));
 
 	if (m_rom->get_loaded())
-		m_rom->get_info()->gb_type=(m_rom->get_rom()[0x143]&0x80)?(use_gba?4:3):1;
+		m_rom->get_info()->gb_type=(m_rom->get_rom()[0x143]&0x80)?(detect_as_gba?4:3):1;
 
 	m_cpu->reset();
 	m_lcd->reset();
@@ -92,7 +94,8 @@ void gb::reset()
 	skip=skip_buf=0;
 	re_render=0;
 
-	//if (use_gba) this->get_cpu()->get_regs()->BC.b.l = 0x01;
+
+	if (detect_as_gba) this->get_cpu()->get_regs()->BC.b.l = 0x01;
 
 	
 }
