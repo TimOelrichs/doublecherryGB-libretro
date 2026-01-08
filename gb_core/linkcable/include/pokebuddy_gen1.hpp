@@ -104,7 +104,12 @@ private:
 	bool has_owned_mew();
 	bool has_owned_mew_gen2();
 	bool has_owned_celebi();
+	static bool is_pokemon_yellow_cartdrige()
+	{
+		bool isYellow = (strncmp(cart_name, "POKEMON YEL", 11) == 0);
 
+		return isYellow;
+	}
 	void add_event_pokemon_to_datablock();
 	void add_event_pokemon_to_datablock_gen2();
 

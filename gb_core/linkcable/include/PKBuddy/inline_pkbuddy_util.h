@@ -132,8 +132,17 @@ std::string pokebuddy_gen1::convert_name_to_string(std::string str) {
 
 bool pokebuddy_gen1::has_owned_mew() {
 
-	byte own = v_gb[0]->get_cpu()->read_direct(0xD309);
-	return ((own >> 6) & 1);
+	{
+		uint16_t address = is_pokemon_yellow_cartdrige()
+						 ? 0xD308
+						 : 0xD309;
+
+		bool isYellowEuVersion = (strncmp(cart_name, "POKEMON YELAPS", 14) == 0);
+		if (isYellowEuVersion) address = 0xD30D;
+		uint8_t own = v_gb[0]->get_cpu()->read_direct(address);
+
+		return ((own >> 6) & 1);
+	}
  
 }
 
