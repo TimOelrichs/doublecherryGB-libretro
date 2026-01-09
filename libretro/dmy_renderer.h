@@ -23,6 +23,9 @@
 #include <cmath>
 #include <array>
 #include "../gb_core/renderer.h"
+#include "libretro.h"
+
+extern retro_environment_t environ_cb;
 
 struct gb_audio_profile
 {
@@ -152,7 +155,26 @@ public:
 
 	virtual void reset() {}
 	virtual word get_sensor(bool x_y) override; // { return 0; }
-	virtual void set_bibrate(bool bibrate) {}
+	virtual void set_bibrate(bool bibrate) override
+	{
+		if (bibrate == last_rumble)
+			return;
+
+		last_rumble = bibrate;
+
+		if (!environ_cb)
+			return;
+
+		retro_rumble_interface rumble;
+		if (!environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble))
+			return;
+
+		rumble.set_rumble_state(
+			0,
+			RETRO_RUMBLE_STRONG,
+			bibrate ? 0xFFFF : 0
+		);
+	}
 
 	virtual void render_screen(byte *buf,int width,int height,int depth);
 	virtual word map_color(word gb_col);
@@ -348,5 +370,6 @@ private:
 
 	GhostingMode ghosting_mode = GhostingMode::PALETTE_BLEND;
 
+	bool last_rumble = false;
 
 };

@@ -617,7 +617,8 @@ void mbc::mbc5_write(word adr,byte dat)
 		break;
 	case 4:
 	case 5:
-		if (ref_gb->get_rom()->get_info()->cart_type==0x1C||ref_gb->get_rom()->get_info()->cart_type==0x1D||ref_gb->get_rom()->get_info()->cart_type==0x1E){//Rumble カートリッジ
+		if (ref_gb->get_rom()->get_info()->cart_type==0x1C||ref_gb->get_rom()->get_info()->cart_type==0x1D||ref_gb->get_rom()->get_info()->cart_type==0x1E)
+			{//Rumble カートリッジ
 			sram_page=ref_gb->get_rom()->get_sram()+0x2000*(dat&0x07&(ram_size_tbl[ref_gb->get_rom()->get_info()->ram_size]-1));
 			if (dat&0x8)
 				ref_gb->get_renderer()->set_bibrate(true);
