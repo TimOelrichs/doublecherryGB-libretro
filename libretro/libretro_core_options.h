@@ -46,7 +46,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
         "dcgb_gbc_detect_as_GBA",
         "detect as played on Game Boy Advance",
         NULL,
-        "Some Game Boy Color Games offer GBA Enhanced features, when played on a Game Boy Advance.\n\nKnown GBA enhanced Game:\n - Shantae\n - Wendy - Every Witch Way\n - Zelda - Oracle of Ages/Seasons",
+        "Some Game Boy Color Games offer GBA Enhanced features, when played on a Game Boy Advance.\n\nKnown GBA enhanced Game:\n - Shantae\n - Wendy - Every Witch Way\n - Zelda - Oracle of Ages/Seasons \n - Medarot 5\n - Mega Man Extreme 2",
         NULL,
         "System",
         {
