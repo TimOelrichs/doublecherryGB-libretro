@@ -24,6 +24,104 @@
 #include <array>
 #include "../gb_core/renderer.h"
 
+struct gb_audio_profile
+{
+	float lp;    // lowpass coefficient
+	float hp;    // highpass feedback
+	float clip;  // softclip strength
+};
+
+static const gb_audio_profile GB_PROFILE_DMG = {
+	0.12f,   // ~8.5 kHz @ 44.1 kHz
+	0.996f,  // strong DC kill
+	1.0f
+};
+
+static const gb_audio_profile GB_PROFILE_GBC = {
+	0.22f,   // ~14 kHz @ 44.1 kHz
+	0.990f,  // light DC kill
+	0.35f
+};
+
+#define OVERSAMPLE 4
+#define SINC_TAPS 16
+#define HQ_BUF_SIZE 4096
+
+static const float sinc_kernel[SINC_TAPS * 2 + 1] = {
+	-0.0012f, -0.0028f, -0.0049f, -0.0071f,
+	-0.0087f, -0.0088f, -0.0062f,  0.0000f,
+	 0.0114f,  0.0287f,  0.0516f,  0.0789f,
+	 0.1084f,  0.1370f,  0.1611f,  0.1768f,
+	 0.1822f,
+	 0.1768f,  0.1611f,  0.1370f,  0.1084f,
+	 0.0789f,  0.0516f,  0.0287f,  0.0114f,
+	 0.0000f, -0.0062f, -0.0088f, -0.0087f,
+	-0.0071f, -0.0049f, -0.0028f, -0.0012f
+};
+
+struct gb_hq_state
+{
+	float l[HQ_BUF_SIZE] = {};
+	float r[HQ_BUF_SIZE] = {};
+	int write = 0;
+	int filled = 0;
+};
+
+static gb_hq_state hq;
+
+static inline void hq_push(float l, float r)
+{
+	hq.l[hq.write] = l;
+	hq.r[hq.write] = r;
+	hq.write = (hq.write + 1) % HQ_BUF_SIZE;
+	if (hq.filled < HQ_BUF_SIZE)
+		hq.filled++;
+}
+
+static inline float hq_sinc(const float* buf, int center)
+{
+	float acc = 0.0f;
+	for (int i = -SINC_TAPS; i <= SINC_TAPS; ++i)
+	{
+		int idx = (center + i + HQ_BUF_SIZE) % HQ_BUF_SIZE;
+		acc += buf[idx] * sinc_kernel[i + SINC_TAPS];
+	}
+	return acc;
+}
+
+
+static inline float sinc_convolve(
+	const float* hist,
+	int center
+)
+{
+	float acc = 0.0f;
+	for (int i = -SINC_TAPS; i <= SINC_TAPS; ++i)
+		acc += hist[center + i] * sinc_kernel[i + SINC_TAPS];
+	return acc;
+}
+
+
+
+
+static inline int16_t gb_softclip(float x, float strength)
+{
+	// cubic softclip
+	x -= strength * (x * x * x) * 1.0e-10f;
+
+	if (x >  32767.f) return  32767;
+	if (x < -32768.f) return -32768;
+	return (int16_t)x;
+}
+
+struct gb_audio_state
+{
+	float l_lp = 0.0f, r_lp = 0.0f;
+	float l_hp = 0.0f, r_hp = 0.0f;
+	float l_prev = 0.0f, r_prev = 0.0f;
+};
+
+static gb_audio_state gb_audio;
 
 
 
