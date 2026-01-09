@@ -80,6 +80,8 @@ extern struct retro_sensor_interface sensor_interface;
 std::array<word, GRADIENT_STEPS> blended_palette;
 
 
+
+
 extern bool useGbcLCDforDmG;
 
 static inline void temperature_tint(double temperature, double* r, double* g, double* b)
@@ -341,6 +343,72 @@ word dmy_renderer::unmap_color(word gb_col)
 #endif
 }
 
+static inline void gb_filter_sample(
+    int16_t& l,
+    int16_t& r,
+    const gb_audio_profile& p
+)
+{
+    // --- Highpass (DC removal) ---
+    gb_audio.l_hp = l - gb_audio.l_prev + p.hp * gb_audio.l_hp;
+    gb_audio.r_hp = r - gb_audio.r_prev + p.hp * gb_audio.r_hp;
+
+    gb_audio.l_prev = l;
+    gb_audio.r_prev = r;
+
+    // --- Lowpass (GB DAC) ---
+    gb_audio.l_lp += p.lp * (gb_audio.l_hp - gb_audio.l_lp);
+    gb_audio.r_lp += p.lp * (gb_audio.r_hp - gb_audio.r_lp);
+
+    // --- Softclip ---
+    l = gb_softclip(gb_audio.l_lp, p.clip);
+    r = gb_softclip(gb_audio.r_lp, p.clip);
+}
+
+static inline void gb_hq_process(
+    const int16_t* in,
+    int16_t* out,
+    int frames,
+    const gb_audio_profile& profile
+)
+{
+    for (int i = 0; i < frames; ++i)
+    {
+        // --- 4× oversample (zero stuffing) ---
+        for (int o = 0; o < OVERSAMPLE; ++o)
+        {
+            float l = (o == 0) ? in[i*2 + 0] : 0.0f;
+            float r = (o == 0) ? in[i*2 + 1] : 0.0f;
+            hq_push(l, r);
+        }
+
+        // --- noch nicht genug Daten? ---
+        if (hq.filled < (SINC_TAPS * 2 + 1) * OVERSAMPLE)
+        {
+            out[i*2+0] = in[i*2+0];
+            out[i*2+1] = in[i*2+1];
+            continue;
+        }
+
+        int center =
+            (hq.write - 1 - (SINC_TAPS * OVERSAMPLE) + HQ_BUF_SIZE)
+            % HQ_BUF_SIZE;
+
+        float l = hq_sinc(hq.l, center);
+        float r = hq_sinc(hq.r, center);
+
+        int16_t sl = (int16_t)l;
+        int16_t sr = (int16_t)r;
+
+        // --- GB DAC Filter ---
+        gb_filter_sample(sl, sr, profile);
+
+        out[i*2 + 0] = sl;
+        out[i*2 + 1] = sr;
+    }
+}
+
+
 void dmy_renderer::refresh() {
    static int16_t stream[SAMPLES_PER_FRAME*2];
    // static int16_t stream[SAMPLES_PER_FRAME];
@@ -369,11 +437,38 @@ void dmy_renderer::refresh() {
        if (audio_2p_mode == which_gb)
        {
            // only play gb 0 or 1
-           
+           static int16_t hq_out[SAMPLES_PER_FRAME * 2];
+
            this->snd_render->render(stream, SAMPLES_PER_FRAME);
-           audio_batch_cb(stream, SAMPLES_PER_FRAME);
+
+           const gb_audio_profile& profile =
+    is_gbc_rom ? GB_PROFILE_GBC : GB_PROFILE_DMG;
+
+
+           for (int i = 0; i < SAMPLES_PER_FRAME; ++i)
+           {
+               gb_filter_sample(
+                   stream[i*2 + 0],
+                   stream[i*2 + 1],
+                   profile
+               );
+
+               audio_batch_cb(stream, SAMPLES_PER_FRAME);
+               return;
+           }
+
+    //TODO: Make options
+           gb_hq_process(
+               stream,
+               hq_out,
+               SAMPLES_PER_FRAME,
+               profile
+           );
+           audio_batch_cb(hq_out, SAMPLES_PER_FRAME);
+           //audio_batch_cb(stream, SAMPLES_PER_FRAME);
+
       
-           memset(stream, 0, sizeof(stream));
+       //    memset(stream, 0, sizeof(stream));
        
        }
        if (which_gb >= (emulated_gbs-1))
