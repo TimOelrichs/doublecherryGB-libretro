@@ -305,8 +305,19 @@ word dmy_renderer::map_color(word gb_col)
         return bFinal << 10 | gFinal << 5 | rFinal;
     }
 
-    // Fallback
-    return gb_col;
+    // Fallback:
+    if (rgb565)
+    {
+        return ((gb_col & 0x7C00) >> 10) |   // B -> R
+               ((gb_col & 0x03E0) << 1)  |   // G -> G
+               ((gb_col & 0x001F) << 11);    // R -> B
+    }
+    else
+    {
+        return ((gb_col & 0x001F) << 10) |
+               ((gb_col & 0x03E0))       |
+               ((gb_col & 0x7C00) >> 10);
+    }
 }
 
 word dmy_renderer::unmap_color(word gb_col)
