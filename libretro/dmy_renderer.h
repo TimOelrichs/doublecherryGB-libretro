@@ -170,8 +170,13 @@ public:
 			return;
 
 		rumble.set_rumble_state(
-			0,
+			which_gb,
 			RETRO_RUMBLE_STRONG,
+			bibrate ? 0xFFFF : 0
+		);
+		rumble.set_rumble_state(
+			which_gb,
+			RETRO_RUMBLE_WEAK,
 			bibrate ? 0xFFFF : 0
 		);
 	}
