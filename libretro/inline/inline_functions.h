@@ -866,9 +866,11 @@ static void check_variables(void)
         var.value = NULL;
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
         {
+            /*
             if (!strcmp(var.value, "On"))
                 logging_allowed = true;
-            else logging_allowed = false; 
+            else logging_allowed = false;
+            */
         }
 
 

@@ -173,7 +173,7 @@ std::vector<I_savestate*> v_serializable_devices;
 bool use_multi_adapter = false;
 bool use_tetris_4p_hack = false;
 bool log_2p_link = false;
-bool logging_allowed = true; 
+bool logging_allowed = false;
 bool detect_as_gba = true;
 unsigned short max_gbs = 16;
 

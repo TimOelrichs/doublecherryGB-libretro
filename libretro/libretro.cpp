@@ -328,21 +328,19 @@ void retro_reset(void)
 
 }
 
-void retro_run(void)
+void handlePlayerJoined()
 {
-    bool updated = false;
+    ++emulated_gbs;
+    check_variables();
+    auto_link_multiplayer();
+    display_message("Player Joined");
+    if (emulated_gbs <= 2) _screen_4p_split = false;
+    else _screen_4p_split = true;
+    update_multiplayer_geometry();
+}
 
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
-        check_variables();
-
-    get_monotonic_time(&inputpoll_start_time);
-    //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
-    input_poll_cb();
-
-    hotkey_handle();
-
-
-
+void checkForJoinedMultiplayer()
+{
     //check Multiplayer new player
     int16_t key_state;
     //check if also the start button is pressed
@@ -350,19 +348,13 @@ void retro_run(void)
         key_state = input_state_cb(emulated_gbs, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
         if (key_state)
         {
-           // struct retro_variable var;
-            //var.key = "dcgb_emulated_gameboys";
-            //var.value = "3";
-           // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
-            ++emulated_gbs;
-            check_variables();
-            auto_link_multiplayer();
-            display_message("Player Joined");
-            update_multiplayer_geometry();
+            handlePlayerJoined();
         }
     }
+}
 
-
+void run_main_loop()
+{
     for (int line = 0; line < 154; line++)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
@@ -373,7 +365,25 @@ void retro_run(void)
         }
         if (master_link)
             master_link->process();
-    }   
+    }
+}
+
+void checkAndUpdateVariable()
+{
+    bool updated = false;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+        check_variables();
+}
+
+void retro_run(void)
+{
+    checkAndUpdateVariable();
+    get_monotonic_time(&inputpoll_start_time);
+    input_poll_cb();
+    hotkey_handle();
+    checkForJoinedMultiplayer();
+    run_main_loop();
 
 }
 
