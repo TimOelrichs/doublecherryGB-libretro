@@ -328,29 +328,32 @@ void retro_reset(void)
 
 }
 
-void handlePlayerJoined()
-{
-    ++emulated_gbs;
-    check_variables();
-    auto_link_multiplayer();
-    display_message("Player Joined");
-    if (emulated_gbs <= 2) _screen_4p_split = false;
-    else _screen_4p_split = true;
-    update_multiplayer_geometry();
-}
+
 
 void checkForJoinedMultiplayer()
 {
     //check Multiplayer new player
     int16_t key_state;
     //check if also the start button is pressed
+
+    if (emulated_gbs_changed)
+    {
+        handlePlayerJoined();
+        emulated_gbs_changed = false;
+    }
+
     if (emulated_gbs <= 16) {
         key_state = input_state_cb(emulated_gbs, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
         if (key_state)
         {
+            ++emulated_gbs;
+            //check_variables();
+            display_message("Player Joined");
             handlePlayerJoined();
         }
     }
+
+
 }
 
 void run_main_loop()

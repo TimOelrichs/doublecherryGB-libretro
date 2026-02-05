@@ -194,6 +194,7 @@ int _number_of_local_screens = 1;
 static size_t _serialize_size[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 bool gblink_enable = false;
+bool emulated_gbs_changed = false;
 size_t emulated_gbs = 1;
 char cart_name[18];
 

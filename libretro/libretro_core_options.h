@@ -384,9 +384,9 @@ static struct retro_core_option_v2_definition core_options_us[] = {
 
   {
      "dcgb_emulated_gameboys",
-     "Number of emulated Gameboys (reload)",
+     "Number of emulated Gameboys",
       NULL,
-      "Number of emulated GameBoys (1-16)",
+      "Number of emulated GameBoys (1-16) \n Players can also join anytime by just pressing any Button on their controllers",
       NULL,
       "Multiplayer",
       {

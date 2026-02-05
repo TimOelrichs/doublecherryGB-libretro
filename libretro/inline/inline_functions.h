@@ -14,6 +14,7 @@ extern "C" uint64_t OSGetTime(void);
 #include <thread>
 
 // Netplay (Netpacket) interface
+void handlePlayerJoined();
 
 void netpacket_poll_receive() {
     if (netpacket_pollrcv_fn_ptr)
@@ -793,11 +794,12 @@ static void check_variables(void)
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        if (!already_checked_options) 
+        //if (!already_checked_options)
         { 
             int value = atoi(var.value);
             emulated_gbs = value;
             mode = (value == 1) ? MODE_SINGLE_GAME : mode;
+            emulated_gbs_changed = true;
         }
     }
 
@@ -1167,4 +1169,12 @@ void set_memory_maps() {
 void init_printer_registry() {
     PrinterRegistry::register_printer("png", std::make_unique<PNGPrinter>());
     PrinterRegistry::register_printer("bmp", std::make_unique<BMPPrinter>());
+}
+
+void handlePlayerJoined()
+{
+    auto_link_multiplayer();
+    if (emulated_gbs <= 2) _screen_4p_split = false;
+    else _screen_4p_split = true;
+    update_multiplayer_geometry();
 }
