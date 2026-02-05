@@ -27,6 +27,7 @@ int dcgb_last_hotkey_pressed = -1;
 int dcgb_hotkey_frame_counter = 0;
 I_dcgb_hotkey_target* hotkey_target = NULL; 
 
+bool dcgb_audio_filter_enabled = true;
 //GB Printer Vars
 bool gb_printer_png_scale_enabled = true;
 ScaleTarget gb_printer_png_scale_mode = ScaleTarget::DIN_A4;

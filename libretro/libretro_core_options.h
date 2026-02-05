@@ -22,6 +22,11 @@ struct retro_core_option_v2_category option_cats_us[] = {
       "Core Inputs Settings",
       "Core Inputs Settings"
       },
+{
+    "Audio",
+    "Core Audio Settings",
+    "Core Audio Settings"
+    },
 
 
       {
@@ -232,7 +237,21 @@ static struct retro_core_option_v2_definition core_options_us[] = {
 
    
     //********************LCD OPTIONS END*********************************
-   
+{
+    "dcgb_audio_filter",
+    "Audio Filter",
+    NULL,
+    "Experimental Audio Filter",
+    NULL,
+    "Audio",
+    {
+              {"0", "Off"},
+              {"1", "On"},
+              {NULL, NULL}
+
+    },
+    "1",
+ },
     //********************INPUT OPTIONS START*********************************
       {
      "dcgb_input_polling_rate",

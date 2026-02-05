@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "inline_variables.h"
 #include "libretro.h"
 
 #if defined(__PSP__)
@@ -789,6 +790,15 @@ static void check_variables(void)
             auto_random_tv_remote = true;
     }
 
+
+    var.key = "dcgb_audio_filter";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        dcgb_audio_filter_enabled = (bool)value;
+
+    }
     
     var.key = "dcgb_emulated_gameboys";
     var.value = NULL;

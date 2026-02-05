@@ -52,6 +52,7 @@ extern int gbc_rgbSubpixel_upscale_factor;
 extern int gb_dotMarix_upscale_factor;
 extern bool gbc_lcd_blur_effect_enabled;
 extern bool useDmgGhosting;
+extern bool dcgb_audio_filter_enabled;
 
 extern retro_log_printf_t log_cb;
 extern retro_video_refresh_t video_cb;
@@ -444,19 +445,23 @@ void dmy_renderer::refresh() {
            const gb_audio_profile& profile =
     is_gbc_rom ? GB_PROFILE_GBC : GB_PROFILE_DMG;
 
+    if(dcgb_audio_filter_enabled)
+    {
+        for (int i = 0; i < SAMPLES_PER_FRAME; ++i)
+        {
+            gb_filter_sample(
+                stream[i*2 + 0],
+                stream[i*2 + 1],
+                profile
+            );
 
-           for (int i = 0; i < SAMPLES_PER_FRAME; ++i)
-           {
-               gb_filter_sample(
-                   stream[i*2 + 0],
-                   stream[i*2 + 1],
-                   profile
-               );
+            audio_batch_cb(stream, SAMPLES_PER_FRAME);
+            return;
+        }
+    }
 
-               audio_batch_cb(stream, SAMPLES_PER_FRAME);
-               return;
-           }
-
+           audio_batch_cb(stream, SAMPLES_PER_FRAME);
+           return;
     //TODO: Make options
            gb_hq_process(
                stream,
