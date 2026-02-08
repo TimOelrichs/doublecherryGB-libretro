@@ -530,6 +530,12 @@ static void update_multiplayer_geometry() {
     int base_w = 160;
     int base_h = 144;
 
+    if (cocktail_mode_vertical && _show_player_screen == 2 && emulated_gbs == 2)
+    {
+        base_w = 144;
+        base_h = 166;
+    }
+
     int screenw = base_w;
     int screenh = base_h;
 
@@ -679,7 +685,17 @@ static void check_variables(void)
 
     }
 
-    
+
+    var.key = "dcgb_cocktailtable_mode";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        cocktail_mode_enabled = (bool)value;
+        cocktail_mode_vertical = value == 1;
+        update_multiplayer_geometry();
+
+    }
     var.key = "dcgb_gb_lcd_ghosting";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

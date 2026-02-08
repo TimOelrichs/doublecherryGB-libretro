@@ -532,6 +532,22 @@ static struct retro_core_option_v2_definition core_options_us[] = {
       },
       "Game Boy #1",
      },
+{
+    "dcgb_cocktailtable_mode",
+    "Cocktail Table Mode",
+    NULL,
+    "Rotates the Screens for the use in Cocktail Table Builds. (only for 2 Players)",
+    NULL,
+    "Multiplayer",
+    {
+             {"0", "Off"},
+             {"1", "vertical"},
+             {"2", "horizontal"},
+             { NULL, NULL }
+
+    },
+    "0",
+     },
 
     //********************Multiplayer OPTIONS END*********************************
 

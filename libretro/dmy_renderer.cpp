@@ -60,6 +60,8 @@ extern retro_audio_sample_batch_t audio_batch_cb;
 extern retro_input_poll_t input_poll_cb;
 extern retro_input_state_t input_state_cb;
 extern retro_environment_t environ_cb;
+extern bool cocktail_mode_enabled;
+extern bool cocktail_mode_vertical;
 
 extern bool gblink_enable;
 
@@ -84,6 +86,89 @@ std::array<word, GRADIENT_STEPS> blended_palette;
 
 
 extern bool useGbcLCDforDmG;
+
+static void rotate_framebuffer_180(
+    const uint8_t* src,
+    uint8_t* dst,
+    int width,
+    int height,
+    int pitch,
+    int bytes_per_pixel
+)
+{
+    for (int y = 0; y < height; y++)
+    {
+        const uint8_t* src_row = src + y * pitch;
+        uint8_t* dst_row = dst + (height - 1 - y) * pitch;
+
+        for (int x = 0; x < width; x++)
+        {
+            const uint8_t* sp = src_row + x * bytes_per_pixel;
+            uint8_t* dp = dst_row + (width - 1 - x) * bytes_per_pixel;
+
+            for (int b = 0; b < bytes_per_pixel; b++)
+                dp[b] = sp[b];
+        }
+    }
+}
+static void rotate_framebuffer_90(
+    const uint8_t* src,
+    uint8_t* dst,
+    int width,
+    int height,
+    int src_pitch,
+    int dst_pitch,
+    int bytes_per_pixel
+)
+{
+    for (int y = 0; y < height; y++)
+    {
+        const uint8_t* src_row = src + y * src_pitch;
+
+        for (int x = 0; x < width; x++)
+        {
+            const uint8_t* sp = src_row + x * bytes_per_pixel;
+
+            int dx = x;
+            int dy = height - 1 - y;
+
+            uint8_t* dp = dst + dx * dst_pitch + dy * bytes_per_pixel;
+
+            for (int b = 0; b < bytes_per_pixel; b++)
+                dp[b] = sp[b];
+        }
+    }
+}
+
+static void rotate_framebuffer_270(
+    const uint8_t* src,
+    uint8_t* dst,
+    int width,
+    int height,
+    int src_pitch,
+    int dst_pitch,
+    int bytes_per_pixel
+)
+{
+    for (int y = 0; y < height; y++)
+    {
+        const uint8_t* src_row = src + y * src_pitch;
+
+        for (int x = 0; x < width; x++)
+        {
+            const uint8_t* sp = src_row + x * bytes_per_pixel;
+
+            int dx = y;
+            int dy = width - 1 - x;
+
+            uint8_t* dp = dst + dy * dst_pitch + dx * bytes_per_pixel;
+
+            for (int b = 0; b < bytes_per_pixel; b++)
+                dp[b] = sp[b];
+        }
+    }
+}
+
 
 static inline void temperature_tint(double temperature, double* r, double* g, double* b)
 {
@@ -568,6 +653,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
     //static byte joined_buf8[160 * 144 * 8 * 2];
     static byte joined_buf9[160 * 144 * 9 * 2]; // three screens' worth of 16-bit data
     static byte joined_buf16[160 * 144 * 16 * 2];
+    static uint8_t rotate_tmp[160 * 144 * 2]; // RGB565 max
 
     const int size_single_screen = sizeof(joined_buf) / 2;
 
@@ -660,25 +746,102 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
         case 2:
         {
             // are we drawing both gb's to the screen?
-            if (_show_player_screen == emulated_gbs)
+            bool show_all_screens = _show_player_screen == emulated_gbs;
+            if (show_all_screens)
             {
+
+                uint8_t* src_buf = buf;
+                int out_width  = width;
+                int out_height = height;
+                int out_pitch  = pitch;
+
+                if (cocktail_mode_enabled)
+                {
+                    if (cocktail_mode_vertical)
+                    {
+                        if (which_gb == 0)
+                        {
+                            rotate_framebuffer_90(
+                                buf,
+                                rotate_tmp,
+                                width,
+                                height,
+                                pitch,
+                                height * 2,   // dst_pitch = new_width * bpp
+                                2
+                            );
+
+                            src_buf    = rotate_tmp;
+                            out_width  = height;
+                            out_height = width;
+                            out_pitch  = height * 2;
+                        }
+                        else if (which_gb == 1)
+                        {
+
+                            rotate_framebuffer_270(
+                                buf,
+                                rotate_tmp,
+                                width,
+                                height,
+                                pitch,
+                                height * 2,
+                                2
+                            );
+
+                            src_buf    = rotate_tmp;
+                            out_width  = height;
+                            out_height = width;
+                            out_pitch  = height * 2;
+                        }
+                    }
+                    else
+                    {
+                        if (which_gb == 0)
+                        {
+                            rotate_framebuffer_180(
+                                buf,
+                                rotate_tmp,
+                                width,
+                                height,
+                                pitch,
+                                2
+                            );
+
+                            src_buf = rotate_tmp;
+                            // width/height/pitch bleiben gleich
+                        }
+                    }
+                }
+
                 if (_screen_vertical)
                 {
-                    memcpy(joined_buf + switched_gb * size_single_screen, buf, size_single_screen);
+                    memcpy(
+                        joined_buf + switched_gb * out_pitch * out_height,
+                        src_buf,
+                        out_pitch * out_height
+                    );
+
                     if (which_gb == 1)
-                        video_cb(joined_buf, width, height * 2, pitch);
+                    {
+                        video_cb(joined_buf, out_width, out_height * 2, out_pitch);
+                        return;
+                    }
                 }
                 else
                 {
-                    for (int row = 0; row < height; ++row)
-                        memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
-                    if (which_gb == 1) {
+                    //const int final_pitch = out_pitch*2;
+                    for (int row = 0; row < out_height; ++row)
+                        memcpy(joined_buf + out_pitch * (2 * row + switched_gb), src_buf + out_pitch * row, out_pitch);
+
+                    if (which_gb == 1)
+                    {
                         //experimental GBC LCD interlacing effect
                         if (is_gbc_rom && gbc_lcd_interlacing_enabled)
                         {
-                            add_gbc_interlacing_effect(joined_buf, width*2, height, pitch * 2);
+                            add_gbc_interlacing_effect(joined_buf, out_width*2, out_height, out_pitch * 2);
                         }
-                        video_cb(joined_buf, width * 2, height, pitch * 2);
+                        video_cb(joined_buf, out_width * 2, out_height, out_pitch * 2);
                     }
                 }
 
@@ -689,6 +852,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 // (this ignores the "switch player screens" setting)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
+
                 if (which_gb == (emulated_gbs - 1)) {
                     //experimental GBC LCD interlacing effect
                     if (is_gbc_rom && gbc_lcd_interlacing_enabled)
@@ -859,7 +1023,9 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 {
                     for (int row = 0; row < height; ++row)
                         memcpy(joined_buf4 + pitch * (emulated_gbs * row + switched_gb), buf + pitch * row, pitch);
-                    if (which_gb == emulated_gbs - 1) {
+
+                    if (which_gb == emulated_gbs - 1)
+                        {
                         if (is_gbc_rom && gbc_lcd_interlacing_enabled)
                         {
                             add_gbc_interlacing_effect(joined_buf4, width* emulated_gbs, height, pitch* emulated_gbs);

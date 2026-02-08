@@ -20,7 +20,9 @@ retro_set_led_state_t led_state_cb;
 
 unsigned int power_antenna_use_rumble = 0;
 bool auto_random_tv_remote; 
-bool alleyway_analog_controller_enabled = true; 
+bool alleyway_analog_controller_enabled = true;
+bool cocktail_mode_enabled = true;
+bool cocktail_mode_vertical = true;
 
 int dcgb_hotkey_pressed = -1;
 int dcgb_last_hotkey_pressed = -1;
