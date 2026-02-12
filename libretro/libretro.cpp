@@ -84,12 +84,13 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     info->geometry.base_width = w;
     info->geometry.base_height = h;
     info->geometry.aspect_ratio = float(w) / float(h);
+    //*info = my_av_info;
     memcpy(my_av_info, info, sizeof(*my_av_info));
 }
 
 void retro_init(void)
 {
-
+    my_av_info = (retro_system_av_info*) calloc(1, sizeof(*my_av_info));
     unsigned level = 4;
     struct retro_log_callback log;
 
@@ -133,14 +134,21 @@ void retro_init(void)
         libretro_supports_bitmasks = true;
 
    // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
-
+    log_cb(RETRO_LOG_INFO, "Checking Variables\n");
     check_variables();
-
+    log_cb(RETRO_LOG_INFO, "Check Variables done\n");
     init_printer_registry();
+    log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
 }
 
 void retro_deinit(void)
-{ 
+{
+    if (my_av_info)
+    {
+        free(my_av_info);
+        my_av_info = nullptr;
+    }
+    deinit_printer_registry();
     libretro_supports_bitmasks = false;
 }
 
@@ -293,18 +301,27 @@ return false;
 
 void retro_unload_game(void)
 {
-    unsigned i;
-    for (i = 0; i < emulated_gbs; ++i)
+    for (size_t i = 0; i < v_gb.size(); ++i)
     {
-        if (v_gb[i])
-        {
-            
-            v_gb[i] = NULL;
-            delete render[i];
-            render[i] = NULL;
-        }
+        delete v_gb[i];
+        v_gb[i] = nullptr;
+
+        delete render[i];
+        render[i] = nullptr;
     }
-    free(my_av_info);
+
+    v_gb.clear();
+    render.clear();
+    v_serializable_devices.clear();
+
+    /*
+    if (my_av_info)
+    {
+        free(my_av_info);
+        my_av_info = nullptr;
+    }
+    */
+
     libretro_supports_persistent_buffer = false;
 }
 

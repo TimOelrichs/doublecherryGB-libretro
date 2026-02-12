@@ -1197,6 +1197,11 @@ void init_printer_registry() {
     PrinterRegistry::register_printer("bmp", std::make_unique<BMPPrinter>());
 }
 
+void deinit_printer_registry()
+{
+    PrinterRegistry::shutdown();
+}
+
 void handlePlayerJoined()
 {
     auto_link_multiplayer();
