@@ -314,14 +314,6 @@ void retro_unload_game(void)
     render.clear();
     v_serializable_devices.clear();
 
-    /*
-    if (my_av_info)
-    {
-        free(my_av_info);
-        my_av_info = nullptr;
-    }
-    */
-
     libretro_supports_persistent_buffer = false;
 }
 

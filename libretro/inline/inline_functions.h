@@ -955,7 +955,9 @@ static void check_variables(void)
             if (_show_player_screen != emulated_gbs) {
                 audio_2p_mode = _show_player_screen;
                 var.key = "dcgb_audio_output";
-                var.value = "Game Boy #" +  audio_2p_mode+1;
+                char buf[32];
+                snprintf(buf, sizeof(buf), "Game Boy #%d", audio_2p_mode + 1);
+                var.value = buf;
                 environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
 
             }
