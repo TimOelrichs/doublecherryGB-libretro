@@ -9,11 +9,13 @@
 #include "libretro_core_options.h"
 #include "../gb_core/gb.h"
 #include "dmy_renderer.h"
+#include "serializer.h"
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
 #include <time.h>
+#include <random>
 
 #include "../gb_core/linkcable/include/sio_devices.hpp"
 #include "../gb_core/infrared/include/ir_devices.hpp"
@@ -21,6 +23,13 @@
 #include "inline/inline_functions.h"
 
 
+uint64_t random64bit() {
+    static std::random_device rd;
+    static std::mt19937_64 gen(rd());
+    static std::uniform_int_distribution<uint64_t> dis;
+
+    return dis(gen);
+}
 
 static void check_variables(void);
 
@@ -139,6 +148,9 @@ void retro_init(void)
     log_cb(RETRO_LOG_INFO, "Check Variables done\n");
     init_printer_registry();
     log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
+
+
+    my_random_netplay_id = random64bit();
 }
 
 void retro_deinit(void)
@@ -150,6 +162,13 @@ void retro_deinit(void)
     }
     deinit_printer_registry();
     libretro_supports_bitmasks = false;
+
+    if (player_joined_with_joypad_press)
+    {
+        emulated_gbs = 1;
+        player_joined_with_joypad_press = false;
+    }
+
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -164,7 +183,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, input_desc);
 
-   
+
     if (environ_cb(RETRO_ENVIRONMENT_GET_GAME_INFO_EXT, &info_ext) &&
         info_ext->persistent_data)
     {
@@ -345,10 +364,10 @@ void checkForJoinedMultiplayer()
     int16_t key_state;
     //check if also the start button is pressed
 
-    if (emulated_gbs_changed)
+    if (emulated_gbs_changed_in_options)
     {
         handlePlayerJoined();
-        emulated_gbs_changed = false;
+        emulated_gbs_changed_in_options = false;
     }
 
     if (emulated_gbs <= 16) {
@@ -356,7 +375,9 @@ void checkForJoinedMultiplayer()
         if (key_state)
         {
             ++emulated_gbs;
+            if (show_all_screens) _show_player_screen = emulated_gbs;
             //check_variables();
+            player_joined_with_joypad_press = true;
             display_message("Player Joined");
             handlePlayerJoined();
         }
@@ -523,10 +544,13 @@ size_t retro_serialize_size(void)
 
 bool retro_serialize(void *data, size_t size)
 {
+
+
     // if (size == retro_serialize_size())
     {
 
         uint8_t *ptr = (uint8_t *)data;
+
 
         for (size_t i = 0; i < emulated_gbs; ++i)
         {
@@ -534,10 +558,36 @@ bool retro_serialize(void *data, size_t size)
             {
                 v_gb[i]->save_state_mem(ptr);
                 ptr += _serialize_size[i];
+                if (i == 0)
+                {
+                    int savestate_context = 0;
+                    bool success = environ_cb(RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT, &savestate_context);
+                    if (success)
+                    {
+                        if (savestate_context == RETRO_SAVESTATE_CONTEXT_ROLLBACK_NETPLAY )
+                        {
+                            serializer s(ptr, serializer::SAVE_BUF);
+                            s_VAR(emulated_gbs);
+                            s_VAR(my_random_netplay_id);
+                            ptr += sizeof(emulated_gbs) + sizeof(my_random_netplay_id);
+
+                        if (emulated_gbs == 1){
+                            ++emulated_gbs;
+                            //check_variables();
+                            player_joined_with_joypad_press = true;
+                            handlePlayerJoined();
+                        }
+                        }
+                    }
+
+                }
             }
         }
-   
+
 		if (master_link) master_link->save_state_mem(ptr);
+
+
+
         /*
         for (int i = 0; i < v_serializable_devices.size(); i++)
         {
@@ -552,6 +602,7 @@ bool retro_serialize(void *data, size_t size)
 bool retro_unserialize(const void *data, size_t size)
 {
 
+
     // if (size == retro_serialize_size())
     {
         unsigned i;
@@ -563,6 +614,35 @@ bool retro_unserialize(const void *data, size_t size)
             {
                 v_gb[i]->restore_state_mem(ptr);
                 ptr += _serialize_size[i];
+                if (i == 0)
+                {
+                    int savestate_context = 0;
+                    bool success = environ_cb(RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT, &savestate_context);
+                    if (success)
+                    {
+
+                        if (savestate_context == RETRO_SAVESTATE_CONTEXT_ROLLBACK_NETPLAY)
+                        {
+                            serializer s(ptr, serializer::LOAD_BUF);
+
+                            s_VAR(emulated_gbs);
+                            uint64_t host_random_id = 0;
+                            s_VAR(host_random_id);
+                            ptr += sizeof(emulated_gbs) + sizeof(host_random_id);
+
+                            if (!i_am_netplay_client && !i_am_netplay_host && emulated_gbs == 2)
+                            {
+                                 i_am_netplay_host = host_random_id == my_random_netplay_id;
+                                 i_am_netplay_client = !i_am_netplay_host;
+
+                                 if (i_am_netplay_host){
+                                  _show_player_screen = 0;
+                                  }else  _show_player_screen = 1;
+                            }
+                        }
+                    }
+
+                }
             }
         }
 
