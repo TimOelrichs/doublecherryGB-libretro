@@ -1205,20 +1205,25 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         //if (!already_checked_options)
-        { 
-            int value = atoi(var.value);
+        {
+            size_t value = atoi(var.value);
             //only update if not set to 1 to avoid conflicts with joined Multiplayer with Joypad
-            if (value > 1 )
+            bool value_changed = (bool)(value != emulated_gbs);
+            if (value_changed)
             {
-                emulated_gbs = value;
-                mode = (value == 1) ? MODE_SINGLE_GAME : mode;
-                emulated_gbs_changed_in_options = true;
-            }
-            if (value == 1 && !player_joined_with_joypad_press)
-            {
-                emulated_gbs = value;
-                mode = (value == 1) ? MODE_SINGLE_GAME : mode;
-                emulated_gbs_changed_in_options = true;
+                display_message("Emulated GB changed %d to %d", emulated_gbs, value );
+                if (value > 1 )
+                {
+                    emulated_gbs = value;
+                    mode = (value == 1) ? MODE_SINGLE_GAME : mode;
+                    emulated_gbs_changed_in_options = true;
+                }
+                if (value == 1)
+                {
+                    emulated_gbs = value;
+                    mode = (value == 1) ? MODE_SINGLE_GAME : mode;
+                    emulated_gbs_changed_in_options = true;
+                }
             }
         }
     }
