@@ -46,7 +46,7 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-    log_cb(RETRO_LOG_INFO, "GET AV INFO\n");
+
     check_variables();
 
     int base_w = 160 * gbc_rgbSubpixel_upscale_factor;
@@ -85,7 +85,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     }
 
     // Geometriegrenzen setzen
-    log_cb(RETRO_LOG_INFO, "BEFORE SET AV INFO\n");
+
     info->geometry.max_width = base_w * max_gbs;
     info->geometry.max_height = base_h * max_gbs;
 
@@ -95,10 +95,10 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     info->geometry.base_height = h;
     info->geometry.aspect_ratio = float(w) / float(h);
     //*info = my_av_info;
-    log_cb(RETRO_LOG_INFO, "BEFORE COPY AV INFO\n");
+
     //memcpy(my_av_info, info, sizeof(*my_av_info));
     memcpy(&my_av_info, info, sizeof(my_av_info));
-    log_cb(RETRO_LOG_INFO, "AFTER COPY AV INFO\n");
+
 }
 
 void retro_init(void)
@@ -228,16 +228,13 @@ bool retro_load_game(const struct retro_game_info *info)
 
 
     // Multiplayer-Setup
-    log_cb(RETRO_LOG_INFO, "BEFORE LINK MULTIPLAYER\n");
+
     auto_link_multiplayer();
-    log_cb(RETRO_LOG_INFO, "BEFORE CHECK VARIABLES\n");
     check_variables();
-    log_cb(RETRO_LOG_INFO, "BEFORE SET MEMORY MAP\n");
     set_memory_maps();
-    log_cb(RETRO_LOG_INFO, "BEFORE MASTER LINK\n");
     if (master_link)
         v_serializable_devices.push_back(master_link);
-    log_cb(RETRO_LOG_INFO, "AFTER MASTER LINK\n");
+
    return true;
 }
 
@@ -404,7 +401,7 @@ void checkForJoinedMultiplayer()
 
 void run_main_loop()
 {
-    log_cb(RETRO_LOG_INFO, "BEFORE RUN LOOP\n");
+
     for (int line = 0; line < 154; line++)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
@@ -416,7 +413,7 @@ void run_main_loop()
         if (master_link)
             master_link->process();
     }
-    log_cb(RETRO_LOG_INFO, "AFTER RUN LOOP\n");
+
 }
 
 void checkAndUpdateVariable()
@@ -428,13 +425,12 @@ void checkAndUpdateVariable()
 
 void retro_run(void)
 {
-    log_cb(RETRO_LOG_INFO, "BEFORE RUN - CHECK UPDATES\n");
+
     checkAndUpdateVariable();
-    log_cb(RETRO_LOG_INFO, "BEFORE RUN - GET TIME\n");
+
     get_monotonic_time(&inputpoll_start_time);
-    input_poll_cb();   log_cb(RETRO_LOG_INFO, "BEFORE RUN - HANDLE HOTKEY\n");
+    input_poll_cb();
     hotkey_handle();
-    input_poll_cb();   log_cb(RETRO_LOG_INFO, "BEFORE RUN - CHECK MULTIPLAYER\n");
     checkForJoinedMultiplayer();
     run_main_loop();
 
