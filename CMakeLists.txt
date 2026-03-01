@@ -65,6 +65,10 @@ set(SOURCES
     ${CORE_DIR}/services/printer/png_printer.cpp
     ${CORE_DIR}/services/printer/image_scaler.cpp
     ${CORE_DIR}/services/printer/printer_registry.cpp
+        libretro/Helpers/Netplay/NetplayManager.cpp
+        libretro/Helpers/Netplay/NetplayManager.h
+        libretro/Helpers/Netplay/NetPacketManager.cpp
+        libretro/Helpers/Netplay/NetPacketManager.h
 )
 
 # Bibliothek erstellen

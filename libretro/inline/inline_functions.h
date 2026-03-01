@@ -17,7 +17,7 @@ extern "C" uint64_t OSGetTime(void);
 // Netplay (Netpacket) interface
 void handlePlayerJoined();
 
-
+/*
 void netpacket_poll_receive() {
     if (netpacket_pollrcv_fn_ptr)
         netpacket_pollrcv_fn_ptr();
@@ -88,10 +88,12 @@ const struct retro_netpacket_callback netpacket_iface = {
     "DoubleCherryGB netpack V1.0",   // core version char*
   };
 
+
 void active_netpacket_api()
 {
     environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void*)&netpacket_iface);
 }
+*/
 
 bool is_rom_with_known_trading_or_battling_feature()
 {
