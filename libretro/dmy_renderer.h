@@ -364,7 +364,8 @@ private:
 	
 	int cur_time;
 	int which_gb;
-	bool rgb565;
+	static inline bool rgb565 = false;
+	static inline bool rgb565_checked = false;
 	byte is_odd_frame = 0;
 
 	word last_frame[160*144];

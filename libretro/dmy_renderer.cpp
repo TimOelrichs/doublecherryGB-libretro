@@ -196,14 +196,25 @@ dmy_renderer::dmy_renderer(int which)
 {
    which_gb = which;
 
-   retro_pixel_format pixfmt = RETRO_PIXEL_FORMAT_RGB565;
-   rgb565 = environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &pixfmt);
+  //  if (!rgb565_checked)
+  {
+        rgb565_checked = true;
 
-#ifndef FRONTEND_SUPPORTS_RGB565
-   if (rgb565 && log_cb)
-      log_cb(RETRO_LOG_INFO, "Frontend supports RGB565; will use that instead of XRGB1555.\n");
-#endif
+        retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+        rgb565 = false; // Default
 
+        if (environ_cb) {
+            // Prüfe ob RGB565 unterstützt wird
+            fmt = RETRO_PIXEL_FORMAT_RGB565;
+            if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
+                rgb565 = true;
+            } else {
+                // Fallback zu XRGB8888
+                fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+                environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
+            }
+        }
+    }
    //gradient for DMG LCD Ghosting effect
    generateGradient();
    std::fill_n(last_frame, 160 * 144, 0xFFFF);

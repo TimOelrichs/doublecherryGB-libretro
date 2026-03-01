@@ -734,6 +734,7 @@ void auto_link_multiplayer() {
         else if (is_rom_with_known_trading_or_battling_feature())
             active_netpacket_api();
 
+        master_link  = nullptr;
         auto_config_1p_link();
         mode = MODE_SINGLE_GAME;
         break;
@@ -747,6 +748,8 @@ void auto_link_multiplayer() {
         v_gb[0]->set_target(v_gb[1]);
         v_gb[1]->set_target(v_gb[0]);
         //}
+        //
+        master_link  = nullptr;
         break;
     }
     case 3:
@@ -911,6 +914,7 @@ void performExtraInputPoll() {
 
 static void update_multiplayer_geometry() {
 
+    log_cb(RETRO_LOG_INFO, "BEFORE UPDATE GEOMETRY\n");
     int base_w = 160;
     int base_h = 144;
 
@@ -947,12 +951,15 @@ static void update_multiplayer_geometry() {
             screenw *= _number_of_local_screens;
     }
 
-    my_av_info->geometry.base_width = screenw;
-    my_av_info->geometry.base_height = screenh;
-    my_av_info->geometry.aspect_ratio = static_cast<float>(screenw) / screenh;
+    my_av_info.geometry.base_width = screenw;
+    my_av_info.geometry.base_height = screenh;
+    my_av_info.geometry.aspect_ratio = static_cast<float>(screenw) / screenh;
 
     already_checked_options = true;
-    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+    log_cb(RETRO_LOG_INFO, "BEFORE SET GEOMETRY\n");
+    //environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
+    log_cb(RETRO_LOG_INFO, "AFTER SET GEOMETRY\n");
 
 }
 
@@ -1022,12 +1029,12 @@ static void check_variables(void)
 
         int screenw = 160 * gbc_rgbSubpixel_upscale_factor;
         int screenh = 144 * gbc_rgbSubpixel_upscale_factor;
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+        my_av_info.geometry.base_width = screenw;
+        my_av_info.geometry.base_height = screenh;
+        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
 
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
 
     }
 
@@ -1042,12 +1049,12 @@ static void check_variables(void)
 
         int screenw = 160 * gb_dotMarix_upscale_factor;
         int screenh = 144 * gb_dotMarix_upscale_factor;
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+        my_av_info.geometry.base_width = screenw;
+        my_av_info.geometry.base_height = screenh;
+        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
 
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
 
     }
 
@@ -1356,6 +1363,7 @@ static void check_variables(void)
             }
 
             if (_show_player_screen != emulated_gbs) {
+                display_message("köbööö");
                 audio_2p_mode = _show_player_screen;
                 var.key = "dcgb_audio_output";
                 char buf[32];
@@ -1409,12 +1417,12 @@ static void check_variables(void)
      
         int screenw = 160, screenh = 144;
 
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+        my_av_info.geometry.base_width = screenw;
+        my_av_info.geometry.base_height = screenh;
+        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
         already_checked_options = true;
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
     }
 }
 
