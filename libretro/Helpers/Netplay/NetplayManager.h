@@ -1,0 +1,14 @@
+//
+// Created by tim on 01.03.26.
+//
+
+#ifndef DOUBLECHERRYGB_NETPLAYMANAGER_H
+#define DOUBLECHERRYGB_NETPLAYMANAGER_H
+
+
+class NetplayManager
+{
+};
+
+
+#endif //DOUBLECHERRYGB_NETPLAYMANAGER_H

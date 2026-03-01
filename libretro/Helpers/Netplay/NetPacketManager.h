@@ -1,0 +1,14 @@
+//
+// Created by tim on 01.03.26.
+//
+
+#ifndef DOUBLECHERRYGB_NETPACKETMANAGER_H
+#define DOUBLECHERRYGB_NETPACKETMANAGER_H
+
+
+class NetPacketManager
+{
+};
+
+
+#endif //DOUBLECHERRYGB_NETPACKETMANAGER_H
