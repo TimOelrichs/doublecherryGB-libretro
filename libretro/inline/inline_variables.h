@@ -34,7 +34,7 @@ bool dcgb_audio_filter_enabled = true;
 bool gb_printer_png_scale_enabled = true;
 ScaleTarget gb_printer_png_scale_mode = ScaleTarget::DIN_A4;
 Alignment gb_printer_png_alignment = Alignment::CENTER;
-
+bool player_joined_with_joypad_press = false;
 
 //Alleyway Analog Controller var, TODO: to set in core options 
 #include "../gb_core/linkcable/include/alleyway_link_controller.hpp"
@@ -52,7 +52,7 @@ struct retro_sensor_interface sensor_interface = {
     get_sensor_input
 };
 
-
+/*
 static const struct retro_variable vars_single[] = {
      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
      { "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear"},
@@ -135,6 +135,7 @@ static const struct retro_subsystem_info subsystems[] = {
    //{ "4 Player Game Boy 2x 2-Player Link", "gb_2x2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
    { NULL },
 };
+*/
 
 
 enum mode {
@@ -159,7 +160,11 @@ bool gbc_lcd_interfacing_fast = true;
 float gbc_lcd_interlacing_brightness = 1.05f;
 float light_temperature = 0.0f; 
 bool useGbcLCDforDmG = false;
-bool useDmgGhosting = true; 
+bool useDmgGhosting = true;
+bool force_linkcable_over_ip_mode = false;
+bool i_am_netplay_client = false;
+bool i_am_netplay_host = false;
+__uint64_t my_random_netplay_id = 0;
 
 enum color_correction_mode gbc_cc_mode = GAMBATTE_ACCURATE;
 
@@ -195,9 +200,10 @@ bool _screen_switched = false;
 unsigned int _show_player_screen = 1;
 int _number_of_local_screens = 1;
 static size_t _serialize_size[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+bool show_all_screens = false;
 
 bool gblink_enable = false;
-bool emulated_gbs_changed = false;
+bool emulated_gbs_changed_in_options = false;
 size_t emulated_gbs = 1;
 char cart_name[18];
 
@@ -207,7 +213,7 @@ bool already_checked_options = false;
 bool libretro_supports_persistent_buffer = false;
 bool libretro_supports_bitmasks = false;
 //struct retro_system_av_info* my_av_info = (retro_system_av_info*)malloc(sizeof(*my_av_info));
-static struct retro_system_av_info* my_av_info = nullptr;
+static struct retro_system_av_info my_av_info;
 //static struct retro_system_av_info my_av_info;
 
 unsigned libretro_msg_interface_version = 0;

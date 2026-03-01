@@ -276,7 +276,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
      //********************Linkcable Devices OPTIONS Start*********************************
 {
      "dcgb_singleplayer_linked_devive",
-     "Singleplayer connetected Linkcabledevice",
+     "Singleplayer connected Linkcabledevice",
      NULL,
      "Leave this to auto, unless you want to force a device for unsupported software",
      NULL,
@@ -405,7 +405,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
      "dcgb_emulated_gameboys",
      "Number of emulated Gameboys",
       NULL,
-      "Number of emulated GameBoys (1-16) \n Players can also join anytime by just pressing any Button on their controllers",
+      "Number of emulated GameBoys (1-16) \n Players can also join anytime by just pressing the LB/L1 Button on players controllers",
       NULL,
       "Multiplayer",
       {

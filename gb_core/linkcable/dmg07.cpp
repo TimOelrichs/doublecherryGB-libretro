@@ -772,8 +772,6 @@ void dmg07::serialize(serializer& s)
 
 	s_ARRAY(in_data_buffer);
 	s_ARRAY(last_trans_nr);
-	
-	
 
 }
 

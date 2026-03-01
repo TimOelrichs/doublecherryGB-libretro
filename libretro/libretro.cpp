@@ -9,11 +9,13 @@
 #include "libretro_core_options.h"
 #include "../gb_core/gb.h"
 #include "dmy_renderer.h"
+#include "serializer.h"
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
 #include <time.h>
+#include <random>
 
 #include "../gb_core/linkcable/include/sio_devices.hpp"
 #include "../gb_core/infrared/include/ir_devices.hpp"
@@ -21,6 +23,13 @@
 #include "inline/inline_functions.h"
 
 
+uint64_t random64bit() {
+    static std::random_device rd;
+    static std::mt19937_64 gen(rd());
+    static std::uniform_int_distribution<uint64_t> dis;
+
+    return dis(gen);
+}
 
 static void check_variables(void);
 
@@ -37,8 +46,8 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
+    log_cb(RETRO_LOG_INFO, "GET AV INFO\n");
     check_variables();
-
 
     int base_w = 160 * gbc_rgbSubpixel_upscale_factor;
     int base_h = 144 * gbc_rgbSubpixel_upscale_factor;
@@ -76,6 +85,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     }
 
     // Geometriegrenzen setzen
+    log_cb(RETRO_LOG_INFO, "BEFORE SET AV INFO\n");
     info->geometry.max_width = base_w * max_gbs;
     info->geometry.max_height = base_h * max_gbs;
 
@@ -85,12 +95,17 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     info->geometry.base_height = h;
     info->geometry.aspect_ratio = float(w) / float(h);
     //*info = my_av_info;
-    memcpy(my_av_info, info, sizeof(*my_av_info));
+    log_cb(RETRO_LOG_INFO, "BEFORE COPY AV INFO\n");
+    //memcpy(my_av_info, info, sizeof(*my_av_info));
+    memcpy(&my_av_info, info, sizeof(my_av_info));
+    log_cb(RETRO_LOG_INFO, "AFTER COPY AV INFO\n");
 }
 
 void retro_init(void)
 {
-    my_av_info = (retro_system_av_info*) calloc(1, sizeof(*my_av_info));
+
+    //my_av_info = (retro_system_av_info*) calloc(1, sizeof(*my_av_info));
+    memset(&my_av_info, 0, sizeof(my_av_info));
     unsigned level = 4;
     struct retro_log_callback log;
 
@@ -139,21 +154,34 @@ void retro_init(void)
     log_cb(RETRO_LOG_INFO, "Check Variables done\n");
     init_printer_registry();
     log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
+
+
+
+    my_random_netplay_id = random64bit();
 }
 
 void retro_deinit(void)
 {
+    /*
     if (my_av_info)
     {
         free(my_av_info);
         my_av_info = nullptr;
-    }
+    }*/
     deinit_printer_registry();
     libretro_supports_bitmasks = false;
+
+    if (player_joined_with_joypad_press)
+    {
+        emulated_gbs = 1;
+        player_joined_with_joypad_press = false;
+    }
+
 }
 
 bool retro_load_game(const struct retro_game_info *info)
 {
+    log_cb(RETRO_LOG_INFO, "Init BEFORE LOAD ROM\n");
     size_t rom_size = 0;
     byte* rom_data = nullptr;
     const retro_game_info_ext* info_ext = nullptr;
@@ -163,8 +191,8 @@ bool retro_load_game(const struct retro_game_info *info)
     render.clear();
 
     environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, input_desc);
+    log_cb(RETRO_LOG_INFO, "SET INPUT DESC\n");
 
-   
     if (environ_cb(RETRO_ENVIRONMENT_GET_GAME_INFO_EXT, &info_ext) &&
         info_ext->persistent_data)
     {
@@ -181,7 +209,7 @@ bool retro_load_game(const struct retro_game_info *info)
     v_gb.reserve(max_gbs);
     render.reserve(max_gbs);
 
- 
+    log_cb(RETRO_LOG_INFO, "BEFORE INIT GBS\n");
     for (byte i = 0; i < max_gbs; i++) {
         auto r = new dmy_renderer(i);
         auto g = new gb(r, true, true);
@@ -193,20 +221,23 @@ bool retro_load_game(const struct retro_game_info *info)
         render.push_back(std::move(r));
         v_gb.push_back(std::move(g));
     }
-
+    log_cb(RETRO_LOG_INFO, "AFTER INIT GBS\n");
     // Cartridge-Infos
     set_cart_name(rom_data);
     is_gbc_rom = v_gb[0]->get_rom()->get_info()->gb_type == 3 || v_gb[0]->get_rom()->get_info()->gb_type == 4  ;
 
 
     // Multiplayer-Setup
+    log_cb(RETRO_LOG_INFO, "BEFORE LINK MULTIPLAYER\n");
     auto_link_multiplayer();
+    log_cb(RETRO_LOG_INFO, "BEFORE CHECK VARIABLES\n");
     check_variables();
+    log_cb(RETRO_LOG_INFO, "BEFORE SET MEMORY MAP\n");
     set_memory_maps();
-
+    log_cb(RETRO_LOG_INFO, "BEFORE MASTER LINK\n");
     if (master_link)
         v_serializable_devices.push_back(master_link);
-
+    log_cb(RETRO_LOG_INFO, "AFTER MASTER LINK\n");
    return true;
 }
 
@@ -345,10 +376,11 @@ void checkForJoinedMultiplayer()
     int16_t key_state;
     //check if also the start button is pressed
 
-    if (emulated_gbs_changed)
+    if (emulated_gbs_changed_in_options)
     {
         handlePlayerJoined();
-        emulated_gbs_changed = false;
+        emulated_gbs_changed_in_options = false;
+        return;
     }
 
     if (emulated_gbs <= 16) {
@@ -356,7 +388,12 @@ void checkForJoinedMultiplayer()
         if (key_state)
         {
             ++emulated_gbs;
+            show_all_screens = true;
+            if (show_all_screens)
+                _show_player_screen = emulated_gbs;
+
             //check_variables();
+            player_joined_with_joypad_press = true;
             display_message("Player Joined");
             handlePlayerJoined();
         }
@@ -367,6 +404,7 @@ void checkForJoinedMultiplayer()
 
 void run_main_loop()
 {
+    log_cb(RETRO_LOG_INFO, "BEFORE RUN LOOP\n");
     for (int line = 0; line < 154; line++)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
@@ -378,22 +416,25 @@ void run_main_loop()
         if (master_link)
             master_link->process();
     }
+    log_cb(RETRO_LOG_INFO, "AFTER RUN LOOP\n");
 }
 
 void checkAndUpdateVariable()
 {
     bool updated = false;
-
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
         check_variables();
 }
 
 void retro_run(void)
 {
+    log_cb(RETRO_LOG_INFO, "BEFORE RUN - CHECK UPDATES\n");
     checkAndUpdateVariable();
+    log_cb(RETRO_LOG_INFO, "BEFORE RUN - GET TIME\n");
     get_monotonic_time(&inputpoll_start_time);
-    input_poll_cb();
+    input_poll_cb();   log_cb(RETRO_LOG_INFO, "BEFORE RUN - HANDLE HOTKEY\n");
     hotkey_handle();
+    input_poll_cb();   log_cb(RETRO_LOG_INFO, "BEFORE RUN - CHECK MULTIPLAYER\n");
     checkForJoinedMultiplayer();
     run_main_loop();
 
@@ -523,10 +564,13 @@ size_t retro_serialize_size(void)
 
 bool retro_serialize(void *data, size_t size)
 {
+
+
     // if (size == retro_serialize_size())
     {
 
         uint8_t *ptr = (uint8_t *)data;
+
 
         for (size_t i = 0; i < emulated_gbs; ++i)
         {
@@ -534,10 +578,37 @@ bool retro_serialize(void *data, size_t size)
             {
                 v_gb[i]->save_state_mem(ptr);
                 ptr += _serialize_size[i];
+                if (i == 0)
+                {
+                    int savestate_context = 0;
+                    bool success = environ_cb(RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT, &savestate_context);
+                    if (success)
+                    {
+                        if (savestate_context == RETRO_SAVESTATE_CONTEXT_ROLLBACK_NETPLAY )
+                        {
+
+                            serializer s(ptr, serializer::SAVE_BUF);
+                            s_VAR(emulated_gbs);
+                            s_VAR(my_random_netplay_id);
+                            ptr += sizeof(emulated_gbs) + sizeof(my_random_netplay_id);
+
+                        if (emulated_gbs == 1){
+                            ++emulated_gbs;
+                            //check_variables();
+                            player_joined_with_joypad_press = true;
+                            handlePlayerJoined();
+                        }
+                        }
+                    }
+
+                }
             }
         }
-   
+
 		if (master_link) master_link->save_state_mem(ptr);
+
+
+
         /*
         for (int i = 0; i < v_serializable_devices.size(); i++)
         {
@@ -552,6 +623,7 @@ bool retro_serialize(void *data, size_t size)
 bool retro_unserialize(const void *data, size_t size)
 {
 
+
     // if (size == retro_serialize_size())
     {
         unsigned i;
@@ -563,6 +635,36 @@ bool retro_unserialize(const void *data, size_t size)
             {
                 v_gb[i]->restore_state_mem(ptr);
                 ptr += _serialize_size[i];
+                if (i == 0)
+                {
+                    int savestate_context = 0;
+                    bool success = environ_cb(RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT, &savestate_context);
+                    if (success)
+                    {
+
+                        if (savestate_context == RETRO_SAVESTATE_CONTEXT_ROLLBACK_NETPLAY)
+                        {
+
+                            serializer s(ptr, serializer::LOAD_BUF);
+
+                            s_VAR(emulated_gbs);
+                            uint64_t host_random_id = 0;
+                            s_VAR(host_random_id);
+                            ptr += sizeof(emulated_gbs) + sizeof(host_random_id);
+
+                            if (!i_am_netplay_client && !i_am_netplay_host && emulated_gbs == 2)
+                            {
+                                 i_am_netplay_host = host_random_id == my_random_netplay_id;
+                                 i_am_netplay_client = !i_am_netplay_host;
+
+                                 if (i_am_netplay_host){
+                                  _show_player_screen = 0;
+                                  }else  _show_player_screen = 1;
+                            }
+                        }
+                    }
+
+                }
             }
         }
 

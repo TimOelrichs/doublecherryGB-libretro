@@ -17,6 +17,7 @@ extern "C" uint64_t OSGetTime(void);
 // Netplay (Netpacket) interface
 void handlePlayerJoined();
 
+
 void netpacket_poll_receive() {
     if (netpacket_pollrcv_fn_ptr)
         netpacket_pollrcv_fn_ptr();
@@ -78,14 +79,393 @@ static void netpacket_disconnected(unsigned short client_id) {
 }
 
 const struct retro_netpacket_callback netpacket_iface = {
-  netpacket_start,          // start
-  netpacket_receive,        // receive
-  netpacket_stop,           // stop
-  netpacket_poll_receive,   // poll
-  netpacket_connected,      // connected
-  netpacket_disconnected,   // disconnected
-  "DoubleCherryGB netpack V1.0",   // core version char* 
-};
+    netpacket_start,          // start
+    netpacket_receive,        // receive
+    netpacket_stop,           // stop
+    netpacket_poll_receive,   // poll
+    netpacket_connected,      // connected
+    netpacket_disconnected,   // disconnected
+    "DoubleCherryGB netpack V1.0",   // core version char*
+  };
+
+void active_netpacket_api()
+{
+    environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void*)&netpacket_iface);
+}
+
+bool is_rom_with_known_trading_or_battling_feature()
+{
+    // Check ROM header for known games with trading/battling features
+
+    // Pokemon games (except Pinball)
+    if (!strncmp(cart_name, "POKEMON", 7) || !strncmp(cart_name, "PM_CRYSTAL", 10))
+    {
+        // TODO: Exclude POKEMON PINBALL (both POKEMON_PINBALL and POKEMONPINBALL variants)
+        return true;
+    }
+
+    // Robopon
+    if (!strncmp(cart_name, "ROBOPON", 7))
+    {
+        return true;
+    }
+
+    // Zelda Oracle games (trading between versions)
+    if (!strncmp(cart_name, "ZELDA NAYRUA", 12) || !strncmp(cart_name, "ZELDA DIN", 9))
+    {
+        return true;
+    }
+
+    // Harvest Moon games
+    if (!strcmp(cart_name, "HARVEST-MOON GB") ||
+        !strncmp(cart_name, "H-MOON2", 7) ||
+        !strncmp(cart_name, "H-MOON3", 7))
+    {
+        return true;
+    }
+
+    /*
+    // Legend of the River King
+    // TODO: Verify if trading is possible (not mentioned on boxart)
+    if (!strncmp(cart_name, "THE RIVER K", 11))
+    {
+        return true;
+    }
+    */
+
+    // Legend of the River King 2
+    if (!strncmp(cart_name, "RIVER KING2", 11))
+    {
+        return true;
+    }
+
+    // Shin Megami Tensei Devil Children
+    if (!strncmp(cart_name, "DEBITIRU", 8))
+    {
+        return true;
+    }
+
+    // Shaman King Card Game
+    // TODO: Verify if trading is possible
+    if (!strncmp(cart_name, "SHAMAN", 6))
+    {
+        return true;
+    }
+
+    // Telefang Games
+    if (!strncmp(cart_name, "TELEFANG", 8))
+    {
+        return true;
+    }
+
+    // Network Boukenki Bugsite Games
+    if (!strncmp(cart_name, "BUGSITE", 7))
+    {
+        return true;
+    }
+
+    // Medarot Games
+    if (!strncmp(cart_name, "MEDAROT", 7))
+    {
+        return true;
+    }
+
+    // Medarot Card Games
+    if (!strncmp(cart_name, "MEDACARD", 8))
+    {
+        return true;
+    }
+
+    // Dragon Warrior Monster games (various spellings)
+    if (!strncmp(cart_name, "DRAGON QMON", 8) ||
+        !strncmp(cart_name, "DRAGON WMON", 8) ||
+        !strncmp(cart_name, "DWM2-", 5) ||
+        !strncmp(cart_name, "DWQ2-", 5))
+    {
+        return true;
+    }
+
+    // Dino Breeder games
+    if (!strncmp(cart_name, "DINO3", 5) || !strncmp(cart_name, "DINO4", 5))
+    {
+        return true;
+    }
+
+    // Azure Dream
+    if (!strncmp(cart_name, "AZUREDREAM", 10))
+    {
+        return true;
+    }
+
+    // Star Ocean
+    if (!strncmp(cart_name, "STAROCEAN", 10))
+    {
+        return true;
+    }
+
+    // Space-net Games
+    if (!strncmp(cart_name, "SNCOSMO", 7))
+    {
+        return true;
+    }
+
+    // Trade & Battle Card Hero
+    if (!strncmp(cart_name, "CARD HERO", 7))
+    {
+        return true;
+    }
+
+    // Yu-Gi-Oh Games
+    if (!strncmp(cart_name, "YU GI OH", 8) || !strncmp(cart_name, "YUGIOU", 6))
+    {
+        return true;
+    }
+
+    // Animastar GB
+    if (!strncmp(cart_name, "ANIMASTAR", 9))
+    {
+        return true;
+    }
+
+    // Arle no Bouken - Mahou no Jewel
+    if (!strncmp(cart_name, "ADV OF ARLE", 11))
+    {
+        return true;
+    }
+
+    // Bad Badtz-Maru Robo Battle
+    if (!strncmp(cart_name, "XO R-BATTLE", 11))
+    {
+        return true;
+    }
+
+    // Super B-Daman games
+    if (!strncmp(cart_name, "SUPERBDAMAN", 11) ||
+        !strncmp(cart_name, "BAKUGAIDEN", 10) ||
+        !strncmp(cart_name, "F.MEGA TUNE", 11))
+    {
+        return true;
+    }
+
+    // Pokemon Trading Card Game
+    if (!strncmp(cart_name, "POKECARD", 8))
+    {
+        return true;
+    }
+
+    // Barcode Taisen Bardigun
+    if (!strncmp(cart_name, "BARDIGUN", 8))
+    {
+        return true;
+    }
+
+    // Brave Saga
+    if (!strncmp(cart_name, "BRAVESAGA", 8))
+    {
+        return true;
+    }
+
+    // Bouken! Dondoko Shima
+    if (!strncmp(cart_name, "DONDOKO", 7))
+    {
+        return true;
+    }
+
+    // Cardcaptor Sakura games
+    if (!strncmp(cart_name, "CC-SAKURA2", 10))
+    {
+        return true;
+    }
+
+    // Cross Hunter Games
+    if (!strncmp(cart_name, "CROSS-H", 7))
+    {
+        return true;
+    }
+
+    // Daikaijuu Monogatari
+    if (!strncmp(cart_name, "POYON'SD", 7))
+    {
+        return true;
+    }
+
+    // Doki x Doki Sasete!!
+    // TODO: Verify trading capability
+    if (!strncmp(cart_name, "DOKIDOKI", 7))
+    {
+        return true;
+    }
+
+    // Dragon Quest III / Dragon Warrior III
+    if (!strncmp(cart_name, "GBDQ3", 5) || !strncmp(cart_name, "DW 3BD3E", 8))
+    {
+        return true;
+    }
+
+    // Dr. Rin ni Kiitemite!
+    if (!strncmp(cart_name, "DR.RIN", 6))
+    {
+        return true;
+    }
+
+    // Fushigi no Dungeon - Fuurai no Shiren GB 2
+    if (!strncmp(cart_name, "SIREN GB2 ", 9))
+    {
+        return true;
+    }
+
+    // GB Harobots
+    if (!strncmp(cart_name, "HAROBOTS", 8))
+    {
+        return true;
+    }
+
+    // Get Chuu Club
+    // TODO: Verify trading capability
+    if (!strncmp(cart_name, "MUSHI-CLUB", 10))
+    {
+        return true;
+    }
+
+    // Grandia - Parallel Trippers
+    if (!strncmp(cart_name, "GRANDIA", 7))
+    {
+        return true;
+    }
+
+    // Granduel
+    if (!strncmp(cart_name, "GRANDUEL", 8))
+    {
+        return true;
+    }
+
+    // Hamster Club / Hamster Paradise games
+    if (!strncmp(cart_name, "HAMSTERCLUB", 8) ||
+        !strncmp(cart_name, "AWASETE C", 9) ||
+        !strncmp(cart_name, "HAMSTAR PRADISE", 15) ||
+        !strncmp(cart_name, "HAMUPARA2", 9) ||
+        !strncmp(cart_name, " HAMPARA", 9))
+    {
+        return true;
+    }
+
+    // Harry Potter games
+    if (!strncmp(cart_name, "HPCOSECRETS", 11) ||
+        !strncmp(cart_name, "HARRYPOTTER", 11))
+    {
+        return true;
+    }
+
+    // Atelier games
+    if (!strncmp(cart_name, "ATELIER", 7))
+    {
+        return true;
+    }
+
+    // Kakurenbo Battle - Monster Tactics
+    if (!strncmp(cart_name, "MONTAC", 6))
+    {
+        return true;
+    }
+
+    // Bistro Recipe games
+    if (!strncmp(cart_name, "BISTRO RC", 9))
+    {
+        return true;
+    }
+
+    // Kanzume Monsters Parfait
+    if (!strncmp(cart_name, "MONSTER KAN", 11))
+    {
+        return true;
+    }
+
+    // Kaseki Sousei Reborn II
+    if (!strncmp(cart_name, "KASEKI REBORN", 13))
+    {
+        return true;
+    }
+
+    // Kawaii Pet Shop Monogatari 2
+    if (!strncmp(cart_name, "PET SHOP2", 9))
+    {
+        return true;
+    }
+
+    // Transformers Beast Wars
+    if (!strncmp(cart_name, "BEAST WARS", 10))
+    {
+        return true;
+    }
+
+    // Konchuu games
+    if (!strncmp(cart_name, "KONCHUFIGHT", 11) ||
+        !strncmp(cart_name, "KONCHU HAK", 10))
+    {
+        return true;
+    }
+
+    // Lil' Monster
+    if (!strncmp(cart_name, "LIL'MONSTER", 11))
+    {
+        return true;
+    }
+
+    // Monster Race 2
+    // TODO: Verify trading capability
+    if (!strncmp(cart_name, "MONSTER RACE 2", 14))
+    {
+        return true;
+    }
+
+    // Monster Rancher games
+    if (!strncmp(cart_name, "MREXPLORER", 10) ||
+        !strncmp(cart_name, "MR CARD GB", 10))
+    {
+        return true;
+    }
+
+    // Rokumon Tengai Mon-Colle-Knight
+    if (!strncmp(cart_name, "RTMONCOLLE", 10))
+    {
+        return true;
+    }
+
+    // Sanrio Timenet
+    if (!strncmp(cart_name, "TIMENET", 7))
+    {
+        return true;
+    }
+
+    // Seme COM Dungeon
+    if (!strncmp(cart_name, "DRURURUAGA", 10))
+    {
+        return true;
+    }
+
+    // Survival Kids 2
+    // TODO: Verify trading capability
+    if (!strncmp(cart_name, "SURVIVAL K2", 11))
+    {
+        return true;
+    }
+
+    // Sweet Ange
+    // TODO: Verify trading capability
+    if (!strncmp(cart_name, "SWEET ANGE", 11))
+    {
+        return true;
+    }
+
+    // Zok Zok Heroes
+    if (!strncmp(cart_name, "ZOKZOK HERO", 11))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 
 void set_cart_name(byte* rombuf)
 {
@@ -348,8 +728,13 @@ void auto_link_multiplayer() {
     {
         //TODO only if DUAL-GAME ROM
         // set interface for netpaket api (easy pokemon trading)
-        environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void*)&netpacket_iface);
 
+        if(force_linkcable_over_ip_mode)
+            active_netpacket_api();
+        else if (is_rom_with_known_trading_or_battling_feature())
+            active_netpacket_api();
+
+        master_link  = nullptr;
         auto_config_1p_link();
         mode = MODE_SINGLE_GAME;
         break;
@@ -363,6 +748,8 @@ void auto_link_multiplayer() {
         v_gb[0]->set_target(v_gb[1]);
         v_gb[1]->set_target(v_gb[0]);
         //}
+        //
+        master_link  = nullptr;
         break;
     }
     case 3:
@@ -527,6 +914,7 @@ void performExtraInputPoll() {
 
 static void update_multiplayer_geometry() {
 
+    log_cb(RETRO_LOG_INFO, "BEFORE UPDATE GEOMETRY\n");
     int base_w = 160;
     int base_h = 144;
 
@@ -563,12 +951,15 @@ static void update_multiplayer_geometry() {
             screenw *= _number_of_local_screens;
     }
 
-    my_av_info->geometry.base_width = screenw;
-    my_av_info->geometry.base_height = screenh;
-    my_av_info->geometry.aspect_ratio = static_cast<float>(screenw) / screenh;
+    my_av_info.geometry.base_width = screenw;
+    my_av_info.geometry.base_height = screenh;
+    my_av_info.geometry.aspect_ratio = static_cast<float>(screenw) / screenh;
 
     already_checked_options = true;
-    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+    log_cb(RETRO_LOG_INFO, "BEFORE SET GEOMETRY\n");
+    //environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
+    log_cb(RETRO_LOG_INFO, "AFTER SET GEOMETRY\n");
 
 }
 
@@ -638,12 +1029,12 @@ static void check_variables(void)
 
         int screenw = 160 * gbc_rgbSubpixel_upscale_factor;
         int screenh = 144 * gbc_rgbSubpixel_upscale_factor;
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+        my_av_info.geometry.base_width = screenw;
+        my_av_info.geometry.base_height = screenh;
+        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
 
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
 
     }
 
@@ -658,12 +1049,12 @@ static void check_variables(void)
 
         int screenw = 160 * gb_dotMarix_upscale_factor;
         int screenh = 144 * gb_dotMarix_upscale_factor;
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+        my_av_info.geometry.base_width = screenw;
+        my_av_info.geometry.base_height = screenh;
+        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
 
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
 
     }
 
@@ -821,11 +1212,26 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         //if (!already_checked_options)
-        { 
-            int value = atoi(var.value);
-            emulated_gbs = value;
-            mode = (value == 1) ? MODE_SINGLE_GAME : mode;
-            emulated_gbs_changed = true;
+        {
+            size_t value = atoi(var.value);
+            //only update if not set to 1 to avoid conflicts with joined Multiplayer with Joypad
+            bool value_changed = (bool)(value != emulated_gbs);
+            if (value_changed)
+            {
+                display_message("Emulated GB changed %d to %d", emulated_gbs, value );
+                if (value > 1 )
+                {
+                    emulated_gbs = value;
+                    mode = (value == 1) ? MODE_SINGLE_GAME : mode;
+                    emulated_gbs_changed_in_options = true;
+                }
+                if (value == 1)
+                {
+                    emulated_gbs = value;
+                    mode = (value == 1) ? MODE_SINGLE_GAME : mode;
+                    emulated_gbs_changed_in_options = true;
+                }
+            }
         }
     }
 
@@ -945,14 +1351,19 @@ static void check_variables(void)
         {
 
             if (!strcmp(var.value, "all players"))
+            {
+                show_all_screens = true;
                 _show_player_screen = emulated_gbs;
+            }
             else {
+                show_all_screens = false;
                 int player;
                 if (sscanf(var.value, "player %d only", &player) == 1 && player >= 1 && player <= 16)
                     _show_player_screen = player - 1;
             }
 
             if (_show_player_screen != emulated_gbs) {
+                display_message("köbööö");
                 audio_2p_mode = _show_player_screen;
                 var.key = "dcgb_audio_output";
                 char buf[32];
@@ -1006,12 +1417,12 @@ static void check_variables(void)
      
         int screenw = 160, screenh = 144;
 
-        my_av_info->geometry.base_width = screenw;
-        my_av_info->geometry.base_height = screenh;
-        my_av_info->geometry.aspect_ratio = float(screenw) / float(screenh);
+        my_av_info.geometry.base_width = screenw;
+        my_av_info.geometry.base_height = screenh;
+        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
         already_checked_options = true;
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, my_av_info);
+        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
     }
 }
 
