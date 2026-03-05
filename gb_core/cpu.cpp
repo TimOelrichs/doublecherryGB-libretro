@@ -29,6 +29,7 @@
 #include <fstream>
 
 #include "libretro-common/include/retro_timers.h"
+#include "../libretro/DoubleCherryEngine/Netplay/NetPacketManager.h"
 
 #define SLEEP_MS(ms) retro_sleep(ms)
 
@@ -40,10 +41,10 @@
 #define N_FLAG 0x02
 #define C_FLAG 0x01
 
-extern bool logging_allowed; 
-extern unsigned int num_clients;
-extern unsigned short my_client_id;
+extern bool logging_allowed;
 extern int emulated_gbs;
+
+inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
 //extern unsigned int num_clients;
 //extern static u32 num_clients;
 
@@ -463,17 +464,16 @@ void cpu::io_write(word adr,byte dat)
 
 			if (start_transmission)
 			{
-				
-				const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
-				if (netpacket_active) {
-					int id = my_client_id ? 0 : 1;
-					byte data[1] = { ref_gb->get_regs()->SB };
-					netpacket_send(id, data, 1);
-					waiting_for_netpacket = true;
-				}
 
 				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 01;
 				if (!isMaster) return;
+				//const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
+				if (netpacket_manager.netpacket_is_active()) {
+					int receiver_id = netpacket_manager.get_netpacket_id() ? 0 : 1;
+					byte data[1] = { ref_gb->get_regs()->SB };
+					netpacket_manager.send(receiver_id, data, 1);
+					netpacket_manager.waiting_for_netpacket = true;
+				}
 
 				const int speed_factor = (!is_dmg && (dat & 0x02)) ? 32 : 1;
 				const int transfer_cycles = is_dmg ? 512 : (512 * 8) / speed_factor;
@@ -1111,11 +1111,11 @@ void cpu::exec(int clocks)
 			gdma_rest=0;
 		}
 	}
-	const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
+	//const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
 
 	while(rest_clock>0){
 
-		if (netpacket_active) netpacket_poll_receive();
+		if (netpacket_manager.netpacket_is_active()) netpacket_manager.poll_receive();
 
 		irq_process();
 
@@ -1164,8 +1164,9 @@ void cpu::exec(int clocks)
 		if (total_clock>seri_occer){
 			seri_occer=0x7fffffff;
 
-			const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
-			if (netpacket_active) {
+			//const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
+			if (netpacket_manager.netpacket_is_active() )
+			{
 				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 1;
 				if (!isMaster) return;
 
@@ -1173,23 +1174,24 @@ void cpu::exec(int clocks)
 				const auto timeout = std::chrono::seconds(5);
 
 				// Blockierende Warte-Schleife, bis ein Byte da ist oder Timeout
-				while (received_netpacket_data.empty()) {
-					netpacket_poll_receive();
-
+				while (netpacket_manager.received_netpacket_data.empty())
+				{
+					//netpacket_poll_receive();
+					netpacket_manager.poll_receive();
 					auto elapsed = std::chrono::steady_clock::now() - start;
-					if (elapsed > timeout) {
+					if (elapsed > timeout)
+					{
 						// wirklich Timeout → Defaultwert setzen
-						received_netpacket_data.push(0xFF);
-						waiting_for_netpacket = false;
+						netpacket_manager.received_netpacket_data.push(0xFF);
+						netpacket_manager.waiting_for_netpacket = false;
 						break;
 					}
 					SLEEP_MS(1);
-
 				}
 
 				// Daten übernehmen (Byte vorhanden oder Timeout)
-				ref_gb->get_regs()->SB = received_netpacket_data.front();
-				received_netpacket_data.pop();
+				ref_gb->get_regs()->SB = netpacket_manager.received_netpacket_data.front();
+				netpacket_manager.received_netpacket_data.pop();
 				ref_gb->get_regs()->SC &= 0x3;
 				
 				

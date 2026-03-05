@@ -69,8 +69,6 @@ set(SOURCES
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.h
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.h
-    ${CORE_DIR}/libretro/DoubleCherryEngine/Enviroment/EnviromentManager.cpp
-    ${CORE_DIR}/libretro/DoubleCherryEngine/Enviroment/EnviromentManager.h
     ${CORE_DIR}/libretro/DoubleCherryEngine/common/interfaces/ISingleton.hpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.h

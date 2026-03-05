@@ -17,8 +17,7 @@
 #include <time.h>
 #include <random>
 
-#include "../gb_core/linkcable/include/sio_devices.hpp"
-#include "../gb_core/infrared/include/ir_devices.hpp"
+
 #include "inline/inline_variables.h"
 #include "inline/inline_functions.h"
 
@@ -149,9 +148,6 @@ void retro_init(void)
     init_printer_registry();
     log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
 
-
-
-    my_random_netplay_id = random64bit();
 }
 
 void retro_deinit(void)
@@ -579,6 +575,7 @@ bool retro_serialize(void *data, size_t size)
 
                             serializer s(ptr, serializer::SAVE_BUF);
                             s_VAR(emulated_gbs);
+                            uint64_t my_random_netplay_id = netplay_manager.get_netplay_id();
                             s_VAR(my_random_netplay_id);
                             ptr += sizeof(emulated_gbs) + sizeof(my_random_netplay_id);
 
@@ -642,12 +639,11 @@ bool retro_unserialize(const void *data, size_t size)
                             s_VAR(host_random_id);
                             ptr += sizeof(emulated_gbs) + sizeof(host_random_id);
 
-                            if (!i_am_netplay_client && !i_am_netplay_host && emulated_gbs == 2)
+                            if (!netplay_manager.netplay_detected() && emulated_gbs == 2)
                             {
-                                 i_am_netplay_host = host_random_id == my_random_netplay_id;
-                                 i_am_netplay_client = !i_am_netplay_host;
+                                netplay_manager.detect_netplay_2player_role(host_random_id);
 
-                                 if (i_am_netplay_host){
+                                 if (netplay_manager.i_am_netplay_host){
                                   _show_player_screen = 0;
                                   }else  _show_player_screen = 1;
                             }

@@ -1,5 +1,15 @@
 ﻿#pragma once
 #include "../dcgb_hotkey_target.hpp"
+#include "../DoubleCherryEngine/Netplay/NetPacketManager.h"
+#include "../DoubleCherryEngine/Netplay/NetplayManager.h"
+#include "../services/printer/include/image_scaler.hpp"
+#include "../gb_core/gb.h"
+#include "../libretro/dmy_renderer.h"
+#include "../gb_core/linkcable/include/sio_devices.hpp"
+#include "../gb_core/infrared/include/ir_devices.hpp"
+
+inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
+inline NetplayManager& netplay_manager = NetplayManager::getInstance();
 
 #define RETRO_MEMORY_GAMEBOY_1_SRAM ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
 #define RETRO_MEMORY_GAMEBOY_1_RTC ((2 << 8) | RETRO_MEMORY_RTC)
