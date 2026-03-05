@@ -1,5 +1,15 @@
 ﻿#pragma once
 #include "../dcgb_hotkey_target.hpp"
+#include "../DoubleCherryEngine/Netplay/NetPacketManager.h"
+#include "../DoubleCherryEngine/Netplay/NetplayManager.h"
+#include "../services/printer/include/image_scaler.hpp"
+#include "../gb_core/gb.h"
+#include "../libretro/dmy_renderer.h"
+#include "../gb_core/linkcable/include/sio_devices.hpp"
+#include "../gb_core/infrared/include/ir_devices.hpp"
+
+inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
+inline NetplayManager& netplay_manager = NetplayManager::getInstance();
 
 #define RETRO_MEMORY_GAMEBOY_1_SRAM ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
 #define RETRO_MEMORY_GAMEBOY_1_RTC ((2 << 8) | RETRO_MEMORY_RTC)
@@ -8,10 +18,12 @@
 
 #define RETRO_GAME_TYPE_GAMEBOY_LINK_2P 0x101
 
+/*
 size_t num_clients = 0;
 unsigned short my_client_id = -1;
 static retro_netpacket_send_t netpacket_send_fn_ptr = NULL;
 static retro_netpacket_poll_receive_t netpacket_pollrcv_fn_ptr = NULL;
+*/
 
 struct retro_rumble_interface rumble;
 struct retro_led_interface led;
@@ -162,10 +174,12 @@ float light_temperature = 0.0f;
 bool useGbcLCDforDmG = false;
 bool useDmgGhosting = true;
 bool force_linkcable_over_ip_mode = false;
+
+/*
 bool i_am_netplay_client = false;
 bool i_am_netplay_host = false;
 __uint64_t my_random_netplay_id = 0;
-
+*/
 enum color_correction_mode gbc_cc_mode = GAMBATTE_ACCURATE;
 
 

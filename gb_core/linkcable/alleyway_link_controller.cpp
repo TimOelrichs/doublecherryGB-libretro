@@ -1,5 +1,5 @@
 ﻿#include "./include/alleyway_link_controller.hpp"
-#include "../../libretro/libretro.h"
+#include "../../libretro/DoubleCherryEngine/libretro.h"
 
 extern retro_input_state_t input_state_cb;
 extern bool alleyway_analog_controller_enabled; 

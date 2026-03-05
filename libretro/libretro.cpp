@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <cstdint>
 
-#include "libretro.h"
+#include "DoubleCherryEngine/libretro.h"
 #include "libretro_core_options.h"
 #include "../gb_core/gb.h"
 #include "dmy_renderer.h"
@@ -17,19 +17,12 @@
 #include <time.h>
 #include <random>
 
-#include "../gb_core/linkcable/include/sio_devices.hpp"
-#include "../gb_core/infrared/include/ir_devices.hpp"
+
 #include "inline/inline_variables.h"
 #include "inline/inline_functions.h"
 
 
-uint64_t random64bit() {
-    static std::random_device rd;
-    static std::mt19937_64 gen(rd());
-    static std::uniform_int_distribution<uint64_t> dis;
 
-    return dis(gen);
-}
 
 static void check_variables(void);
 
@@ -46,7 +39,7 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-    log_cb(RETRO_LOG_INFO, "GET AV INFO\n");
+
     check_variables();
 
     int base_w = 160 * gbc_rgbSubpixel_upscale_factor;
@@ -85,7 +78,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     }
 
     // Geometriegrenzen setzen
-    log_cb(RETRO_LOG_INFO, "BEFORE SET AV INFO\n");
+
     info->geometry.max_width = base_w * max_gbs;
     info->geometry.max_height = base_h * max_gbs;
 
@@ -95,10 +88,10 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     info->geometry.base_height = h;
     info->geometry.aspect_ratio = float(w) / float(h);
     //*info = my_av_info;
-    log_cb(RETRO_LOG_INFO, "BEFORE COPY AV INFO\n");
+
     //memcpy(my_av_info, info, sizeof(*my_av_info));
     memcpy(&my_av_info, info, sizeof(my_av_info));
-    log_cb(RETRO_LOG_INFO, "AFTER COPY AV INFO\n");
+
 }
 
 void retro_init(void)
@@ -155,9 +148,6 @@ void retro_init(void)
     init_printer_registry();
     log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
 
-
-
-    my_random_netplay_id = random64bit();
 }
 
 void retro_deinit(void)
@@ -228,16 +218,13 @@ bool retro_load_game(const struct retro_game_info *info)
 
 
     // Multiplayer-Setup
-    log_cb(RETRO_LOG_INFO, "BEFORE LINK MULTIPLAYER\n");
+
     auto_link_multiplayer();
-    log_cb(RETRO_LOG_INFO, "BEFORE CHECK VARIABLES\n");
     check_variables();
-    log_cb(RETRO_LOG_INFO, "BEFORE SET MEMORY MAP\n");
     set_memory_maps();
-    log_cb(RETRO_LOG_INFO, "BEFORE MASTER LINK\n");
     if (master_link)
         v_serializable_devices.push_back(master_link);
-    log_cb(RETRO_LOG_INFO, "AFTER MASTER LINK\n");
+
    return true;
 }
 
@@ -404,7 +391,7 @@ void checkForJoinedMultiplayer()
 
 void run_main_loop()
 {
-    log_cb(RETRO_LOG_INFO, "BEFORE RUN LOOP\n");
+
     for (int line = 0; line < 154; line++)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
@@ -416,7 +403,7 @@ void run_main_loop()
         if (master_link)
             master_link->process();
     }
-    log_cb(RETRO_LOG_INFO, "AFTER RUN LOOP\n");
+
 }
 
 void checkAndUpdateVariable()
@@ -428,13 +415,12 @@ void checkAndUpdateVariable()
 
 void retro_run(void)
 {
-    log_cb(RETRO_LOG_INFO, "BEFORE RUN - CHECK UPDATES\n");
+
     checkAndUpdateVariable();
-    log_cb(RETRO_LOG_INFO, "BEFORE RUN - GET TIME\n");
+
     get_monotonic_time(&inputpoll_start_time);
-    input_poll_cb();   log_cb(RETRO_LOG_INFO, "BEFORE RUN - HANDLE HOTKEY\n");
+    input_poll_cb();
     hotkey_handle();
-    input_poll_cb();   log_cb(RETRO_LOG_INFO, "BEFORE RUN - CHECK MULTIPLAYER\n");
     checkForJoinedMultiplayer();
     run_main_loop();
 
@@ -589,6 +575,7 @@ bool retro_serialize(void *data, size_t size)
 
                             serializer s(ptr, serializer::SAVE_BUF);
                             s_VAR(emulated_gbs);
+                            uint64_t my_random_netplay_id = netplay_manager.get_netplay_id();
                             s_VAR(my_random_netplay_id);
                             ptr += sizeof(emulated_gbs) + sizeof(my_random_netplay_id);
 
@@ -652,12 +639,11 @@ bool retro_unserialize(const void *data, size_t size)
                             s_VAR(host_random_id);
                             ptr += sizeof(emulated_gbs) + sizeof(host_random_id);
 
-                            if (!i_am_netplay_client && !i_am_netplay_host && emulated_gbs == 2)
+                            if (!netplay_manager.netplay_detected() && emulated_gbs == 2)
                             {
-                                 i_am_netplay_host = host_random_id == my_random_netplay_id;
-                                 i_am_netplay_client = !i_am_netplay_host;
+                                netplay_manager.detect_netplay_2player_role(host_random_id);
 
-                                 if (i_am_netplay_host){
+                                 if (netplay_manager.i_am_netplay_host){
                                   _show_player_screen = 0;
                                   }else  _show_player_screen = 1;
                             }
@@ -791,7 +777,7 @@ void retro_set_environment(retro_environment_t cb)
   //  libretro_set_core_options(environ_cb, &option_categories);
     //libretro_supports_option_categories |= option_categories;
 
-    cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void *)subsystems);
+    //cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void *)subsystems);
     /* Request a persistent content data buffer */
     cb(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE,
        (void *)content_overrides);

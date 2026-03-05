@@ -29,10 +29,10 @@
 
 #include "dmy_renderer.h"
 #include "../gb_core/gb.h"
-#include "libretro.h"
+#include "DoubleCherryEngine/libretro.h"
 #include "../Filter/Video/VideoFilter.hpp"
 #include "gbc_lut_accurate.h"
-#include "libretro.h"
+#include "DoubleCherryEngine/libretro.h"
 
 
 extern std::vector<gb* > v_gb;

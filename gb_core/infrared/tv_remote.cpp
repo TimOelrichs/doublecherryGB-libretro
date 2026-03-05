@@ -28,7 +28,7 @@
 */
 
 #include "./include/tv_remote.hpp"
-#include "../../libretro/libretro.h"
+#include "../../libretro/DoubleCherryEngine/libretro.h"
 #include "./include/inline/inline_tv_remote_code.hpp"
 
 extern void display_message_alt(std::string msg_str);

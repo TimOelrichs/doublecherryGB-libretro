@@ -23,7 +23,7 @@
 #include <cmath>
 #include <array>
 #include "../gb_core/renderer.h"
-#include "libretro.h"
+#include "DoubleCherryEngine/libretro.h"
 
 extern retro_environment_t environ_cb;
 
