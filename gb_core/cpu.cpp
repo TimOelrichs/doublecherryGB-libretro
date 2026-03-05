@@ -22,7 +22,7 @@
 // CPU emulation unit (I/O, IRQ, etc.)
 
 #include "gb.h"
-#include "../libretro/libretro.h"
+#include "../libretro/DoubleCherryEngine/libretro.h"
 #include <string>
 #include <istream>
 #include <iostream>

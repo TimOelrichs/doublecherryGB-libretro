@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <cstdint>
 
-#include "libretro.h"
+#include "DoubleCherryEngine/libretro.h"
 #include "libretro_core_options.h"
 #include "../gb_core/gb.h"
 #include "dmy_renderer.h"
@@ -23,13 +23,7 @@
 #include "inline/inline_functions.h"
 
 
-uint64_t random64bit() {
-    static std::random_device rd;
-    static std::mt19937_64 gen(rd());
-    static std::uniform_int_distribution<uint64_t> dis;
 
-    return dis(gen);
-}
 
 static void check_variables(void);
 
@@ -787,7 +781,7 @@ void retro_set_environment(retro_environment_t cb)
   //  libretro_set_core_options(environ_cb, &option_categories);
     //libretro_supports_option_categories |= option_categories;
 
-    cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void *)subsystems);
+    //cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void *)subsystems);
     /* Request a persistent content data buffer */
     cb(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE,
        (void *)content_overrides);

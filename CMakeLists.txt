@@ -65,10 +65,16 @@ set(SOURCES
     ${CORE_DIR}/services/printer/png_printer.cpp
     ${CORE_DIR}/services/printer/image_scaler.cpp
     ${CORE_DIR}/services/printer/printer_registry.cpp
-        libretro/Helpers/Netplay/NetplayManager.cpp
-        libretro/Helpers/Netplay/NetplayManager.h
-        libretro/Helpers/Netplay/NetPacketManager.cpp
-        libretro/Helpers/Netplay/NetPacketManager.h
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.cpp
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.h
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.h
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Enviroment/EnviromentManager.cpp
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Enviroment/EnviromentManager.h
+    ${CORE_DIR}/libretro/DoubleCherryEngine/common/interfaces/ISingleton.hpp
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.h
+        libretro/DoubleCherryEngine/DoubleCherryEngine.h
 )
 
 # Bibliothek erstellen

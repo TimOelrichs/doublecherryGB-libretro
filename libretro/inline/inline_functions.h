@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "inline_variables.h"
-#include "libretro.h"
+#include "../DoubleCherryEngine/libretro.h"
 
 #if defined(__PSP__)
 extern "C" uint64_t sceKernelGetSystemTimeWide(void);

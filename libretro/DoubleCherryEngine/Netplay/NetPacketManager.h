@@ -1,22 +1,14 @@
 #pragma once
 #include <memory>
 
-#include "../../libretro/libretro.h"
+#include "NetPacketReceiveHandler.h"
+#include "../libretro.h"
+#include "../common/interfaces/ISingleton.hpp"
 
-class NetPacketReceiveHandler {
+
+class NetpacketManager final : public ISingleton<NetpacketManager> {
+    friend class ISingleton<NetpacketManager>;
 public:
-    virtual ~NetPacketReceiveHandler() = default;
-    virtual void handleReceive(const void* buf, size_t len, uint16_t client_id) = 0;
-};
-
-
-class NetpacketManager {
-public:
-    // Singleton
-    static NetpacketManager& getInstance() {
-        static NetpacketManager instance;
-        return instance;
-    }
 
     void activate_netpacket_api();
     [[nodiscard]] bool netpacket_is_active() const {return active_netpacket_api;}
@@ -35,21 +27,6 @@ public:
             m_send_fn_ptr(RETRO_NETPACKET_RELIABLE | RETRO_NETPACKET_FLUSH_HINT, buf, len, client_id);
     }
 
-    /*
-    void receive(const void* buf, size_t len, unsigned short client_id) {
-        const byte* data = reinterpret_cast<const byte*>(buf);
-        
-        bool isMaster = (v_gb[0]->get_regs()->SC & 0x01) == 1;
-        if (!isMaster) {
-            v_gb[0]->receive_from_linkcable(data[0]);
-            return;
-        }
-        
-        v_gb[0]->get_cpu()->received_netpacket_data.push(data[0]);
-        v_gb[0]->get_cpu()->waiting_for_netpacket = false;
-    }
-    */
-    
     bool connected(unsigned short client_id) {
         if (m_num_clients >= m_max_gbs)
             return false;
@@ -123,10 +100,13 @@ private:
     int m_num_clients = 0;
     const int m_max_gbs = 2;
     bool active_netpacket_api = false;
+    bool waiting_for_netpacket = false;
 
+    std::queue<byte> received_netpacket_data;
     std::unique_ptr<NetPacketReceiveHandler> m_receive_handler;
     retro_netpacket_send_t m_send_fn_ptr = nullptr;
     retro_netpacket_poll_receive_t m_pollrcv_fn_ptr = nullptr;
+
 };
 
 // Definition der Callback-Struktur (mit Wrappern)

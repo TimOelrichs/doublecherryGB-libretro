@@ -22,7 +22,7 @@
 //-------------------------------------------------
 
 #include "./include/power_antenna.hpp"
-#include "../../libretro/libretro.h"
+#include "../../libretro/DoubleCherryEngine/libretro.h"
 
 extern retro_set_rumble_state_t rumble_state_cb;
 extern retro_set_led_state_t led_state_cb;

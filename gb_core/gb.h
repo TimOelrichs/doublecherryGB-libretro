@@ -712,8 +712,7 @@ public:
 
 	int next_ir_clock = INT_MIN;
 	std::vector<ir_signal*> out_ir_signal_que;
-	bool waiting_for_netpacket = false;
-	std::queue<byte> received_netpacket_data;
+
 	
 
 private:

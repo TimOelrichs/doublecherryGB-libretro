@@ -22,7 +22,7 @@
 //-------------------------------------------------
 
 #include "./include/hack_4p_tetris.hpp"
-#include "../../libretro/libretro.h"
+#include "../../libretro/DoubleCherryEngine/libretro.h"
 #include <string>
 #include <sstream>
 #include <vector>
