@@ -1289,7 +1289,7 @@ static void check_variables(void)
             }
 
             if (_show_player_screen != emulated_gbs) {
-                display_message("köbööö");
+                //display_message("köbööö");
                 audio_2p_mode = _show_player_screen;
                 var.key = "dcgb_audio_output";
                 char buf[32];
