@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <random>
-#include <bits/types.h>
+
 
 class NetplayManager
 {

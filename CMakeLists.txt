@@ -72,7 +72,7 @@ set(SOURCES
     ${CORE_DIR}/libretro/DoubleCherryEngine/common/interfaces/ISingleton.hpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.h
-        libretro/DoubleCherryEngine/DoubleCherryEngine.h
+    ${CORE_DIR}/libretro/DoubleCherryEngine/DoubleCherryEngine.h
 )
 
 # Bibliothek erstellen

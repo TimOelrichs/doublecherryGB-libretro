@@ -3,7 +3,7 @@
 //
 
 #include "NetPacketManager.h"
-#include "../../gb_core/gb.h"
+#include "../../../gb_core/gb.h"
 
 
 extern std::vector<gb*> v_gb;
