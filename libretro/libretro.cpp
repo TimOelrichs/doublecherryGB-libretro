@@ -641,13 +641,18 @@ bool retro_unserialize(const void *data, size_t size)
                             s_VAR(host_random_id);
                             ptr += sizeof(emulated_gbs) + sizeof(host_random_id);
 
-                            if (!netplay_manager.netplay_detected() && emulated_gbs == 2)
+                            if (!netplay_manager.netplay_detected() )
                             {
-                                netplay_manager.detect_netplay_2player_role(host_random_id);
-                                show_all_screens = false;
-                                 if (netplay_manager.i_am_netplay_host){
-                                  _show_player_screen = 0;
-                                  }else  _show_player_screen = 1;
+                                if (emulated_gbs == 2)
+                                {
+                                    netplay_manager.detect_netplay_2player_role(host_random_id);
+                                    show_all_screens = false;
+                                    if (netplay_manager.i_am_netplay_host){
+                                        _show_player_screen = 0;
+                                    }else  _show_player_screen = 1;
+                                }
+                                else
+                                    show_all_screens = true; //can't detect player_number when players >  2
                             }
                         }
                     }

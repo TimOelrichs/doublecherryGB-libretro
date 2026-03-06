@@ -925,13 +925,11 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 // (this ignores the "switch player screens" setting)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
-                if (which_gb == emulated_gbs) {
-                    //experimental GBC LCD interlacing effect
-                    if (is_gbc_rom && gbc_lcd_interlacing_enabled)
-                    {
-                        add_gbc_interlacing_effect(joined_buf, width, height, pitch);
-                    }
-                    video_cb(joined_buf, width, height, pitch);
+
+                if (which_gb == (emulated_gbs - 1)) {
+
+                    apply_all_gb_effects_and_render(joined_buf, width, height, depth, pitch);
+                    return;
                 }
                    
             }
@@ -1039,13 +1037,11 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 // (this ignores the "switch player screens" setting)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
-                if (which_gb == (emulated_gbs - 1))
-                {
-                    if (is_gbc_rom && gbc_lcd_interlacing_enabled)
-                    {
-                        add_gbc_interlacing_effect(joined_buf, width, height, pitch);
-                    }
-                    video_cb(joined_buf, width, height, pitch);
+
+                if (which_gb == (emulated_gbs - 1)) {
+
+                    apply_all_gb_effects_and_render(joined_buf, width, height, depth, pitch);
+                    return;
                 }
             }
 
@@ -1109,8 +1105,12 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 // (this ignores the "switch player screens" setting)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
-                if (which_gb == (emulated_gbs - 1))
-                    video_cb(joined_buf, width, height, pitch);
+
+                if (which_gb == (emulated_gbs - 1)) {
+
+                    apply_all_gb_effects_and_render(joined_buf, width, height, depth, pitch);
+                    return;
+                }
             }
 
             break;
@@ -1187,8 +1187,12 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 // (this ignores the "switch player screens" setting)
                 if (_show_player_screen == which_gb)
                     memcpy(joined_buf, buf, size_single_screen);
-                if (which_gb == (emulated_gbs - 1))
-                    video_cb(joined_buf, width, height, pitch);
+
+                if (which_gb == (emulated_gbs - 1)) {
+
+                    apply_all_gb_effects_and_render(joined_buf, width, height, depth, pitch);
+                    return;
+                }
             }
 
 
