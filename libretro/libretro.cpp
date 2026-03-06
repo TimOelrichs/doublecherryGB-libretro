@@ -39,8 +39,7 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-
-    check_variables();
+    gbc_rgbSubpixel_upscale_factor = 1; // Default value
 
     int base_w = 160 * gbc_rgbSubpixel_upscale_factor;
     int base_h = 144 * gbc_rgbSubpixel_upscale_factor;
@@ -92,6 +91,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     //memcpy(my_av_info, info, sizeof(*my_av_info));
     memcpy(&my_av_info, info, sizeof(my_av_info));
 
+    check_variables();
 }
 
 void retro_init(void)
@@ -581,6 +581,8 @@ bool retro_serialize(void *data, size_t size)
 
                         if (emulated_gbs == 1){
                             ++emulated_gbs;
+                            show_all_screens = false;
+                            _show_player_screen = 0;
                             //check_variables();
                             player_joined_with_joypad_press = true;
                             handlePlayerJoined();
@@ -642,7 +644,7 @@ bool retro_unserialize(const void *data, size_t size)
                             if (!netplay_manager.netplay_detected() && emulated_gbs == 2)
                             {
                                 netplay_manager.detect_netplay_2player_role(host_random_id);
-
+                                show_all_screens = false;
                                  if (netplay_manager.i_am_netplay_host){
                                   _show_player_screen = 0;
                                   }else  _show_player_screen = 1;
