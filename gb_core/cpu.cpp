@@ -41,7 +41,7 @@
 #define N_FLAG 0x02
 #define C_FLAG 0x01
 
-extern bool logging_allowed;
+extern bool logging_transers_to_file_allowed;
 extern int emulated_gbs;
 
 inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
@@ -458,7 +458,7 @@ void cpu::io_write(word adr,byte dat)
 		{
 			auto& regs = *ref_gb->get_regs();
 			const bool is_dmg = (ref_gb->get_rom()->get_info()->gb_type == 1);
-			const bool start_transmission = (dat & 0x80);
+			const bool start_transmission = (dat & 0x80) == 0x80;
 			const uint8_t sc_mask = is_dmg ? 0x81 : 0x83;
 			regs.SC = dat & sc_mask;
 
@@ -966,7 +966,7 @@ byte cpu::receive_from_linkcable(byte in_data)
 	*/
 
 	byte out_data = ref_gb->get_regs()->SB;
-	//log_link_traffic(in_data, out_data);
+	log_link_traffic(in_data, out_data);
 
 	ref_gb->get_regs()->SB = in_data;
 	ref_gb->get_regs()->SC &= 1;
@@ -979,7 +979,7 @@ byte cpu::receive_from_linkcable(byte in_data)
 void cpu::log_link_traffic(byte a, byte b)
 {
 	
-	if (logging_allowed)
+	if (logging_transers_to_file_allowed)
 	{
 		std::string filePath = "./2p_link_log.txt";
 		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
@@ -1001,7 +1001,7 @@ void cpu::log_link_traffic(byte a, byte b)
 
 void cpu::log_ir_traffic(ir_signal *signal, bool incoming) {
 
-	if (logging_allowed)
+	if (logging_transers_to_file_allowed)
 	{
 		std::string filePath = "./ir_logger.txt";
 		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
@@ -1167,11 +1167,26 @@ void cpu::exec(int clocks)
 			//const bool netpacket_active = emulated_gbs == 1 && (num_clients == 1 || my_client_id == 1);
 			if (netpacket_manager.netpacket_is_active() )
 			{
-				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 1;
-				if (!isMaster) return;
-
 				auto start = std::chrono::steady_clock::now();
-				const auto timeout = std::chrono::seconds(5);
+				const auto timeout = std::chrono::seconds(1);
+
+				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 1;
+				if (!isMaster)
+				{
+					while (netpacket_manager.received_netpacket_data.empty())
+					{
+						//netpacket_poll_receive();
+						netpacket_manager.poll_receive();
+						auto elapsed = std::chrono::steady_clock::now() - start;
+						if (elapsed > timeout)
+						{
+							return;
+						}
+						SLEEP_MS(1);
+					}
+					return;
+				}
+
 
 				// Blockierende Warte-Schleife, bis ein Byte da ist oder Timeout
 				while (netpacket_manager.received_netpacket_data.empty())

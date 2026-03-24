@@ -24,7 +24,7 @@
 #include "../../gb.h"
 #include "../../serializer.h"
 
-extern bool logging_allowed; 
+extern bool logging_transers_to_file_allowed; 
 
 class hack_4p_kwirk final : public I_linkcable_target {
 

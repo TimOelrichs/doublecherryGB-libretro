@@ -1132,7 +1132,16 @@ static void check_variables(void)
         dcgb_audio_filter_enabled = (bool)value;
 
     }
-    
+
+    var.key = "dcgb_netplay_mode";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        force_linkcable_over_ip_mode = (bool)value;
+
+    }
+
     var.key = "dcgb_emulated_gameboys";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1176,6 +1185,16 @@ static void check_variables(void)
                 _number_of_local_screens = 2;
         }
      }
+
+        var.key = "dcgb_dev_log_linkcable_to_file";
+        var.value = NULL;
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+        {
+            int value = atoi(var.value);
+            logging_transers_to_file_allowed = (bool)value;
+            if(logging_transers_to_file_allowed) display_message("Logging to file is enabled");
+        }
+
 
     //TODO FOR 3PLAYERS
     if (emulated_gbs > 2) {
@@ -1221,17 +1240,7 @@ static void check_variables(void)
         else
             gblink_enable = false;
 
-        // check whether link cable mode is enabled
-        var.key = "dcgb_log_link";
-        var.value = NULL;
-        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-        {
-            /*
-            if (!strcmp(var.value, "On"))
-                logging_allowed = true;
-            else logging_allowed = false;
-            */
-        }
+
 
 
         var.key = "dcgb_screen_placement";
@@ -1460,7 +1469,7 @@ void check_for_new_players() {
 
 void log_save_state(uint8_t* data, size_t size)
 {
-    if (logging_allowed)
+    if (logging_transers_to_file_allowed)
     {
         std::string filePath = "./dmg07_savesate_log.bin";
         std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
@@ -1544,7 +1553,13 @@ void deinit_printer_registry()
 void handlePlayerJoined()
 {
     auto_link_multiplayer();
-    if (emulated_gbs <= 2) _screen_4p_split = false;
+    if (emulated_gbs <= 2)
+    {
+        _screen_4p_split = false;
+        //use same save file for both instances
+        memcpy(v_gb[1]->get_rom()->get_sram(), v_gb[0]->get_rom()->get_sram(), v_gb[0]->get_rom()->get_sram_size());
+
+    }
     else _screen_4p_split = true;
     update_multiplayer_geometry();
 }

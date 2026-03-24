@@ -21,7 +21,7 @@
 
 #include "./include/link_master_device.hpp"
 
-extern bool logging_allowed;
+extern bool logging_transers_to_file_allowed;
 extern int emulated_gbs;
 
 byte link_master_device::send_byte(byte which, byte dat)
@@ -44,7 +44,7 @@ void link_master_device::broadcast_byte(byte dat)
 
 void link_master_device::log_traffic(byte id, byte b) {
 
-	if (logging_allowed) {
+	if (logging_transers_to_file_allowed) {
 		std::string filePath = "./4p_log.csv";
 		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
 		if (id < 4)

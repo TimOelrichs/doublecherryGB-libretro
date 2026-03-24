@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <fstream>
 
-extern bool logging_allowed; 
+extern bool logging_transers_to_file_allowed; 
 extern size_t emulated_gbs;
 extern retro_environment_t environ_cb;
 extern unsigned libretro_msg_interface_version;
@@ -179,7 +179,7 @@ void hack_4p_tetris::init_send_data_vec() {
 
 void hack_4p_tetris::log_traffic(byte id, byte b)
 {
-	if (!logging_allowed) return; 
+	if (!logging_transers_to_file_allowed) return; 
 
 	std::string filePath = "./tetrishack_log.txt";
 	std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);

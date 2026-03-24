@@ -29,7 +29,7 @@
 #include "../../../libretro/dcgb_hotkey_target.hpp"
 
 
-extern bool logging_allowed;
+extern bool logging_transers_to_file_allowed;
 extern char cart_name[18];
 
 enum pkm_generation {

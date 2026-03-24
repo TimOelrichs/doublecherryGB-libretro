@@ -716,6 +716,7 @@ public:
 	std::vector<ir_signal*> out_ir_signal_que;
 
 	
+	int total_clock, seri_occer;
 
 private:
 	byte inline io_read(word adr);
@@ -745,7 +746,8 @@ private:
 	int que_cur;
 //	word org_pal[16][4];
 
-	int total_clock, rest_clock, sys_clock, seri_occer, div_clock;
+	//int total_clock, rest_clock, sys_clock, seri_occer, div_clock;
+	int  rest_clock, sys_clock, div_clock;
 	bool halt,speed,speed_change,dma_executing;
 	bool b_trace;
 	int dma_src;
