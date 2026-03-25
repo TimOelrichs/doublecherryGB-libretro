@@ -4,6 +4,7 @@
 
 #include "../gb_core/gb.h"
 #include "NetPacketReceiveHandler.h"
+#include "NetPacketSendHandler.h"
 #include "../libretro.h"
 #include "../common/interfaces/ISingleton.hpp"
 
@@ -20,8 +21,14 @@ public:
     }
 
     uint16_t get_netpacket_id() {return m_my_client_id;}
+
     void setReceiveHandler(std::unique_ptr<NetPacketReceiveHandler> handler) {
         m_receive_handler = std::move(handler);
+    }
+
+    void setSendHandler(std::unique_ptr<NetPacketSendHandler> handler) {
+        m_send_handler = std::move(handler);
+        m_send_handler->set_retro_netpacket_send_t(m_send_fn_ptr);
     }
 
     void poll_receive() {
@@ -30,8 +37,11 @@ public:
     }
 
     void send(uint16_t client_id, const void* buf, size_t len) {
-        if (m_send_fn_ptr)
+        if (m_send_handler)
+            m_send_handler->handleSend(client_id, buf, len);
+        else if (m_send_fn_ptr)
             m_send_fn_ptr(RETRO_NETPACKET_RELIABLE | RETRO_NETPACKET_FLUSH_HINT, buf, len, client_id);
+
     }
 
     bool connected(unsigned short client_id) {
@@ -50,13 +60,15 @@ public:
     static const struct retro_netpacket_callback s_iface;
 
     bool waiting_for_netpacket = false;
+    bool lockstep_mode_enabled = false;
     std::queue<byte> received_netpacket_data;
 
 private:
 
     NetpacketManager()
     {
-        m_receive_handler = std::unique_ptr<NetPacketReceiveHandler>(new DefaultNetPacketReceiveHandler(*this));
+        m_receive_handler = std::unique_ptr<NetPacketReceiveHandler>(new DefaultNetPacketReceiveHandler());
+        setSendHandler(std::unique_ptr<NetPacketSendHandler>(new DefaultNetPacketSendHandler()));
     }
 
     ~NetpacketManager() = default;
@@ -71,10 +83,12 @@ private:
         m_num_clients = 0;
         m_my_client_id = client_id;
         active_netpacket_api = true;
+        m_send_handler->set_retro_netpacket_send_t(send_fn);
     }
 
     void stop() {
         m_send_fn_ptr = nullptr;
+        m_send_handler->set_retro_netpacket_send_t(nullptr);
         m_pollrcv_fn_ptr = nullptr;
     }
 
@@ -116,6 +130,7 @@ private:
     bool active_netpacket_api = false;
 
     std::unique_ptr<NetPacketReceiveHandler> m_receive_handler;
+    std::unique_ptr<NetPacketSendHandler> m_send_handler;
     retro_netpacket_send_t m_send_fn_ptr = nullptr;
     retro_netpacket_poll_receive_t m_pollrcv_fn_ptr = nullptr;
 };

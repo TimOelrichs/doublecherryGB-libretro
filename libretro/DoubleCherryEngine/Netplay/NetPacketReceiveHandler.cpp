@@ -8,49 +8,23 @@
 
 extern std::vector<gb*> v_gb;
 
-const byte LINKCABLE_SPEED_CHANGE = 0x01;
 
 void DefaultNetPacketReceiveHandler::handleReceive(const void* buf, std::size_t len, uint16_t client_id)
 {
-    switch (len)
-    {
-        case 1: //normal data byte
-            {
-                const byte* data = reinterpret_cast<const byte*>(buf);
+    NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
 
-                bool isMaster = (v_gb[0]->get_regs()->SC & 0x01) == 1;
-                if (!isMaster) {
+    const byte* data = reinterpret_cast<const byte*>(buf);
 
-                    byte answer_data[1] =  {v_gb[0]->receive_from_linkcable(data[0])};
-                    netpacket_manager_.send(client_id, answer_data, 1);
-                    v_gb[0]->get_cpu()->seri_occer = v_gb[0]->get_cpu()->total_clock + 17328;
-                    return;
-                }
+    bool isMaster = (v_gb[0]->get_regs()->SC & 0x01) == 1;
+    if (!isMaster) {
 
-                netpacket_manager_.received_netpacket_data.push(data[0]);
-                netpacket_manager_.waiting_for_netpacket = false;
-                return;
-            }
-
-        case 2:
-            {
-                /*
-                byte command_byte = &buf[0];
-                byte command_data =  &buf[1];
-
-                switch (command_byte)
-                {
-                    case LINKCABLE_SPEED_CHANGE:
-                    {
-
-                    }
-
-                }
-                */
-            }
-
+        byte answer_data[1] =  {v_gb[0]->receive_from_linkcable(data[0])};
+        netpacket_manager.send(client_id, answer_data, 1);
+        return;
     }
 
+    netpacket_manager.received_netpacket_data.push(data[0]);
+    netpacket_manager.waiting_for_netpacket = false;
 
 }
 

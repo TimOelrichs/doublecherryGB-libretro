@@ -459,11 +459,28 @@ void auto_config_4p_hack()
     
 };
 
+#include "../libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.h"
+inline std::unique_ptr<PokemonTcgNetpacketHandler> netpacket_handler = std::make_unique<PokemonTcgNetpacketHandler>();
 
 void auto_config_1p_link() {
 
+    //TODO: POKEMON TCG 2
+    if (!strcmp(cart_name, "POKECARD"))
+    {
+        log_cb(RETRO_LOG_INFO, "Trying to set custom NetpacketHandler\n");
 
+        master_link = netpacket_handler.get();
+        log_cb(RETRO_LOG_INFO, "Set Masterlink");
+        auto send_handler = std::make_unique<PokemonTcgNetpacketHandler>(*netpacket_handler);
+        auto receive_handler = std::make_unique<PokemonTcgNetpacketHandler>(*netpacket_handler);
 
+        NetpacketManager::getInstance().setSendHandler(std::move(send_handler));
+        log_cb(RETRO_LOG_INFO, "Set SendHandler\n");
+        NetpacketManager::getInstance().setReceiveHandler(std::move(receive_handler));
+        log_cb(RETRO_LOG_INFO, "Set ReceiverHandler\n");
+        display_message("Set Netpacket Handler for Pokemon TCG\n");
+        return;
+    }
     //link Alleyway paddle controller
     if (!strcmp(cart_name, "ALLEY WAY"))
     {

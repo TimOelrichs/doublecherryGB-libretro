@@ -458,7 +458,7 @@ void cpu::io_write(word adr,byte dat)
 		{
 			auto& regs = *ref_gb->get_regs();
 			const bool is_dmg = (ref_gb->get_rom()->get_info()->gb_type == 1);
-			const bool start_transmission = (dat & 0x80) == 0x80;
+			const bool start_transmission = (dat & 0x80);
 			const uint8_t sc_mask = is_dmg ? 0x81 : 0x83;
 			regs.SC = dat & sc_mask;
 
@@ -1168,10 +1168,11 @@ void cpu::exec(int clocks)
 			if (netpacket_manager.netpacket_is_active() )
 			{
 				auto start = std::chrono::steady_clock::now();
-				const auto timeout = std::chrono::seconds(1);
+				const auto timeout = std::chrono::seconds(3);
 
 				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 1;
-				if (!isMaster)
+
+				if (!isMaster && netpacket_manager.lockstep_mode_enabled)
 				{
 					while (netpacket_manager.received_netpacket_data.empty())
 					{

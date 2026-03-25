@@ -73,6 +73,10 @@ set(SOURCES
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.h
     ${CORE_DIR}/libretro/DoubleCherryEngine/DoubleCherryEngine.h
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.h
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp
+    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.h
 )
 
 # Bibliothek erstellen
