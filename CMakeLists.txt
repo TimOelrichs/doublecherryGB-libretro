@@ -66,17 +66,11 @@ set(SOURCES
     ${CORE_DIR}/services/printer/image_scaler.cpp
     ${CORE_DIR}/services/printer/printer_registry.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.cpp
-    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.h
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp
-    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.h
-    ${CORE_DIR}/libretro/DoubleCherryEngine/common/interfaces/ISingleton.hpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
-    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.h
-    ${CORE_DIR}/libretro/DoubleCherryEngine/DoubleCherryEngine.h
-    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.h
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp
-    ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.h
+
 )
 
 # Bibliothek erstellen

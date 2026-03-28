@@ -35,6 +35,7 @@
 
 #include <thread>
 #include <chrono>
+//#include <bits/valarray_after.h>
 
 #define Z_FLAG 0x40
 #define H_FLAG 0x10
@@ -1172,6 +1173,7 @@ void cpu::exec(int clocks)
 
 				bool isMaster = (ref_gb->get_regs()->SC & 0x01) == 1;
 
+				//Slave Lockstep mode
 				if (!isMaster && netpacket_manager.lockstep_mode_enabled)
 				{
 					while (netpacket_manager.received_netpacket_data.empty())
@@ -1181,15 +1183,22 @@ void cpu::exec(int clocks)
 						auto elapsed = std::chrono::steady_clock::now() - start;
 						if (elapsed > timeout)
 						{
+							log_cb(RETRO_LOG_INFO, "Slave netpacket wait timed out\n");
 							return;
 						}
 						SLEEP_MS(1);
 					}
+
+					byte received_date = netpacket_manager.received_netpacket_data.front();
+					netpacket_manager.received_netpacket_data.pop();
+					ref_gb->receive_from_linkcable(received_date);
+					seri_occer = ref_gb->get_cpu()->get_clock() + 17328;
 					return;
 				}
+				else if (!isMaster) return;
 
 
-				// Blockierende Warte-Schleife, bis ein Byte da ist oder Timeout
+				// Master Blockierende Warte-Schleife, bis ein Byte da ist oder Timeout
 				while (netpacket_manager.received_netpacket_data.empty())
 				{
 					//netpacket_poll_receive();

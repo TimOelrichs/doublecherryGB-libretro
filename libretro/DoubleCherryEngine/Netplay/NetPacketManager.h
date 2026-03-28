@@ -8,6 +8,8 @@
 #include "../libretro.h"
 #include "../common/interfaces/ISingleton.hpp"
 
+extern retro_log_printf_t log_cb;
+
 class NetpacketManager final : public ISingleton<NetpacketManager> {
     friend class ISingleton<NetpacketManager>;
 public:
@@ -22,11 +24,11 @@ public:
 
     uint16_t get_netpacket_id() {return m_my_client_id;}
 
-    void setReceiveHandler(std::unique_ptr<NetPacketReceiveHandler> handler) {
+    void setReceiveHandler(std::shared_ptr<NetPacketReceiveHandler> handler) {
         m_receive_handler = std::move(handler);
     }
 
-    void setSendHandler(std::unique_ptr<NetPacketSendHandler> handler) {
+    void setSendHandler(std::shared_ptr<NetPacketSendHandler> handler) {
         m_send_handler = std::move(handler);
         m_send_handler->set_retro_netpacket_send_t(m_send_fn_ptr);
     }
@@ -37,8 +39,12 @@ public:
     }
 
     void send(uint16_t client_id, const void* buf, size_t len) {
+        //log_cb(RETRO_LOG_INFO, "Send netpacket NManager  \n");
         if (m_send_handler)
+        {
+           // log_cb(RETRO_LOG_INFO, "call sendhandler  \n");
             m_send_handler->handleSend(client_id, buf, len);
+        }
         else if (m_send_fn_ptr)
             m_send_fn_ptr(RETRO_NETPACKET_RELIABLE | RETRO_NETPACKET_FLUSH_HINT, buf, len, client_id);
 
@@ -129,8 +135,8 @@ private:
     const int m_max_gbs = 2;
     bool active_netpacket_api = false;
 
-    std::unique_ptr<NetPacketReceiveHandler> m_receive_handler;
-    std::unique_ptr<NetPacketSendHandler> m_send_handler;
+    std::shared_ptr<NetPacketReceiveHandler> m_receive_handler;
+    std::shared_ptr<NetPacketSendHandler> m_send_handler;
     retro_netpacket_send_t m_send_fn_ptr = nullptr;
     retro_netpacket_poll_receive_t m_pollrcv_fn_ptr = nullptr;
 };

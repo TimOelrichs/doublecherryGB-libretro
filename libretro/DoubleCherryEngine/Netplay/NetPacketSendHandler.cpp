@@ -6,7 +6,6 @@
 #include "NetPacketManager.h"
 #include "../../../gb_core/gb.h"
 
-extern std::vector<gb*> v_gb;
 
 void DefaultNetPacketSendHandler::handleSend(uint16_t client_id, const void* buf, size_t len)
 {

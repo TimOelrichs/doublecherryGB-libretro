@@ -460,7 +460,7 @@ void auto_config_4p_hack()
 };
 
 #include "../libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.h"
-inline std::unique_ptr<PokemonTcgNetpacketHandler> netpacket_handler = std::make_unique<PokemonTcgNetpacketHandler>();
+inline auto shared_handler = std::make_shared<PokemonTcgNetpacketHandler>();
 
 void auto_config_1p_link() {
 
@@ -468,17 +468,19 @@ void auto_config_1p_link() {
     if (!strcmp(cart_name, "POKECARD"))
     {
         log_cb(RETRO_LOG_INFO, "Trying to set custom NetpacketHandler\n");
-
-        master_link = netpacket_handler.get();
+        shared_handler->gb_instance = v_gb[0];
+        master_link = shared_handler.get();
         log_cb(RETRO_LOG_INFO, "Set Masterlink");
-        auto send_handler = std::make_unique<PokemonTcgNetpacketHandler>(*netpacket_handler);
-        auto receive_handler = std::make_unique<PokemonTcgNetpacketHandler>(*netpacket_handler);
 
-        NetpacketManager::getInstance().setSendHandler(std::move(send_handler));
+        auto send_handler = std::make_unique<PokemonTcgNetpacketHandler>(*shared_handler);
+        auto receive_handler = std::make_unique<PokemonTcgNetpacketHandler>(*shared_handler);
+
+        NetpacketManager::getInstance().setSendHandler(shared_handler);
         log_cb(RETRO_LOG_INFO, "Set SendHandler\n");
-        NetpacketManager::getInstance().setReceiveHandler(std::move(receive_handler));
+        NetpacketManager::getInstance().setReceiveHandler(shared_handler);
         log_cb(RETRO_LOG_INFO, "Set ReceiverHandler\n");
         display_message("Set Netpacket Handler for Pokemon TCG\n");
+
         return;
     }
     //link Alleyway paddle controller

@@ -141,12 +141,7 @@ void retro_init(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
         libretro_supports_bitmasks = true;
 
-   // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
-    log_cb(RETRO_LOG_INFO, "Checking Variables\n");
-    check_variables();
-    log_cb(RETRO_LOG_INFO, "Check Variables done\n");
-    init_printer_registry();
-    log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
+
 
 }
 
@@ -218,12 +213,20 @@ bool retro_load_game(const struct retro_game_info *info)
 
 
     // Multiplayer-Setup
+    // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
+    log_cb(RETRO_LOG_INFO, "Checking Variables\n");
+    check_variables();
+    log_cb(RETRO_LOG_INFO, "Check Variables done\n");
+    init_printer_registry();
+    log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
 
     auto_link_multiplayer();
     check_variables();
     set_memory_maps();
     if (master_link)
         v_serializable_devices.push_back(master_link);
+
+
 
    return true;
 }
