@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -24,6 +24,8 @@
 #include "gb.h"
 #include <stdlib.h>
 
+extern bool detect_as_gba;
+
 gb::gb(renderer *ref,bool b_lcd,bool b_apu)
 {
 	m_renderer=ref;
@@ -34,7 +36,8 @@ gb::gb(renderer *ref,bool b_lcd,bool b_apu)
 	m_mbc=new mbc(this);
 	m_cpu=new cpu(this);
 	m_cheat=new cheat(this);
-	target=NULL;
+	linked_cable_device=NULL;
+	linked_ir_device = NULL;
 
 	m_renderer->reset();
 	m_renderer->set_sound_renderer(b_apu?m_apu->get_renderer():NULL);
@@ -80,7 +83,7 @@ void gb::reset()
 	memset(&c_regs,0,sizeof(c_regs));
 
 	if (m_rom->get_loaded())
-		m_rom->get_info()->gb_type=(m_rom->get_rom()[0x143]&0x80)?(use_gba?4:3):1;
+		m_rom->get_info()->gb_type=(m_rom->get_rom()[0x143]&0x80)?(detect_as_gba?4:3):1;
 
 	m_cpu->reset();
 	m_lcd->reset();
@@ -90,6 +93,11 @@ void gb::reset()
 	now_frame=0;
 	skip=skip_buf=0;
 	re_render=0;
+
+
+	if (detect_as_gba) this->get_cpu()->get_regs()->BC.b.l = 0x01;
+
+	
 }
 
 void gb::hook_extport(ext_hook *ext)
@@ -103,9 +111,23 @@ void gb::unhook_extport()
 	hook_ext=false;
 }
 
+byte gb::receive_from_linkcable(byte data)
+{
+	return get_cpu()->receive_from_linkcable(data);
+}
+
 void gb::set_skip(int frame)
 {
 	skip_buf=frame;
+}
+
+void gb::set_use_gba(bool use) {
+	use_gba = use;
+	if (use) this->get_cpu()->get_regs()->BC.b.l = 0x01;
+}
+
+dword* gb::get_rp_que() {
+	return this->get_cpu()->rp_que;
 }
 
 bool gb::load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent)
@@ -306,6 +328,7 @@ void gb::refresh_pal()
 		m_lcd->get_mapped_pal(i>>2)[i&3]=m_renderer->map_color(m_lcd->get_pal(i>>2)[i&3]);
 }
 
+
 void gb::run()
 {
 	if (m_rom->get_loaded()){
@@ -447,4 +470,69 @@ void gb::run()
 			m_cpu->exec(456);
 		}
 	}
+}
+
+byte gb::send_over_linkcable(byte out_data)
+{
+	I_linkcable_target* connected_linkcable_device = this->get_linked_target();
+	return connected_linkcable_device ? connected_linkcable_device->receive_from_linkcable(out_data) : 0xFF;
+
+}
+
+void gb::receive_ir_signal(ir_signal* signal)
+{
+	received_ir_signals.push_back(signal); 
+
+	this->get_cpu()->log_ir_traffic(signal, true);
+
+	/*
+	if(!this->get_cpu()->out_ir_signal_que.empty()) 
+		this->get_cpu()->out_ir_signal_que.clear();
+	*/
+	
+}
+
+
+
+void gb::send_ir_signal(ir_signal* signal)
+{
+	get_ir_target()->receive_ir_signal(signal);
+
+}
+
+
+static int asHex(const char c)
+{
+	return c >= 'A' ? c - 'A' + 0xA : c - '0';
+}
+
+void gb::set_Game_Genie(bool enable, std::string code)
+{
+	if (code.size() < 7) return; 
+
+	const unsigned val = (asHex(code[0]) << 4 | asHex(code[1])) & 0xFF;
+	const unsigned addr = (asHex(code[2]) << 8 | asHex(code[4]) << 4 | asHex(code[5]) | (asHex(code[6]) ^ 0xF) << 12) & 0x7FFF;
+
+	if (enable)
+	{
+	
+		if (addr <= 0x4000 * 2)
+		{
+			byte original_value = this->get_rom()->get_rom()[addr];
+			this->get_rom()->get_rom()[addr] = val;
+			undo_cheat_map[code] = original_value;
+		}
+		return; 
+	}
+
+	std::map<std::string, byte>::iterator it;
+	it = undo_cheat_map.find(code);
+	if (it != undo_cheat_map.end())
+	{	
+		byte original_value = undo_cheat_map[code];
+		this->get_rom()->get_rom()[addr] = original_value;
+		undo_cheat_map.erase(it);
+	}
+		
+
 }

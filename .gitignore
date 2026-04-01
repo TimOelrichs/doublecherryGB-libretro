@@ -1,6 +1,17 @@
+﻿# Build-Artifakte
 *.o
 *.so
 *.dll
 *.exe
-tgbdual
+
+# Temporäre Dateien
 .goutputstream-*
+.vs/
+.idea/
+.cmake-*
+
+# Lokale Build-Verzeichnisse
+build*/
+out
+
+CMakeSettings.json

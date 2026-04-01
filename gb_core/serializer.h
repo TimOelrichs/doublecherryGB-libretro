@@ -1,3 +1,4 @@
+#pragma once
 #ifndef __SERIALIZER_H__
 #define __SERIALIZER_H__
 

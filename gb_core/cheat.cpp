@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -80,12 +80,12 @@ void cheat::create_unique_name(char *buf)
 {
 	int num;
 	bool end=false;
-	char tmp[16];
+	char tmp[20];
 	std::list<cheat_dat>::iterator ite;
 
 	for (num=0;!end;num++){
 		end=true;
-		sprintf(tmp,"cheat_%03d",num);
+		snprintf(tmp, sizeof(tmp), "cheat_%03d", num);
 		for (ite=cheat_list.begin();ite!=cheat_list.end();ite++)
 			if (strcmp(ite->name,tmp)==0)
 				end=false;
@@ -201,4 +201,7 @@ byte cheat::cheat_read(word adr)
 
 void cheat::cheat_write(word adr,byte dat)
 {
+	//avoid warning about unused parameters
+	(void)adr;
+	(void)dat;
 }

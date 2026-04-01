@@ -23,6 +23,9 @@
 #include "gb.h"
 #include <stdlib.h>
 #include <string.h>
+#include <fstream>
+
+extern bool logging_allowed; 
 
 rom::rom()
 {
@@ -38,6 +41,17 @@ rom::~rom()
    if (!b_persistent)
       free(dat);
 	free(sram);
+}
+
+void rom::log_info(char* info) {
+
+	
+		std::string filePath = "./gameinfo.txt";
+		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
+
+		ofs << info;
+		ofs.close();
+	
 }
 
 bool rom::has_battery()
@@ -72,6 +86,9 @@ bool rom::load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent)
 	info.cart_type=buf[0x147];
 	info.rom_size=buf[0x148];
 	info.ram_size=buf[0x149];
+
+	if(logging_allowed)
+		log_info(info.cart_name);
 
 	if (memcmp(info.cart_name,momocol_title,16)==0){
 		info.cart_type=0x100;//mmm01

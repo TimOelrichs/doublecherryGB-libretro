@@ -1,4 +1,4 @@
-/*--------------------------------------------------
+﻿/*--------------------------------------------------
    TGB Dual - Gameboy Emulator -
    Copyright (C) 2001  Hii
 
@@ -22,6 +22,13 @@
 // MBC emulation unit (MBC1/2/3/5/7,HuC-1,MMM01,Rumble,RTC,Motion-Sensor,etc...)
 
 #include "gb.h"
+
+#include <ctime>
+#include <cstdint>
+#include <string>
+#include <istream>
+#include <iostream>
+#include <fstream>
 
 mbc::mbc(gb *ref)
 {
@@ -62,6 +69,22 @@ void mbc::reset()
 	if (ref_gb->get_rom()->get_info()->cart_type==0xFD){
 		ext_is_ram=false;
 	}
+
+	huc3_haltTime = huc3_baseTime = 0;
+	huc3_dataTime = huc3_writingTime = 0;
+	huc3_ramValue = huc3_shift = huc3_current_mem_control_reg = huc3_modeflag = huc3_access_adress = 0;
+	huc3_halted = false;
+
+	
+	huc3_rtc_register = (byte*)calloc(0xFF, sizeof(byte));
+	/*
+	for (int i = 0; i < 0xFF; i++)
+	{
+		huc3_rtc_register[i] = 0xFF;
+	}
+	*/
+
+
 }
 
 byte mbc::read(word adr)
@@ -177,7 +200,8 @@ byte mbc::ext_read(word adr)
 	case 0xFE:
 //		extern FILE *file;
 //		fprintf(file,"%04X : HuC-3 ext_read %04X \n",ref_gb->get_cpu()->get_regs()->PC,adr);
-		return 1;
+
+		return huc3_read(adr);
 	case 0xFF:
 		return 0;
 	}
@@ -212,6 +236,7 @@ void mbc::ext_write(word adr,byte dat)
 	case 0xFE: //HuC-3
 //		extern FILE *file;
 //		fprintf(file,"%04X : HuC-3 ext_write %04X <= %02X\n",ref_gb->get_cpu()->get_regs()->PC,adr,dat);
+		huc3_write(adr, dat);
 		break;
 	case 0xFD: //TAMA5
 //		extern FILE *file;
@@ -592,7 +617,8 @@ void mbc::mbc5_write(word adr,byte dat)
 		break;
 	case 4:
 	case 5:
-		if (ref_gb->get_rom()->get_info()->cart_type==0x1C||ref_gb->get_rom()->get_info()->cart_type==0x1D||ref_gb->get_rom()->get_info()->cart_type==0x1E){//Rumble カートリッジ
+		if (ref_gb->get_rom()->get_info()->cart_type==0x1C||ref_gb->get_rom()->get_info()->cart_type==0x1D||ref_gb->get_rom()->get_info()->cart_type==0x1E)
+			{//Rumble カートリッジ
 			sram_page=ref_gb->get_rom()->get_sram()+0x2000*(dat&0x07&(ram_size_tbl[ref_gb->get_rom()->get_info()->ram_size]-1));
 			if (dat&0x8)
 				ref_gb->get_renderer()->set_bibrate(true);
@@ -672,34 +698,61 @@ void mbc::huc1_write(word adr,byte dat)
 	}
 }
 
+byte mbc::huc3_read(word adr)
+{
+	if (adr >> 13 == 5) //A000
+	{
+		switch (huc3_current_mem_control_reg)
+		{
+		case 0x0C: return (huc3_command & 0xF0) | (huc3_ramValue & 0x0F);
+		case 0x0D: return 1;
+		case 0x0E:
+		{
+			if (ref_gb->get_cpu()->get_clock() <= ref_gb->get_cpu()->next_ir_clock)
+				return (0xC0 | (byte)huc_ir_last_received_light);
+
+			if (ref_gb->get_ir_master_device()) ref_gb->get_ir_master_device()->process_ir();
+
+			if (!ref_gb->received_ir_signals.empty())
+			{
+				huc_ir_last_received_light = !ref_gb->received_ir_signals[0]->light_on;
+
+				ref_gb->get_cpu()->next_ir_clock = ref_gb->get_cpu()->get_clock() + ref_gb->received_ir_signals[0]->duration;
+				ref_gb->received_ir_signals.erase(ref_gb->received_ir_signals.begin());
+
+				return (0xC0 | (byte)huc_ir_last_received_light);
+			}
+			return 0xC1;
+		}
+		default:return 0xFF;
+		}
+
+	}
+
+	return 1;
+}
+
 void mbc::huc3_write(word adr,byte dat)
 {
 //	extern FILE *file;
 //	fprintf(file,"%04X : HuC-3 write %04X <= %02X\n",ref_gb->get_cpu()->get_regs()->PC,adr,dat);
 	switch(adr>>13){
 	case 0:
-		if (dat==0xA)
-			ext_is_ram=true;
-		else if (dat==0x0B){
-			ext_is_ram=false;
-		}
-		else if (dat==0x0C){
-			ext_is_ram=false;
-		}
-		else if (dat==0x0D){
-			ext_is_ram=false;
-		}
-		else {
-			ext_is_ram=false;
-		}
+	{
+		huc3_current_mem_control_reg = dat;
+		ext_is_ram = (dat == 0xA);
+		huc_ir_mode = (dat == 0xE);
+		if (huc_ir_mode) ref_gb->get_cpu()->next_ir_clock = -2147483648;
 		break;
+	}
+	
 	case 1:
 		rom_page=ref_gb->get_rom()->get_rom()+0x4000*((dat==0?1:dat)&0x7F&(rom_size_tbl[ref_gb->get_rom()->get_info()->rom_size]-1))-0x4000;
 		break;
 	case 2:
 		if (dat<8){
 			sram_page=ref_gb->get_rom()->get_sram()+0x2000*(dat&3);
-			ext_is_ram=true;
+			//ext_is_ram=true;
 		}
 		else{
 //			ext_is_ram=false;
@@ -722,6 +775,271 @@ void mbc::huc3_write(word adr,byte dat)
 		}
 */
 		break;
+	case 5: //A000-BFFF
+	{
+		switch (huc3_current_mem_control_reg)
+		{
+			//RTC command/argument (write)
+		case 0x0B: huc3_command = dat; break;
+			//RTC command/argument (write)
+		case 0x0C:;  break;
+			//RTC semaphore (read/write)
+		case 0x0D:
+		{
+			if ((dat & 0x01) == 0x00) huc3_execute_command();
+			break;
+		}
+		//HUC IR MODE
+		case 0x0E:
+		{
+
+			if (last_huc_ir_out_signal != (dat & 0x01))
+			{
+				if (!ref_gb->get_cpu()->out_ir_signal_que.empty()) {
+					//correct last duration value
+					int size = ref_gb->get_cpu()->out_ir_signal_que.size();
+					ref_gb->get_cpu()->out_ir_signal_que[size - 1]->duration = ref_gb->get_cpu()->get_clock() - ref_gb->get_cpu()->out_ir_signal_que[size - 1]->duration;
+					ref_gb->get_cpu()->log_ir_traffic(ref_gb->get_cpu()->out_ir_signal_que[size - 1], false);
+					//ref_gb->send_ir_signal(ref_gb->get_cpu()->out_ir_signal_que[size - 1]);
+				}
+
+				//add signal to out queu
+				last_huc_ir_out_signal = dat & 0x01;
+				ref_gb->get_cpu()->out_ir_signal_que.push_back(new ir_signal((dat == 0x01), ref_gb->get_cpu()->get_clock()));
+			}
+			break;
+
+		}
+		}
+	}
+	}
+
+	
+}
+
+void mbc::huc3_execute_command()
+{
+	byte argument = (huc3_command & 0x0F);
+	// command
+	switch (huc3_command & 0xF0)
+	{
+	case 0x10:
+	{
+		// read time
+		
+		//huc3_doLatch();
+		huc3_ramValue = huc3_rtc_register[huc3_access_adress];
+		//huc3_log(1, huc3_access_adress, huc3_ramValue);
+		/*
+			if (huc3_modeflag == HUC3_READ) {
+				huc3_ramValue = (huc3_dataTime >> huc3_shift) & 0x0F;
+				huc3_shift += 4;
+				if (huc3_shift > 24) huc3_shift = 0;
+			}
+			*/
+		huc3_access_adress++;
+		break;
+	}
+	case 0x30:
+	{
+		// write time
+		huc3_rtc_register[huc3_access_adress] = argument;
+		//huc3_log(0, huc3_access_adress, argument);
+		/*
+		// write time
+		if (huc3_modeflag == HUC3_WRITE) {
+			if (huc3_shift == 0) huc3_writingTime = 0;
+			if (huc3_shift < 24) {
+				huc3_writingTime |= argument << huc3_shift;
+				huc3_shift += 4;
+				if (huc3_shift == 24) {
+					huc3_updateTime();
+					huc3_modeflag = HUC3_READ;
+					huc3_shift = 0;
+				}
+			}
+		}
+		*/
+		huc3_access_adress++;
+		huc3_ramValue = 1;
+		break;
+	}
+	case 0x40:
+	{
+		huc3_access_adress &= 0xF0;
+		huc3_access_adress |= argument;
+		huc3_ramValue = 1;
+		break;
+	}
+	case 0x50:
+		huc3_access_adress &= 0x0F;
+		huc3_access_adress |= (argument << 4);
+		huc3_ramValue = 1;
+		break;
+		//extended command
+	case 0x60:
+	{
+		//huc3_log(0, 0x60, argument);
+		switch (argument)
+		{
+		case 0: huc3_copy_RTC2Scratch(); 
+			break;
+		case 1: huc3_copy_Scratch2RTC(); 
+			break;
+		case 2: huc3_ramValue = 1;
+		case 0xE: break;
+		}
+
+
+
+		break;
+	}
+	}
+}
+
+
+void mbc::huc3_copy_Scratch2RTC()
+{
+	for (int i = 0; i < 7; i++)
+		huc3_rtc_register[16 + i] = huc3_rtc_register[i];
+
+	// überträgt Scratch-Register → aktuelle RTC
+	huc3_updateTime();
+}
+
+void mbc::huc3_copy_RTC2Scratch()
+{
+	// Latch berechnen (aktualisiert Minuten & Tage korrekt)
+	huc3_doLatch();
+
+	// Scratch-Register (0..5) mit RTC-Register (0x10..0x15) füllen
+	for (int i = 0; i < 6; ++i) {
+		huc3_rtc_register[i] = huc3_rtc_register[0x10 + i];
+	}
+
+	// Internes 24-bit Feld optional setzen (für alte Logik)
+	huc3_dataTime = 0;
+	for (int i = 0; i < 6; ++i) {
+		huc3_dataTime |= ((uint32_t)(huc3_rtc_register[i] & 0x0F)) << (i * 4);
+	}
+}
+
+
+#include <ctime>
+#include <cstdint>
+#include <chrono>
+
+void mbc::huc3_doLatch()
+{
+	using namespace std::chrono;
+
+	uint64_t now = duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+
+	// Initialisiere Timestamp, falls noch nicht vorhanden
+	if (huc3_state.rtc_timestamp == 0)
+		huc3_state.rtc_timestamp = now;
+
+	int64_t time_passed = static_cast<int64_t>(now - huc3_state.rtc_timestamp);
+
+	// Aktuelle Sekunden seit Mitternacht
+	uint32_t seconds = huc3_state.rtc_seconds;
+
+	if (time_passed > 0)
+	{
+		for (int64_t i = 0; i < time_passed; i++)
+		{
+			seconds++;
+			if (seconds >= 86400)
+			{
+				seconds = 0;
+				huc3_state.rtc_days++;
+			}
+		}
+	}
+	else if (time_passed < 0)
+	{
+		time_passed = -time_passed;
+		for (int64_t i = 0; i < time_passed; i++)
+		{
+			if (seconds == 0)
+			{
+				seconds = 86399;
+				if (huc3_state.rtc_days) huc3_state.rtc_days--;
+			}
+			else
+				seconds--;
+		}
+	}
+
+	// Neue Sekunden und Timestamp speichern
+	huc3_state.rtc_seconds = seconds;
+	huc3_state.rtc_timestamp = now;
+
+	// Minuten und Tage für RTC Register berechnen
+	unsigned minutes = seconds / 60;
+	unsigned days = huc3_state.rtc_days & 0xFFF; // 12 Bit
+
+	huc3_rtc_register[0x10] = minutes & 0x0F;
+	huc3_rtc_register[0x11] = (minutes >> 4) & 0x0F;
+	huc3_rtc_register[0x12] = (minutes >> 8) & 0x0F;
+
+	huc3_rtc_register[0x13] = days & 0x0F;
+	huc3_rtc_register[0x14] = (days >> 4) & 0x0F;
+	huc3_rtc_register[0x15] = (days >> 8) & 0x0F;
+
+	// Scratch-Register synchronisieren
+	for (int i = 0; i < 6; ++i)
+		huc3_rtc_register[i] = huc3_rtc_register[0x10 + i];
+}
+void mbc::huc3_updateTime()
+{
+	// Build writingTime from scratch registers (same wie vorher)
+	huc3_writingTime = 0;
+	huc3_shift = 0;
+	for (size_t i = 0; i < 7; i++) {
+		huc3_writingTime |= (uint32_t)(huc3_rtc_register[i] & 0x0F) << huc3_shift;
+		huc3_shift += 4;
+	}
+
+	unsigned minute = (huc3_writingTime & 0xFFF) % 1440;
+	unsigned day = (huc3_writingTime >> 12) & 0xFFF;
+
+	uint64_t now = (uint64_t)std::time(nullptr);
+
+	// Wenn noch kein timestamp vorhanden ist -> initialisiere
+	if (huc3_state.rtc_timestamp == 0) {
+		huc3_state.rtc_timestamp = now;
+	}
+
+	// Setze die struktur aus den Registern (Spiel hat Uhr manuell gesetzt)
+	huc3_state.rtc_seconds = minute * 60;
+	huc3_state.rtc_days = day; // 12bit, fit in 32bit
+
+	// Nur wenn timestamp == 0 (erste Initialisierung) verwenden wir now als Basis.
+	// WICHTIG: wir dürfen rtc_timestamp nicht immer überschreiben.
+	// Falls der game code hat explizit Scratch->RTC (also setzt neue Werte),
+	// kannst du hier huc3_state.rtc_timestamp = now;  (wenn das Verhalten gewünscht)
+	// aber nicht beim normalen update nach load.
+	// Update baseTime/haltTime für interne Nutzung:
+	huc3_baseTime = now - (uint64_t)huc3_state.rtc_days * 86400ULL - (uint64_t)huc3_state.rtc_seconds;
+	huc3_haltTime = huc3_baseTime;
+}
+
+
+void mbc::huc3_log(bool read, byte adress, byte value)
+{
+	//if (logging_allowed)
+	{
+		std::string filePath = "./huc3.txt";
+		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
+
+		//ofs << "" << clocks_occer << tabs;
+		//ofs << "" << std::hex << (int)a << "\t";
+		//ofs << "" << std::hex << (int)b << "";
+		ofs << (read ? "read adress: " : "write adress: ") << std::hex << (unsigned int)adress;
+		ofs << " value: " << std::hex << (unsigned int)value;
+		ofs << std::endl;
+		ofs.close();
 	}
 }
 
