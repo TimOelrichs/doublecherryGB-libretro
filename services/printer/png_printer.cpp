@@ -1,7 +1,8 @@
 // png_printer.cpp
 #include "./include/png_printer.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../../Third-Party/stb_image_write.h"
+#include <extern/stb/stb_image_write.h>
+//#include "../../Third-Party/stb_image_write.h"
 
 bool PNGPrinter::print(const uint32_t* argb_pixels, int width, int height, ScaleTarget scale_target, Alignment alignment) {
 

@@ -1,0 +1,3 @@
+[submodule "extern/libmobile"]
+	path = extern/libmobile
+	url = https://github.com/REONTeam/libmobile.git

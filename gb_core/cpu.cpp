@@ -28,7 +28,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "libretro-common/include/retro_timers.h"
+#include <extern/libretro-common/include/retro_timers.h>
+//#include "libretro-common/include/retro_timers.h"
 #include "../libretro/DoubleCherryEngine/Netplay/NetPacketManager.h"
 
 #define SLEEP_MS(ms) retro_sleep(ms)

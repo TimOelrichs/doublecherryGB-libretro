@@ -234,6 +234,7 @@ public:
 class I_linkcable_target {
 	
 public:
+	virtual ~I_linkcable_target() = default;
 	virtual byte receive_from_linkcable(byte) = 0;	
 
 };
