@@ -38,7 +38,7 @@ hack_4p_kwirk::hack_4p_kwirk(std::vector<gb*> g_gb)
 
 void hack_4p_kwirk::log_traffic(byte id, byte b)
 {
-	if (!logging_transers_to_file_allowed) return;
+	if (!logging_transfers_to_file_allowed) return;
 
 	std::string filePath = "./kwirkhack_log.txt";
 	std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);

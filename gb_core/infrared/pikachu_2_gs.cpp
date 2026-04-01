@@ -37,7 +37,7 @@ pikachu_2_gs::pikachu_2_gs(std::vector<gb*> gbs)
 	reset();
 }
 
-void pikachu_2_gs::receive_ir_signal(ir_signal* signal)
+void pikachu_2_gs::receive_egde_ir_signal(Infrared_Signal* signal)
 {
     in_ir_signals.push_back(signal);
     log_ir_traffic(signal, true);
@@ -206,9 +206,9 @@ void pikachu_2_gs::receive_ir_signal(ir_signal* signal)
         }
     }
 }
-void pikachu_2_gs::send_ir_signal(ir_signal* signal)
+void pikachu_2_gs::send_ir_signal(Infrared_Signal* signal)
 {
-	v_gb[0]->receive_ir_signal(signal);
+	v_gb[0]->receive_ir_pulse(signal);
 }
 
 void pikachu_2_gs::process_ir() 
@@ -263,10 +263,10 @@ void pikachu_2_gs::check_hello_msg()
 
 void pikachu_2_gs::build_hello_msg()
 {
-	out_ir_signals.push_back(new ir_signal(1, 5612));
-	out_ir_signals.push_back(new ir_signal(0, 23503));
-	out_ir_signals.push_back(new ir_signal(1, 5612));
-	out_ir_signals.push_back(new ir_signal(0, 23503));
+	out_ir_signals.push_back(new Infrared_Signal(1, 5612));
+	out_ir_signals.push_back(new Infrared_Signal(0, 23503));
+	out_ir_signals.push_back(new Infrared_Signal(1, 5612));
+	out_ir_signals.push_back(new Infrared_Signal(0, 23503));
 
 }
 
@@ -357,23 +357,23 @@ void pikachu_2_gs::add_byte_to_out_ir_signals(byte data) {
 	byte out_bit = data;
 	for (int i = 7; i >= 0; i--)
 	{
-		out_ir_signals.push_back(new ir_signal(1, 112));
+		out_ir_signals.push_back(new Infrared_Signal(1, 112));
 
 		out_bit = ((data >> i) & 0x01);
 		int duration = out_bit ? 1380 : 640;
-		out_ir_signals.push_back(new ir_signal(0, duration)); 
+		out_ir_signals.push_back(new Infrared_Signal(0, duration)); 
 
 	}
 }
 
 void pikachu_2_gs::add_preamble_to_out_signals() {
-	out_ir_signals.push_back(new ir_signal(1, 5644));
-	out_ir_signals.push_back(new ir_signal(0, 24761));
+	out_ir_signals.push_back(new Infrared_Signal(1, 5644));
+	out_ir_signals.push_back(new Infrared_Signal(0, 24761));
 }
 
 void pikachu_2_gs::add_postamble_to_out_signals() {
-	out_ir_signals.push_back(new ir_signal(1, 5593));
-	out_ir_signals.push_back(new ir_signal(0, 24761));
+	out_ir_signals.push_back(new Infrared_Signal(1, 5593));
+	out_ir_signals.push_back(new Infrared_Signal(0, 24761));
 }
 
 void pikachu_2_gs::set_sending_delay(int clocks)
@@ -406,7 +406,7 @@ word pikachu_2_gs::calc_checksum()
 
 
 
-void pikachu_2_gs::log_ir_traffic(ir_signal* signal, bool incoming) {
+void pikachu_2_gs::log_ir_traffic(Infrared_Signal* signal, bool incoming) {
 
 	//if (logging_allowed)
 	{

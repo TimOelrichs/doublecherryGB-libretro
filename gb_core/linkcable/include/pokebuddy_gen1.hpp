@@ -29,7 +29,7 @@
 #include "../../../libretro/dcgb_hotkey_target.hpp"
 
 
-extern bool logging_transers_to_file_allowed;
+extern bool logging_transfers_to_file_allowed;
 extern char cart_name[18];
 
 enum pkm_generation {
@@ -38,7 +38,7 @@ enum pkm_generation {
 };
 
 
-class pokebuddy_gen1 final : public I_linkcable_target, public I_dcgb_hotkey_target, public I_savestate {
+class pokebuddy_gen1 final : public I_Linkcable_Target, public I_dcgb_hotkey_target, public I_Savestate {
 
 public:
 	pokebuddy_gen1(std::vector<gb*> gbs);

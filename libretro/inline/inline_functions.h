@@ -692,6 +692,7 @@ void auto_link_multiplayer() {
         // if (gblink_enable) {
         v_gb[0]->set_target(v_gb[1]);
         v_gb[1]->set_target(v_gb[0]);
+
         //}
         //
         master_link  = nullptr;
@@ -1210,8 +1211,8 @@ static void check_variables(void)
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
         {
             int value = atoi(var.value);
-            logging_transers_to_file_allowed = (bool)value;
-            if(logging_transers_to_file_allowed) display_message("Logging to file is enabled");
+            logging_transfers_to_file_allowed = (bool)value;
+            if(logging_transfers_to_file_allowed) display_message("Logging to file is enabled");
         }
 
 
@@ -1488,7 +1489,7 @@ void check_for_new_players() {
 
 void log_save_state(uint8_t* data, size_t size)
 {
-    if (logging_transers_to_file_allowed)
+    if (logging_transfers_to_file_allowed)
     {
         std::string filePath = "./dmg07_savesate_log.bin";
         std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);

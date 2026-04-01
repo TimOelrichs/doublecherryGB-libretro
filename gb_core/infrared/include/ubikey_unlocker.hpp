@@ -17,15 +17,15 @@ enum ubikey_unlocker_state {
 	
 };
 
-class ubikey_unlocker final : public I_ir_target, public I_ir_master_device
+class ubikey_unlocker final : public I_Infrared_Target, public I_Infrared_Master_Device
 {
 
 public:
 
 	ubikey_unlocker(std::vector<gb*> gbs);
 
-	void receive_ir_signal(ir_signal* signal) override;
-	void send_ir_signal(ir_signal* signal) override;
+	void receive_egde_ir_signal(Infrared_Signal* signal) override;
+	void send_ir_signal(Infrared_Signal* signal) override;
 	void process_ir() override;
 
 	// Geerbt über I_ir_target
@@ -55,7 +55,7 @@ private:
 	std::vector<gb*> v_gb;
 
 	ubikey_unlocker_state current_state;
-	std::vector<ir_signal*> in_ir_signals, out_ir_signals;
+	std::vector<Infrared_Signal*> in_ir_signals, out_ir_signals;
 	std::vector<byte> in_bytes, bytes_out_for_msg, all_bytes_out_for_checksum;
 	int sending_delay;
 
@@ -64,7 +64,7 @@ private:
 	int hello_counter = 0;
 
 
-	void log_ir_traffic(ir_signal* signal, bool incoming);
+	void log_ir_traffic(Infrared_Signal* signal, bool incoming);
 	void log_ir_received_bytes();
 	void log_ir_answer_delay();
 

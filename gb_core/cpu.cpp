@@ -28,8 +28,11 @@
 #include <iostream>
 #include <fstream>
 
+#include "Infrared_Transceiver.h"
 #include "libretro-common/include/retro_timers.h"
 #include "../libretro/DoubleCherryEngine/Netplay/NetPacketManager.h"
+
+extern retro_log_printf_t log_cb;
 
 #define SLEEP_MS(ms) retro_sleep(ms)
 
@@ -42,7 +45,7 @@
 #define N_FLAG 0x02
 #define C_FLAG 0x01
 
-extern bool logging_transers_to_file_allowed;
+extern bool logging_transfers_to_file_allowed;
 extern int emulated_gbs;
 
 inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
@@ -328,67 +331,7 @@ byte cpu::io_read(word adr)
 	case 0xFF55://HDMA5(転送実行) // HDMA5 (run forward)
 		return (dma_executing?((dma_rest-1)&0x7f):0xFF);
 	case 0xFF56://RP(赤外線) // RP (infrared)
-		//if (ref_gb->get_ir_target())
-		{
-			if ((ref_gb->get_cregs()->RP&0xC0)==0xC0)
-			{
-				
-				//gb* g = ref_gb->get_target();
-				//dword *que=g->get_cpu()->rp_que;
-
-				/*
-				// TGBDUal Implementation
-				dword* que = ref_gb->get_ir_target()->get_rp_que();
-				int que_cnt=0;
-				int cur;
-				while((que[que_cnt]&0xffff)>rest_clock)	cur=que[que_cnt++]>>16;
-				*/
-//				fprintf(file,"read RP %02X\n",(ref_gb->get_cregs()->RP&1)|((cur&1)<<1)|0xC0);
-
-				
-				rp_bitfield ir_state;
-				ir_state.byte = ref_gb->get_cregs()->RP;
-
-				if (total_clock >= next_ir_clock)
-				{
-					if (ref_gb->ir_master_device) ref_gb->ir_master_device->process_ir();
-
-					if (!ref_gb->received_ir_signals.empty())
-					{
-						
-						ir_state.bits.received_signal = !ref_gb->received_ir_signals[0]->light_on;
-						ref_gb->get_cregs()->RP = ir_state.byte;
-
-						next_ir_clock = total_clock + ref_gb->received_ir_signals[0]->duration;
-						ref_gb->received_ir_signals.erase(ref_gb->received_ir_signals.begin());
-					
-					}
-					
-
-				}
-
-				return ref_gb->get_cregs()->RP | 0x3C;  //unused bits 2-5 are always 1
-				//return (ref_gb->get_cregs()->RP&1)|((cur&1)<<1)|0xC0;
-
-//				fprintf(file,"read RP %02X\n",(ref_gb->get_cregs()->RP&1)|((ref_gb->get_target()->get_cregs()->RP&1)<<1)|0xC0);
-//				return (ref_gb->get_cregs()->RP&1)|((ref_gb->get_target()->get_cregs()->RP&1)<<1)|0xC0;
-			}
-			else{
-//				fprintf(file,"read RP %02X\n",(ref_gb->get_cregs()->RP&1));
-				return (ref_gb->get_cregs()->RP | 0x3E ); //unused bits 2-5 are always 1
-			}
-		}
-		/*
-		else{
-			if (ref_gb->hook_ext){ // フックします // Hook
-				if ((ref_gb->get_cregs()->RP&0xC0)==0xC0)
-					return (ref_gb->get_cregs()->RP&1)|(ref_gb->hook_proc.led()?2:0)|0xC0;
-				else
-					return (ref_gb->get_cregs()->RP&0xC1);
-			}
-			else
-				return (ref_gb->get_cregs()->RP&0xC1);
-		}*/
+		return ref_gb->get_infrared_transceiver()->read_RP_REG(total_clock);
 	case 0xFF68://BCPS(BGパレット書き込み指定) // BG write palette
 		return ref_gb->get_cregs()->BCPS;
 	case 0xFF69://BCPD(BGパレット書きこみデータ) // BG palette data written
@@ -419,7 +362,6 @@ byte cpu::io_read(word adr)
 
 	case 0xFFFF://IE(割りこみマスク) // Interrupt Mask
 		return ref_gb->get_regs()->IE;
-
 	// undocumented register
 	case 0xFF6C:
 		return _ff6c&1;
@@ -693,52 +635,7 @@ void cpu::io_write(word adr,byte dat)
 			}
 			return;
 		case 0xFF56://RP(赤外線) // RP (infrared)
-//			fprintf(file,"RP=%02X\n",in_data);
-
-			//old TGBDUAL implementation
-			rp_que[que_cur++]=(((dword)dat)<<16)|((word)rest_clock);
-			rp_que[que_cur]=0x00000000;
-
-
-			//DCGB implementation
-			rp_bitfield old_ir_state, new_ir_state; 
-
-			old_ir_state.byte = ref_gb->get_cregs()->RP;
-			new_ir_state.byte = dat; 
-			new_ir_state.bits.received_signal = old_ir_state.bits.received_signal; //is READ-ONLY
-
-			/*
-			//emulate obscure behavior RP quirk
-			if (last_rp_write == 0x00 && dat == 0xC0) {
-				if (!new_ir_state.bits.received_signal) new_ir_state.bits.received_signal = 1;
-			}
-			last_rp_write = dat;
-			*/
-			
-			ref_gb->get_cregs()->RP = new_ir_state.byte;
-
-			if (old_ir_state.bits.ir_light_on != new_ir_state.bits.ir_light_on)
-			{
-				if (!out_ir_signal_que.empty()) {
-					//correct last duration value
-					int size = out_ir_signal_que.size();
-					out_ir_signal_que[size - 1]->duration = total_clock - out_ir_signal_que[size - 1]->duration;
-					
-					
-					//don't send light off, when role has changed
-					bool role_has_changed =	!out_ir_signal_que[size - 1]->light_on &&
-											out_ir_signal_que[size - 1]->duration > 45000;
-					if (!role_has_changed) {
-						ref_gb->send_ir_signal(out_ir_signal_que[size - 1]);
-						log_ir_traffic(out_ir_signal_que[size - 1], false);
-					}
-						
-				}
-
-				//add signal to out queu
-				out_ir_signal_que.push_back(new ir_signal(new_ir_state.bits.ir_light_on, total_clock));
-			}
-			
+			ref_gb->get_infrared_transceiver()->write_RP_REG(dat, total_clock);
 			return;
 		case 0xFF68://BCPS(BGパレット書き込み指定) // BCPS (write BG palette)
 			ref_gb->get_cregs()->BCPS=dat;
@@ -977,53 +874,31 @@ byte cpu::receive_from_linkcable(byte in_data)
 	
 }
 
-void cpu::log_link_traffic(byte a, byte b)
-{
-	
-	if (logging_transers_to_file_allowed)
-	{
-		std::string filePath = "./2p_link_log.txt";
-		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
+/*
+void cpu::log_ir_traffic(Infrared_Signal *signal, bool incoming) {
 
-		int clocks_occer = total_clock - clocks_since_last_serial;
-		std::string tabs = clocks_occer < 1000000 ? "\t\t\t" : "\t\t";
+    if (logging_transers_to_file_allowed)
+    {
+        std::string filePath = "./ir_logger.txt";
+        std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
 
-		ofs << "" << clocks_occer << tabs;
-		ofs << "" << std::hex << (int)a << "\t";
-		ofs << "" << std::hex << (int)b << "";
+        // Dauer in Mikrosekunden berechnen
+        double duration_us = signal->duration * (1'000'000.0 / 4'194'304.0);
 
-		ofs << std::endl;
-		ofs.close();
+        if (incoming)
+            ofs << "\t\t\t\t\t\t\t\t\t\t\t<" << signal->light_on << "\t" << signal->duration
+                << " (" << duration_us << " us)";
+        else
+            ofs << ">" << signal->light_on << "\t" << signal->duration
+                << " (" << duration_us << " us)";
 
-		clocks_since_last_serial = total_clock;
-	}
+        ofs << std::endl;
+        ofs.close();
 
+        clocks_since_last_serial = total_clock;
+    }
 }
-
-void cpu::log_ir_traffic(ir_signal *signal, bool incoming) {
-
-	if (logging_transers_to_file_allowed)
-	{
-		std::string filePath = "./ir_logger.txt";
-		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
-
-	
-		//ofs << "" << clocks_occer << tabs;
-		//ofs << "" << std::hex << (int)a << "\t";
-		//ofs << "" << std::hex << (int)b << "";
-
-		//ofs << "" << (int)signal->light_on << "\t";
-		if(incoming) ofs << "<" << signal->light_on << "\t" << signal->duration;
-		else ofs << ">" << signal->light_on << "\t" << signal->duration;
-
-		ofs << std::endl;
-		ofs.close();
-
-		clocks_since_last_serial = total_clock;
-	}
-}
-
-
+*/
 
 void cpu::irq(int irq_type)
 {

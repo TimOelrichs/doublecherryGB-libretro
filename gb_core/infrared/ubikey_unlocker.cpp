@@ -54,7 +54,7 @@ ubikey_unlocker::ubikey_unlocker(std::vector<gb*> gbs)
  
 }
 
-void ubikey_unlocker::receive_ir_signal(ir_signal* signal)
+void ubikey_unlocker::receive_egde_ir_signal(Infrared_Signal* signal)
 {
 	in_ir_signals.push_back(signal);
 
@@ -128,9 +128,9 @@ void ubikey_unlocker::receive_ir_signal(ir_signal* signal)
 		}
 	}
 }
-void ubikey_unlocker::send_ir_signal(ir_signal* signal)
+void ubikey_unlocker::send_ir_signal(Infrared_Signal* signal)
 {
-	v_gb[0]->receive_ir_signal(signal);
+	v_gb[0]->receive_ir_pulse(signal);
 }
 
 void ubikey_unlocker::process_ir()
@@ -151,10 +151,10 @@ void ubikey_unlocker::process_ir()
 
 void ubikey_unlocker::build_hello_msg()
 {
-	out_ir_signals.push_back(new ir_signal(1, 472));
-	out_ir_signals.push_back(new ir_signal(0, 472));
-	out_ir_signals.push_back(new ir_signal(1, 472));
-	out_ir_signals.push_back(new ir_signal(0, 11540));
+	out_ir_signals.push_back(new Infrared_Signal(1, 472));
+	out_ir_signals.push_back(new Infrared_Signal(0, 472));
+	out_ir_signals.push_back(new Infrared_Signal(1, 472));
+	out_ir_signals.push_back(new Infrared_Signal(0, 11540));
 
 }
 
@@ -175,7 +175,7 @@ void ubikey_unlocker::reset()
 }
 
 
-void ubikey_unlocker::log_ir_traffic(ir_signal* signal, bool incoming) {
+void ubikey_unlocker::log_ir_traffic(Infrared_Signal* signal, bool incoming) {
 
 	//if (logging_allowed)
 	{
@@ -349,22 +349,22 @@ void ubikey_unlocker::add_byte_to_out_ir_signals(byte data) {
 	{
 		out_bit = ((data >> i) & 0x01);
 		int duration = out_bit ? 292 : 196;
-		out_ir_signals.push_back(new ir_signal(1, duration));
+		out_ir_signals.push_back(new Infrared_Signal(1, duration));
 
-		out_ir_signals.push_back(new ir_signal(0, 560));
+		out_ir_signals.push_back(new Infrared_Signal(0, 560));
 
 
 	}
 }
 
 void ubikey_unlocker::add_preamble_to_out_signals() {
-	out_ir_signals.push_back(new ir_signal(1, 412));
-	out_ir_signals.push_back(new ir_signal(0,560));
+	out_ir_signals.push_back(new Infrared_Signal(1, 412));
+	out_ir_signals.push_back(new Infrared_Signal(0,560));
 }
 
 void ubikey_unlocker::add_postamble_to_out_signals() {
-	out_ir_signals.push_back(new ir_signal(1,412));
-	out_ir_signals.push_back(new ir_signal(0,524));
+	out_ir_signals.push_back(new Infrared_Signal(1,412));
+	out_ir_signals.push_back(new Infrared_Signal(0,524));
 }
 
 word ubikey_unlocker::calc_checksum()

@@ -187,15 +187,15 @@ enum color_correction_mode gbc_cc_mode = GAMBATTE_ACCURATE;
 std::vector<gb*> v_gb;
 std::vector <dmy_renderer*> render;
 link_master_device* master_link;
-I_linkcable_target* linked_target_device; 
+I_Linkcable_Target* linked_target_device;
 
-std::vector<I_savestate*> v_serializable_devices; 
+std::vector<I_Savestate*> v_serializable_devices;
 
 
 bool use_multi_adapter = false;
 bool use_tetris_4p_hack = false;
 bool log_2p_link = false;
-bool logging_transers_to_file_allowed = false;
+bool logging_transfers_to_file_allowed = false;
 bool detect_as_gba = true;
 unsigned short max_gbs = 16;
 

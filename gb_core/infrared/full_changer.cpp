@@ -42,9 +42,9 @@ full_changer::full_changer(std::vector<gb*> gbs)
 	
 }
 
-void full_changer::send_ir_signal(ir_signal* signal)
+void full_changer::send_ir_signal(Infrared_Signal* signal)
 {
-	v_gb[0]->receive_ir_signal(signal);
+	v_gb[0]->receive_ir_pulse(signal);
 }
 
 void full_changer::process_ir()
@@ -68,15 +68,15 @@ void full_changer::handle_special_hotkey(int key)
 void full_changer::build_signal(byte cosmic_character_id)
 {
 	//header
-	out_ir_signals.push_back(new ir_signal(1,900));
-	out_ir_signals.push_back(new ir_signal(0, 300));
+	out_ir_signals.push_back(new Infrared_Signal(1,900));
+	out_ir_signals.push_back(new Infrared_Signal(0, 300));
 	//data
 	byte checksum = 0xFF - ~cosmic_character_id;
 	add_byte_to_out_ir_signals(checksum);
 	add_byte_to_out_ir_signals(~cosmic_character_id);
 	//end
-	out_ir_signals.push_back(new ir_signal(1, 900));
-	out_ir_signals.push_back(new ir_signal(0, 300));
+	out_ir_signals.push_back(new Infrared_Signal(1, 900));
+	out_ir_signals.push_back(new Infrared_Signal(0, 300));
 
 }
 
@@ -91,8 +91,8 @@ void full_changer::add_byte_to_out_ir_signals(byte data)
 		out_bit = ((data >> i) & 0x01);
 		int duration_on = out_bit ? 600 : 300;
 		int duration_off = out_bit ? 300 : 600;
-		out_ir_signals.push_back(new ir_signal(1, duration_on));
-		out_ir_signals.push_back(new ir_signal(0, duration_off));
+		out_ir_signals.push_back(new Infrared_Signal(1, duration_on));
+		out_ir_signals.push_back(new Infrared_Signal(0, duration_off));
 
 	}
 

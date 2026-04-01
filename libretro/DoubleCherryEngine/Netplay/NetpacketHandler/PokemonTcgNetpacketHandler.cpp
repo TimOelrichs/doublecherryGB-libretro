@@ -87,7 +87,6 @@ void PokemonTcgNetpacketHandler::handleSend(uint16_t client_id, const void* buf,
 
         if (isMaster && is_in_idle_mode && data[0] == IDLE_MAGIC_NUMBER )
         {
-          );
             NetpacketManager::getInstance().received_netpacket_data.push(IDLE_MAGIC_NUMBER);
             return; // Netzwerk wird ignoriert
         }

@@ -395,6 +395,23 @@ void checkForJoinedMultiplayer()
 void run_main_loop()
 {
 
+    const int steps = 70224 / 4; // ≈ 17556
+
+    for (int cycle = 0; cycle < steps; cycle++)
+    {
+        if (extra_inputpolling_enabled)
+            performExtraInputPoll();
+
+        for (size_t i = 0; i < emulated_gbs; i++)
+        {
+            v_gb[i]->run_step();
+        }
+
+        if (master_link)
+            master_link->process();
+    }
+    /*
+     /old
     for (int line = 0; line < 154; line++)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
@@ -406,7 +423,7 @@ void run_main_loop()
         if (master_link)
             master_link->process();
     }
-
+    */
 }
 
 void checkAndUpdateVariable()

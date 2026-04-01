@@ -25,7 +25,7 @@
 #include <string.h>
 #include <fstream>
 
-extern bool logging_transers_to_file_allowed;
+extern bool logging_transfers_to_file_allowed;
 
 rom::rom()
 {
@@ -87,7 +87,7 @@ bool rom::load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent)
 	info.rom_size=buf[0x148];
 	info.ram_size=buf[0x149];
 
-	if(logging_transers_to_file_allowed)
+	if(logging_transfers_to_file_allowed)
 		log_info(info.cart_name);
 
 	if (memcmp(info.cart_name,momocol_title,16)==0){

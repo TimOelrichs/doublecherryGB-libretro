@@ -11,14 +11,14 @@
 
 
 
-class full_changer final : public I_ir_master_device, public I_dcgb_hotkey_target
+class full_changer final : public I_Infrared_Master_Device, public I_dcgb_hotkey_target
 {
 
 public:
 
 	full_changer(std::vector<gb*> gbs);
 
-	void send_ir_signal(ir_signal* signal) override;
+	void send_ir_signal(Infrared_Signal* signal) override;
 	void process_ir() override;
 
 	void reset();
@@ -33,7 +33,7 @@ private:
 	int clocks_to_micro_seconds(int clocks) { return (int)(1000000.0 / 4194304.0 * clocks); };
 
 	std::vector<gb*> v_gb;
-	std::vector<ir_signal*>  out_ir_signals;
+	std::vector<Infrared_Signal*>  out_ir_signals;
 
 	//int short_duration = micro_seconds_to_clocks(125);
 	//int long_duration = micro_seconds_to_clocks(250);

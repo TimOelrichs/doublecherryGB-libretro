@@ -55,7 +55,7 @@ set(SOURCES
     ${CORE_DIR}/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp
     ${CORE_DIR}/gb_core/linkcable/power_antenna.cpp
     ${CORE_DIR}/gb_core/linkcable/pokebuddy_gen1.cpp
-    
+    ${CORE_DIR}/gb_core/Infrared_Transceiver.cpp
     ${CORE_DIR}/gb_core/infrared/pikachu_2_gs.cpp
     ${CORE_DIR}/gb_core/infrared/ubikey_unlocker.cpp
     ${CORE_DIR}/gb_core/infrared/tv_remote.cpp
@@ -70,6 +70,8 @@ set(SOURCES
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
     ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp
+
+
 
 )
 
