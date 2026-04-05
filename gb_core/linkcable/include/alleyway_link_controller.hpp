@@ -13,7 +13,7 @@ enum class Alleyway_Controls_Mode {
 
 
 
-class alleyway_link_controller final : public I_linkcable_target, public I_dcgb_hotkey_target
+class alleyway_link_controller final : public I_Linkcable_Target, public I_dcgb_hotkey_target
 {
 
 public:

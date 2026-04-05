@@ -364,7 +364,6 @@ private:
 	void apply_all_gb_effects_and_render(byte* buf, int width, int height, int depth, int pitch);
 	const uint16_t* apply_gbc_rgb_subpixel_upscaling(const uint16_t* buffer, int width, int height);
 	int cur_time;
-	int which_gb;
 	static inline bool rgb565 = false;
 	static inline bool rgb565_checked = false;
 	byte is_odd_frame = 0;

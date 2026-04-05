@@ -51,8 +51,11 @@ public:
 
 	virtual void set_bibrate(bool bibrate)=0;
 
+	int get_gb_id(){return which_gb;};
+
 protected:
 	sound_renderer *snd_render;
+	int which_gb;
 };
 
 #endif

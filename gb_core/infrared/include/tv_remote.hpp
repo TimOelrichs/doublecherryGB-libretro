@@ -18,14 +18,14 @@ enum tv_remote_protocol {
 	ITT
 };
 
-class tv_remote final : public I_ir_master_device, public I_dcgb_hotkey_target
+class tv_remote final : public I_Infrared_Master_Device, public I_dcgb_hotkey_target
 {
 
 public:
 
 	tv_remote(std::vector<gb*> gbs);
 
-	void send_ir_signal(ir_signal* signal) override;
+	void send_ir_signal(Infrared_Signal* signal) override;
 	void process_ir() override;
 
 	void reset();
@@ -66,7 +66,7 @@ private:
 
 	std::vector<gb*> v_gb;
 
-	std::vector<ir_signal*>  out_ir_signals;
+	std::vector<Infrared_Signal*>  out_ir_signals;
 	int current_predefined_remote, total_transmission_time, current_remote_protocol, current_device_adress;
 
 

@@ -43,9 +43,9 @@ tv_remote::tv_remote(std::vector<gb*> gbs)
 	build_predefined_remotes();
 }
 
-void tv_remote::send_ir_signal(ir_signal* signal)
+void tv_remote::send_ir_signal(Infrared_Signal* signal)
 {
-	v_gb[0]->receive_ir_signal(signal);
+	v_gb[0]->receive_ir_pulse(signal);
 }
 
 void tv_remote::process_ir()
@@ -269,8 +269,8 @@ void tv_remote::build_nec_signal_frame(byte adress, byte code)
 {
 
 	//Header
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(9000)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(4500)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(9000)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(4500)));
 
 	add_byte_to_out_ir_signals(adress);
 	add_byte_to_out_ir_signals(~adress);
@@ -278,8 +278,8 @@ void tv_remote::build_nec_signal_frame(byte adress, byte code)
 	add_byte_to_out_ir_signals(~code);
 
 	//End burst
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(562)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(40000)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(562)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(40000)));
 
 	/*
 	//REPEAT CODE
@@ -296,11 +296,11 @@ void tv_remote::add_byte_to_out_ir_signals(byte data)
 	byte out_bit = data;
 	for (int i = 7; i >= 0; i--)
 	{
-		out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(562)));
+		out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(562)));
 
 		out_bit = ((data >> i) & 0x01);
 		int duration = out_bit ? micro_seconds_to_clocks(2250-562) : micro_seconds_to_clocks(1125-562);
-		out_ir_signals.push_back(new ir_signal(0, duration));
+		out_ir_signals.push_back(new Infrared_Signal(0, duration));
 
 	}
 }
@@ -308,14 +308,14 @@ void tv_remote::add_byte_to_out_ir_signals(byte data)
 void tv_remote::build_rc5_signal_frame(byte adress, byte command)
 {
 	//start pulses
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
 
 	//togglebit
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
 
 	total_transmission_time += (889 * 6);
 
@@ -323,17 +323,17 @@ void tv_remote::build_rc5_signal_frame(byte adress, byte command)
 	add_rc5_byte_to_out_ir_signals(command, 7);
 
 	//REPEAT
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(114000 - total_transmission_time)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(114000 - total_transmission_time)));
 
 	//start pulses
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
 
 	//togglebit
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
 
 	total_transmission_time += (889 * 6);
 
@@ -351,13 +351,13 @@ void tv_remote::add_rc5_byte_to_out_ir_signals(byte data, byte length)
 	{	
 		out_bit = ((data >> i) & 0x01);
 		if (out_bit) {
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
 		}
 		else
 		{
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
 		}
 
 		total_transmission_time += (889 * 2);
@@ -371,28 +371,28 @@ void tv_remote::build_rc6_signal_frame(byte adress, byte command)
 {
 	//HEADER
 	//Leader pulse
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(2666)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(2666)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
 	//startbit, always 1
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(444)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(444)));
 	//modebits (0,0,0) Mode0
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(444)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(444)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(444)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(444)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(444)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(444)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(444)));
 	//trailerbit
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(889)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(889)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(889)));
 	total_transmission_time += 2666 + (899 * 3) + (444 * 8);
 
 	add_rc6_byte_to_out_ir_signals(adress);
 	add_rc6_byte_to_out_ir_signals(command);
 	
 	//signal free tim
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(2666)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(2666)));
 }
 
 void tv_remote::add_rc6_byte_to_out_ir_signals(byte data)
@@ -404,13 +404,13 @@ void tv_remote::add_rc6_byte_to_out_ir_signals(byte data)
 		out_bit = ((data >> i) & 0x01);
 
 		if (out_bit) {
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(444)));
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(444)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(444)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(444)));
 		}
 		else
 		{
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(444)));
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(444)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(444)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(444)));
 		}
 
 		total_transmission_time += (444 * 2);
@@ -422,8 +422,8 @@ void tv_remote::add_rc6_byte_to_out_ir_signals(byte data)
 void tv_remote::build_sirc_signal_frame(byte adress, byte command)
 {
 	//Header
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(2400)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(600)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(2400)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(600)));
 	add_sirc_byte_to_out_ir_signals(command, 7);
 	add_sirc_byte_to_out_ir_signals(adress, 5);
 }
@@ -436,13 +436,13 @@ void tv_remote::add_sirc_byte_to_out_ir_signals(byte data, byte length)
 	{
 		out_bit = ((data >> i) & 0x01);
 		if (out_bit) {
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(1200)));
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(600)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(1200)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(600)));
 		}
 		else
 		{
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(600)));
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(600)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(600)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(600)));
 		}
 
 	}
@@ -451,8 +451,8 @@ void tv_remote::add_sirc_byte_to_out_ir_signals(byte data, byte length)
 void tv_remote::build_jvc_signal_frame(byte adress, byte command)
 {
 	//Header
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(8400)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(4200)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(8400)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(4200)));
 
 	total_transmission_time = 8400 + 4200;
 
@@ -460,14 +460,14 @@ void tv_remote::build_jvc_signal_frame(byte adress, byte command)
 	add_jvc_byte_to_out_ir_signals(command);
 
 	//REPEAT
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(60000 - total_transmission_time)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(60000 - total_transmission_time)));
 	total_transmission_time = 0;
 	add_jvc_byte_to_out_ir_signals(adress);
 	add_jvc_byte_to_out_ir_signals(command);
 
 	//Header
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(8400)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(4200)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(8400)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(4200)));
 
 	total_transmission_time = 8400 + 4200;
 
@@ -482,11 +482,11 @@ void tv_remote::add_jvc_byte_to_out_ir_signals(byte data)
 	byte out_bit = data;
 	for (int i = 7; i >= 0; i--)
 	{
-		out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(562)));
+		out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(562)));
 
 		out_bit = ((data >> i) & 0x01);
 		int duration = out_bit ? micro_seconds_to_clocks(2100-526) : micro_seconds_to_clocks(1050-526);
-		out_ir_signals.push_back(new ir_signal(0, duration));
+		out_ir_signals.push_back(new Infrared_Signal(0, duration));
 		
 		total_transmission_time += 562;
 		total_transmission_time += out_bit ? (2100 - 526) : (1050 - 526);
@@ -498,17 +498,17 @@ void tv_remote::add_jvc_byte_to_out_ir_signals(byte data)
 void tv_remote::build_itt_signal_frame(byte adress, byte command)
 {
 	//Header
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(10)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(300-10)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(10)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(300-10)));
 
 	add_itt_byte_to_out_ir_signals(adress, 4);
 	add_itt_byte_to_out_ir_signals(command, 6);
 
 	//End
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(10)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(300 - 10)));
-	out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(10)));
-	out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(100 - 10)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(10)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(300 - 10)));
+	out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(10)));
+	out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(100 - 10)));
 }
 
 void tv_remote::add_itt_byte_to_out_ir_signals(byte data, byte length)
@@ -519,13 +519,13 @@ void tv_remote::add_itt_byte_to_out_ir_signals(byte data, byte length)
 	{
 		out_bit = ((data >> i) & 0x01);
 		if (out_bit) {
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(10)));
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(200-10)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(10)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(200-10)));
 		}
 		else
 		{
-			out_ir_signals.push_back(new ir_signal(1, micro_seconds_to_clocks(10)));
-			out_ir_signals.push_back(new ir_signal(0, micro_seconds_to_clocks(100-10)));
+			out_ir_signals.push_back(new Infrared_Signal(1, micro_seconds_to_clocks(10)));
+			out_ir_signals.push_back(new Infrared_Signal(0, micro_seconds_to_clocks(100-10)));
 		}
 
 	}

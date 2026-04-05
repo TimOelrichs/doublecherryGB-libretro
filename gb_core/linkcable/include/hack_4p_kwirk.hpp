@@ -24,9 +24,9 @@
 #include "../../gb.h"
 #include "../../serializer.h"
 
-extern bool logging_allowed; 
+extern bool logging_transfers_to_file_allowed; 
 
-class hack_4p_kwirk final : public I_linkcable_target {
+class hack_4p_kwirk final : public I_Linkcable_Target {
 
 public:
 	hack_4p_kwirk(std::vector<gb*> g_gb);

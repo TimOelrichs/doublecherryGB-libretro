@@ -32,7 +32,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #ifndef GIT_VERSION
 #define GIT_VERSION ""
 #endif
-    info->library_version = "v0.18.0" GIT_VERSION;
+    info->library_version = "v0.18.1" GIT_VERSION;
     info->need_fullpath = false;
     info->valid_extensions = "gb|dmg|gbc|cgb|sgb";
 }
@@ -141,12 +141,7 @@ void retro_init(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
         libretro_supports_bitmasks = true;
 
-   // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
-    log_cb(RETRO_LOG_INFO, "Checking Variables\n");
-    check_variables();
-    log_cb(RETRO_LOG_INFO, "Check Variables done\n");
-    init_printer_registry();
-    log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
+
 
 }
 
@@ -218,12 +213,20 @@ bool retro_load_game(const struct retro_game_info *info)
 
 
     // Multiplayer-Setup
+    // environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars_quad);
+    log_cb(RETRO_LOG_INFO, "Checking Variables\n");
+    check_variables();
+    log_cb(RETRO_LOG_INFO, "Check Variables done\n");
+    init_printer_registry();
+    log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
 
     auto_link_multiplayer();
     check_variables();
     set_memory_maps();
     if (master_link)
         v_serializable_devices.push_back(master_link);
+
+
 
    return true;
 }
@@ -392,6 +395,23 @@ void checkForJoinedMultiplayer()
 void run_main_loop()
 {
 
+    const int steps = 70224 / 4; // ≈ 17556
+
+    for (int cycle = 0; cycle < steps; cycle++)
+    {
+        if (extra_inputpolling_enabled)
+            performExtraInputPoll();
+
+        for (size_t i = 0; i < emulated_gbs; i++)
+        {
+            v_gb[i]->run_step();
+        }
+
+        if (master_link)
+            master_link->process();
+    }
+    /*
+     /old
     for (int line = 0; line < 154; line++)
     {
         if (extra_inputpolling_enabled) performExtraInputPoll();
@@ -403,7 +423,7 @@ void run_main_loop()
         if (master_link)
             master_link->process();
     }
-
+    */
 }
 
 void checkAndUpdateVariable()

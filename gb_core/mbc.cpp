@@ -30,6 +30,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "Infrared_Transceiver.h"
+
 mbc::mbc(gb *ref)
 {
 	ref_gb=ref;
@@ -713,12 +715,12 @@ byte mbc::huc3_read(word adr)
 
 			if (ref_gb->get_ir_master_device()) ref_gb->get_ir_master_device()->process_ir();
 
-			if (!ref_gb->received_ir_signals.empty())
+			if (!ref_gb->get_infrared_transceiver()->rx.queue.empty())
 			{
-				huc_ir_last_received_light = !ref_gb->received_ir_signals[0]->light_on;
+				huc_ir_last_received_light = !ref_gb->get_infrared_transceiver()->rx.queue[0]->light_on;
 
-				ref_gb->get_cpu()->next_ir_clock = ref_gb->get_cpu()->get_clock() + ref_gb->received_ir_signals[0]->duration;
-				ref_gb->received_ir_signals.erase(ref_gb->received_ir_signals.begin());
+				ref_gb->get_cpu()->next_ir_clock = ref_gb->get_cpu()->get_clock() + ref_gb->get_infrared_transceiver()->rx.queue[0]->duration;
+				ref_gb->get_infrared_transceiver()->rx.queue.erase(ref_gb->get_infrared_transceiver()->rx.queue.begin());
 
 				return (0xC0 | (byte)huc_ir_last_received_light);
 			}
@@ -805,7 +807,7 @@ void mbc::huc3_write(word adr,byte dat)
 
 				//add signal to out queu
 				last_huc_ir_out_signal = dat & 0x01;
-				ref_gb->get_cpu()->out_ir_signal_que.push_back(new ir_signal((dat == 0x01), ref_gb->get_cpu()->get_clock()));
+				ref_gb->get_cpu()->out_ir_signal_que.push_back(new Infrared_Signal((dat == 0x01), ref_gb->get_cpu()->get_clock()));
 			}
 			break;
 

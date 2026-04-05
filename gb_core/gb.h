@@ -42,6 +42,7 @@
 
 
 
+
 #define INT_VBLANK 1
 #define INT_LCDC 2
 #define INT_TIMER 4
@@ -56,7 +57,7 @@ class apu_snd;
 class rom;
 class mbc;
 class cheat;
-
+class Infrared_Transceiver;
 
 // use fixed-width types
 struct Huc3_Rtc_State {
@@ -73,31 +74,111 @@ enum color_correction_mode {
 };
 
 
-union rp_bitfield {
-	unsigned char byte;
-	struct {
-		unsigned char ir_light_on : 1;
-		unsigned char received_signal : 1;
-		unsigned char unused : 4;
-		unsigned char read_enabled : 2;
-	} bits;
-};
 
-struct ir_signal {
+
+struct Infrared_Signal {
 	bool light_on;
 	int duration;
-	ir_signal(bool light, int clocks) {
+	int start_cycle;
+	Infrared_Signal(bool light, int clocks) {
 		light_on = light;
 		duration = clocks; 
 	}
 };
 
-class I_ir_sender {
-	void virtual send_ir_signal(ir_signal* signal) = 0;
+
+
+class I_Infrared_Receiver {
+public:
+	void virtual receive_edge_ir_signal(Infrared_Signal* signal, int cycle) =  0;
+
+	void virtual receive_ir_pulse(Infrared_Signal* signal) =  0;
 };
 
-class I_ir_receiver {
-	void virtual receive_ir_signal(ir_signal* signal) =  0;
+class I_Infrared_Sender {
+public:
+	virtual ~I_Infrared_Sender() = default;
+
+	void set_infrared_target(I_Infrared_Receiver* target) {
+		infrared_target = target;
+	}
+
+protected:
+
+	I_Infrared_Receiver* infrared_target = nullptr;
+
+	virtual void send_ir_signal(Infrared_Signal* signal) {
+		if (!infrared_target) {
+			// optional logging
+			return;
+		}
+		infrared_target->receive_ir_pulse(signal);
+	}
+};
+
+struct IR_Line
+{
+	std::deque<Infrared_Signal*> queue;
+	Infrared_Signal* current{};
+	bool has_current = false;
+};
+
+class Infrared_Transceiver final : public I_Infrared_Sender, public I_Infrared_Receiver
+{
+
+public:
+	explicit Infrared_Transceiver(gb* ref_gb)
+	{
+		this->ref_gb = ref_gb;
+		rp_reg.reg_data = 0x00;
+	}
+
+	void write_RP_REG(byte value, int cycle);
+	byte read_RP_REG(int cycle);
+	void receive_edge_ir_signal(Infrared_Signal* signal, int cycle) override;
+	void  receive_ir_pulse(Infrared_Signal* signal) override;
+
+	IR_Line rx; //received Infrared Signals
+	IR_Line tx; //transmitted Infrared Signals
+
+	void serialize(serializer &s);
+
+private:
+	gb *ref_gb;
+	const int LIGHT_RECOGNITION_DELAY =  0; // 16;
+	const int RISE_DELAY = 0; // 8;
+	const int LIGHT_FADEOUT_DELAY = 0; // 24;
+
+	struct RP_Reg {
+		uint8_t reg_data = 0;
+
+		[[nodiscard]] bool ir_light_on() const { return this->reg_data & 0x01; }
+
+		void set_ir_light_on(const bool v) {
+			if (v) this->reg_data |= 0x01;
+			else   this->reg_data &= ~0x01;
+		}
+
+		[[nodiscard]] bool received_signal() const { return this->reg_data & 0x02; }
+		void set_received_signal(const bool v) {
+			if (v) this->reg_data |= 0x02;
+			else   this->reg_data &= ~0x02;
+		}
+
+		[[nodiscard]] uint8_t read_enabled() const { return (this->reg_data >> 6) & 0x03; }
+
+	}rp_reg;
+
+	void update_rx(int now);
+	void send_ir_signal(Infrared_Signal* signal) override {};
+	void send_edge_ir_signal(Infrared_Signal* signal, int cycle);
+	void correct_prev_duration(IR_Line* line, int new_start, RP_Reg new_ir_state);
+	void apply_duration_fix(Infrared_Signal* prev_signal, int new_start, RP_Reg next_state);
+
+	class Infrared_Logger
+	{
+	public: static void log_ir_traffic_to_file(const Infrared_Signal *signal, bool incoming, int gb_id);
+	}logger;
 };
 
 struct ext_hook{
@@ -222,7 +303,7 @@ struct rom_info {
 };
 
 
-class I_savestate{
+class I_Savestate{
 public:
 	void virtual save_state_mem(void* buf) = 0;
 	void virtual restore_state_mem(void* buf) = 0;
@@ -231,7 +312,7 @@ public:
 	virtual void reset() = 0;
 };
 
-class I_linkcable_target {
+class I_Linkcable_Target {
 	
 public:
 	virtual ~I_linkcable_target() = default;
@@ -239,23 +320,23 @@ public:
 
 };
 
-class I_linkcable_sender{
+class I_Linkcable_Sender{
 	friend class gb;
 public:
 	virtual byte send_over_linkcable(byte) = 0;
 };
 
-class I_ir_target : public I_ir_receiver{
+class I_Infrared_Target : public I_Infrared_Receiver{
 	friend class gb;
 
 public:
 	
-	void virtual receive_ir_signal(ir_signal* signal) = 0;
+	void virtual receive_egde_ir_signal(Infrared_Signal* signal) = 0;
 	virtual dword* get_rp_que() = 0;
 	virtual void reset() = 0;
 };
 
-class I_ir_master_device : public I_ir_sender
+class I_Infrared_Master_Device : public I_Infrared_Sender
 {
 public:
 	void virtual process_ir() = 0;
@@ -270,10 +351,10 @@ public:
 };
 
 
-class gb final : public I_linkcable_target, public I_linkcable_sender, public I_ir_target, public I_ir_sender
+class gb final : public I_Linkcable_Target, public I_Linkcable_Sender, public I_Infrared_Receiver, public I_Infrared_Sender
 {
 friend class cpu;
-friend class I_linkcable_target; 
+friend class I_Linkcable_Target;
 
 public:
 	gb(renderer *ref,bool b_lcd,bool b_apu);
@@ -290,6 +371,7 @@ public:
 	apu *get_apu() { return m_apu; }
 	rom *get_rom() { return m_rom; }
 	mbc *get_mbc() { return m_mbc; }
+	Infrared_Transceiver *get_infrared_transceiver(){ return infrared_transceiver; };
 	renderer *get_renderer() { return m_renderer; }
 	cheat *get_cheat() { return m_cheat; }
 
@@ -298,22 +380,29 @@ public:
 	void set_target(gb* target) { 
 		this->linked_cable_device = target; 
 		this->linked_ir_device = target;
+		this->get_infrared_transceiver()->set_infrared_target(target);
 	};
 
-	I_linkcable_target* get_linked_target() { return linked_cable_device; }
-	void set_linked_target(I_linkcable_target* target) { this->linked_cable_device = target; };
+	I_Linkcable_Target* get_linked_target() { return linked_cable_device; }
+	void set_linked_target(I_Linkcable_Target* target) { this->linked_cable_device = target; };
 
-	I_ir_target* get_ir_target() { return linked_ir_device; }
-	void set_ir_target(I_ir_target* target) { this->linked_ir_device = target; };
-	void set_ir_master_device(I_ir_master_device* ir_master) { this->ir_master_device = ir_master;  };
-	I_ir_master_device* get_ir_master_device() { return this->ir_master_device; };
-	void receive_ir_signal(ir_signal* signal) override;
-	void send_ir_signal(ir_signal* signal) override;
+	I_Infrared_Receiver* get_ir_target()
+	{
+		return linked_ir_device;
+	}
+	void set_ir_target(I_Infrared_Receiver* target){ this->get_infrared_transceiver()->set_infrared_target(target);};
+
+	void set_ir_master_device(I_Infrared_Master_Device* ir_master) { this->ir_master_device = ir_master;  };
+	I_Infrared_Master_Device* get_ir_master_device() { return this->ir_master_device; };
+	void receive_edge_ir_signal(Infrared_Signal* signal, int now) override;
+	void receive_ir_pulse(Infrared_Signal* signal) override;
+	void send_ir_signal(Infrared_Signal* signal) override;
 
 	gb_regs *get_regs() { return &regs; }
 	gbc_regs *get_cregs() { return &c_regs; }
 
 	void run();
+	void run_step();
 	void reset();
 	void set_skip(int frame);
 	void set_use_gba(bool use);
@@ -340,11 +429,11 @@ public:
 
 	void set_Game_Genie(bool enable, std::string code);
 
-	dword* get_rp_que() override;
+	//dword* get_rp_que() override;
 	void hook_extport(ext_hook *ext);
 	void unhook_extport();
 
-	std::vector<ir_signal*> received_ir_signals;
+
 
 private:
 	cpu *m_cpu;
@@ -352,14 +441,13 @@ private:
 	apu *m_apu;
 	rom *m_rom;
 	mbc *m_mbc;
-	
 	renderer *m_renderer;
 
 	cheat *m_cheat;
-
+	Infrared_Transceiver *infrared_transceiver;
 	//gb* target;
-	I_linkcable_target* linked_cable_device;
-	I_ir_target* linked_ir_device;
+	I_Linkcable_Target* linked_cable_device;
+	I_Infrared_Receiver* linked_ir_device;
 
 	gb_regs regs;
 	gbc_regs c_regs;
@@ -379,7 +467,10 @@ private:
 	std::map<std::string, byte> undo_cheat_map; 
 
 	
-	I_ir_master_device* ir_master_device; 
+	I_Infrared_Master_Device* ir_master_device;
+
+	int line_cycle = 0;   // 0–455
+	int ppu_mode = 2;     // Start meist Mode 2
 };
 
 class cheat
@@ -711,12 +802,13 @@ public:
 	//void set_is_seri_master(bool enable);
 
 	void log_link_traffic(byte a, byte b);
-	void log_ir_traffic(ir_signal *signal, bool incoming);
+	void log_ir_traffic(Infrared_Signal *signal, bool incoming);
 
 	int next_ir_clock = INT_MIN;
-	std::vector<ir_signal*> out_ir_signal_que;
+	std::vector<Infrared_Signal*> out_ir_signal_que;
 
 	
+	int total_clock, seri_occer;
 
 private:
 	byte inline io_read(word adr);
@@ -728,7 +820,7 @@ private:
 	//void log();
 
 	gb *ref_gb;
-	I_linkcable_target* linked_device;
+	I_Linkcable_Target* linked_device;
 	cpu_regs regs;
 
 	byte ram[0x2000*4];
@@ -746,7 +838,8 @@ private:
 	int que_cur;
 //	word org_pal[16][4];
 
-	int total_clock, rest_clock, sys_clock, seri_occer, div_clock;
+	//int total_clock, rest_clock, sys_clock, seri_occer, div_clock;
+	int  rest_clock, sys_clock, div_clock;
 	bool halt,speed,speed_change,dma_executing;
 	bool b_trace;
 	int dma_src;

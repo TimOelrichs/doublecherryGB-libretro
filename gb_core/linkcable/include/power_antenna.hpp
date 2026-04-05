@@ -25,7 +25,7 @@
 
 extern bool power_antenna_on;
 
-class power_antenna final : public I_linkcable_target {
+class power_antenna final : public I_Linkcable_Target {
 
 public:
 	power_antenna() {};

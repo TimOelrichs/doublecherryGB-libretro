@@ -22,9 +22,13 @@
 // Interface with external / other unit emulation GB
 
 #include "gb.h"
+#include "./libretro/DoubleCherryEngine/libretro.h"
 #include <stdlib.h>
 
+#include "Infrared_Transceiver.h"
+
 extern bool detect_as_gba;
+extern retro_log_printf_t log_cb;
 
 gb::gb(renderer *ref,bool b_lcd,bool b_apu)
 {
@@ -38,6 +42,7 @@ gb::gb(renderer *ref,bool b_lcd,bool b_apu)
 	m_cheat=new cheat(this);
 	linked_cable_device=NULL;
 	linked_ir_device = NULL;
+	infrared_transceiver = new Infrared_Transceiver(this);
 
 	m_renderer->reset();
 	m_renderer->set_sound_renderer(b_apu?m_apu->get_renderer():NULL);
@@ -126,9 +131,11 @@ void gb::set_use_gba(bool use) {
 	if (use) this->get_cpu()->get_regs()->BC.b.l = 0x01;
 }
 
+/*
 dword* gb::get_rp_que() {
 	return this->get_cpu()->rp_que;
 }
+*/
 
 bool gb::load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent)
 {
@@ -295,11 +302,14 @@ void gb::serialize(serializer &s)
 	s_VAR(regs);
 	s_VAR(c_regs);
 
+
 	m_rom->serialize(s);
 	m_cpu->serialize(s);
 	m_mbc->serialize(s);
 	m_lcd->serialize(s);
 	m_apu->serialize(s);
+	infrared_transceiver->serialize(s);
+
 }
 
 size_t gb::get_state_size(void)
@@ -328,6 +338,127 @@ void gb::refresh_pal()
 		m_lcd->get_mapped_pal(i>>2)[i&3]=m_renderer->map_color(m_lcd->get_pal(i>>2)[i&3]);
 }
 
+void gb::run_step()
+{
+    if (!m_rom->get_loaded())
+        return;
+
+    // 1 CPU cycle (4 T-cycles)
+    m_cpu->exec(4);
+
+    // --- LCD OFF LOGIK ---
+    if (!(regs.LCDC & 0x80)) {
+        regs.LY = 0;
+        regs.STAT &= 0xF8;
+        re_render++;
+        // 154 Zeilen * 456 Zyklen = 70224. Da wir in 4er Schritten gehen:
+        if (re_render >= 17556) {
+            memset(vframe, 0xff, 160 * 144 * 2);
+            m_renderer->refresh();
+            if (now_frame >= skip) {
+                m_renderer->render_screen((byte*)vframe, 160, 144, 16);
+                now_frame = 0;
+            } else now_frame++;
+            m_lcd->clear_win_count();
+            re_render = 0;
+        }
+        return;
+    }
+
+    // --- PPU TIMING COUNTER ---
+    line_cycle += 4;
+
+    // --- SCANLINE START LOGIK (Spiegelt den Anfang der alten run()) ---
+    if (line_cycle >= 456) {
+        line_cycle = 0;
+        regs.LY = (regs.LY + 1) % 154;
+
+        regs.STAT &= 0xF8;
+
+        // LYC Check
+        if (regs.LYC == regs.LY) {
+            regs.STAT |= 4;
+            if (regs.STAT & 0x40)
+                m_cpu->irq(INT_LCDC);
+        }
+
+        // Frame End / Start
+        if (regs.LY == 0) {
+            m_renderer->refresh();
+            if (now_frame >= skip) {
+                m_renderer->render_screen((byte*)vframe, 160, 144, 16);
+                now_frame = 0;
+            } else now_frame++;
+            m_lcd->clear_win_count();
+            skip = skip_buf;
+        }
+    }
+
+    // --- MODE LOGIK ---
+    if (regs.LY >= 144) {
+        // VBLANK
+        regs.STAT |= 1;
+        if (regs.LY == 144 && line_cycle == 4) { // Entspricht m_cpu->exec(72)
+            m_cpu->irq(INT_VBLANK);
+            if (regs.STAT & 0x10)
+                m_cpu->irq(INT_LCDC);
+        }
+        // Sonderfall LY 153 Timing aus deiner run()
+        if (regs.LY == 153 && line_cycle >= 80 && line_cycle < 84) {
+            // Hier setzt deine alte run() LY kurzzeitig auf 0 und wieder zurück
+            // Da run_step() LY aber oben zentral verwaltet, lassen wir es stabil.
+        }
+    } else {
+        // NORMAL SCANLINE
+        if (line_cycle <= 80) {
+            // MODE 2
+            if (!(regs.STAT & 2)) {
+                regs.STAT |= 2;
+                if (regs.STAT & 0x20) m_cpu->irq(INT_LCDC);
+            }
+        }
+        else if (line_cycle <= 80 + 169) {
+            // MODE 3
+            regs.STAT |= 3;
+        }
+        else {
+            // MODE 0 (HBlank)
+            // Dies wird erst ausgeführt, wenn Mode 2 und 3 zeitlich "vorbei" sind
+            if ((regs.STAT & 0x03) != 0) {
+                regs.STAT &= 0xFC; // Set Mode 0
+
+                // HBlank DMA Logik aus deiner run()
+                if (m_cpu->dma_executing) {
+                    if (m_cpu->b_dma_first) {
+                        m_cpu->dma_dest_bank = m_cpu->vram_bank;
+                        if (m_cpu->dma_src < 0x4000) m_cpu->dma_src_bank = m_rom->get_rom();
+                        else if (m_cpu->dma_src < 0x8000) m_cpu->dma_src_bank = m_mbc->get_rom();
+                        else if (m_cpu->dma_src >= 0xA000 && m_cpu->dma_src < 0xC000) m_cpu->dma_src_bank = m_mbc->get_sram() - 0xA000;
+                        else if (m_cpu->dma_src >= 0xC000 && m_cpu->dma_src < 0xD000) m_cpu->dma_src_bank = m_cpu->ram - 0xC000;
+                        else if (m_cpu->dma_src >= 0xD000 && m_cpu->dma_src < 0xE000) m_cpu->dma_src_bank = m_cpu->ram_bank - 0xD000;
+                        else m_cpu->dma_src_bank = NULL;
+                        m_cpu->b_dma_first = false;
+                    }
+
+                    memcpy(m_cpu->dma_dest_bank + (m_cpu->dma_dest & 0x1ff0), m_cpu->dma_src_bank + m_cpu->dma_src, 16);
+                    m_cpu->dma_src += 16;
+                    m_cpu->dma_src &= 0xfff0;
+                    m_cpu->dma_dest += 16;
+                    m_cpu->dma_dest &= 0xfff0;
+                    m_cpu->dma_rest--;
+                    if (!m_cpu->dma_rest) m_cpu->dma_executing = false;
+                }
+
+                // RENDERING: Exakt nach Mode 3 / DMA Start
+                if (now_frame >= skip)
+                    m_lcd->render(vframe, regs.LY);
+
+                if (regs.STAT & 0x08)
+                    m_cpu->irq(INT_LCDC);
+            }
+        }
+    }
+}
 
 void gb::run()
 {
@@ -474,29 +605,34 @@ void gb::run()
 
 byte gb::send_over_linkcable(byte out_data)
 {
-	I_linkcable_target* connected_linkcable_device = this->get_linked_target();
+	I_Linkcable_Target* connected_linkcable_device = this->get_linked_target();
 	return connected_linkcable_device ? connected_linkcable_device->receive_from_linkcable(out_data) : 0xFF;
 
 }
 
-void gb::receive_ir_signal(ir_signal* signal)
+void gb::receive_edge_ir_signal(Infrared_Signal* signal, int now)
 {
-	received_ir_signals.push_back(signal); 
-
-	this->get_cpu()->log_ir_traffic(signal, true);
-
-	/*
-	if(!this->get_cpu()->out_ir_signal_que.empty()) 
-		this->get_cpu()->out_ir_signal_que.clear();
-	*/
-	
+	(void)now; //now here unused
+	get_infrared_transceiver()->receive_edge_ir_signal(signal, get_cpu()->get_clock());
+	//get_infrared_transceiver()->receive_edge_ir_signal(signal, now);
 }
 
 
 
-void gb::send_ir_signal(ir_signal* signal)
+void gb::receive_ir_pulse(Infrared_Signal* signal)
 {
-	get_ir_target()->receive_ir_signal(signal);
+	get_infrared_transceiver()->receive_ir_pulse(signal);
+}
+
+
+void gb::send_ir_signal(Infrared_Signal* signal)
+{
+	if (!get_ir_target())
+	{
+		log_cb(RETRO_LOG_INFO, "Tried sending Infrared Signal, but no target is linkend");
+		return;
+	}
+	get_ir_target()->receive_edge_ir_signal(signal, 0);
 
 }
 

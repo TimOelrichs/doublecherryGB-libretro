@@ -4,9 +4,9 @@
 
 #include <fstream>
 
-extern bool logging_allowed;
+extern bool logging_transfers_to_file_allowed;
 
-class link_master_device : public I_savestate {
+class link_master_device : public I_Savestate {
 
 	
 public:
