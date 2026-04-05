@@ -127,10 +127,9 @@ class Infrared_Transceiver final : public I_Infrared_Sender, public I_Infrared_R
 {
 
 public:
-	Infrared_Transceiver()
-	: rx(),
-	  tx()
+	explicit Infrared_Transceiver(gb* ref_gb)
 	{
+		this->ref_gb = ref_gb;
 		rp_reg.reg_data = 0x00;
 	}
 
@@ -145,9 +144,10 @@ public:
 	void serialize(serializer &s);
 
 private:
-
-	const int START_DELAY = 16; const int RISE_DELAY = 8;
-	const int FALL_DELAY = 24;
+	gb *ref_gb;
+	const int LIGHT_RECOGNITION_DELAY =  0; // 16;
+	const int RISE_DELAY = 0; // 8;
+	const int LIGHT_FADEOUT_DELAY = 0; // 24;
 
 	struct RP_Reg {
 		uint8_t reg_data = 0;
@@ -170,12 +170,14 @@ private:
 	}rp_reg;
 
 	void update_rx(int now);
-	void send_ir_signal(Infrared_Signal* signal) override;
+	void send_ir_signal(Infrared_Signal* signal) override {};
+	void send_edge_ir_signal(Infrared_Signal* signal, int cycle);
 	void correct_prev_duration(IR_Line* line, int new_start, RP_Reg new_ir_state);
+	void apply_duration_fix(Infrared_Signal* prev_signal, int new_start, RP_Reg next_state);
 
 	class Infrared_Logger
 	{
-	public: static void log_ir_traffic_to_file(const Infrared_Signal *signal, bool incoming);
+	public: static void log_ir_traffic_to_file(const Infrared_Signal *signal, bool incoming, int gb_id);
 	}logger;
 };
 
@@ -377,6 +379,7 @@ public:
 	void set_target(gb* target) { 
 		this->linked_cable_device = target; 
 		this->linked_ir_device = target;
+		this->get_infrared_transceiver()->set_infrared_target(target);
 	};
 
 	I_Linkcable_Target* get_linked_target() { return linked_cable_device; }

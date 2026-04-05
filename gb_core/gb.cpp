@@ -42,7 +42,7 @@ gb::gb(renderer *ref,bool b_lcd,bool b_apu)
 	m_cheat=new cheat(this);
 	linked_cable_device=NULL;
 	linked_ir_device = NULL;
-	infrared_transceiver = new Infrared_Transceiver();
+	infrared_transceiver = new Infrared_Transceiver(this);
 
 	m_renderer->reset();
 	m_renderer->set_sound_renderer(b_apu?m_apu->get_renderer():NULL);
@@ -614,6 +614,7 @@ void gb::receive_edge_ir_signal(Infrared_Signal* signal, int now)
 {
 	(void)now; //now here unused
 	get_infrared_transceiver()->receive_edge_ir_signal(signal, get_cpu()->get_clock());
+	//get_infrared_transceiver()->receive_edge_ir_signal(signal, now);
 }
 
 
