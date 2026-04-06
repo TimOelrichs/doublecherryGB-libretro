@@ -25,8 +25,7 @@ void PokemonTcgNetpacketHandler::process()
 
     const bool isMaster = (gb_instance->get_regs()->SC & 0x01) == 1;
 
-    uint32_t now = gb_instance->get_cpu()->get_clock();
-
+    //uint32_t now = gb_instance->get_cpu()->get_clock();
 
     const bool reached_next_transfer_clock = (gb_instance->get_cpu()->get_clock() - this->seri_occer) > transfer_interval ;
 
@@ -44,7 +43,7 @@ void PokemonTcgNetpacketHandler::process()
     else
     {
 
-        NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
+        //NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
         send_idle_change(false);
         log_cb(RETRO_LOG_INFO, "Slave turned Off IDLE mode cause it's got non IDLE Data\n");
         setIdleMode(false);

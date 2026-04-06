@@ -30,7 +30,6 @@
 #include <iostream>
 #include <fstream>
 
-#include "Infrared_Transceiver.h"
 
 mbc::mbc(gb *ref)
 {

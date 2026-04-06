@@ -25,8 +25,6 @@
 #include "./libretro/DoubleCherryEngine/libretro.h"
 #include <stdlib.h>
 
-#include "Infrared_Transceiver.h"
-
 extern bool detect_as_gba;
 extern retro_log_printf_t log_cb;
 

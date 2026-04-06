@@ -61,6 +61,7 @@ set(SOURCES
         ${CORE_DIR}/gb_core/lcd.cpp
         ${CORE_DIR}/gb_core/mbc.cpp
         ${CORE_DIR}/gb_core/rom.cpp
+        ${CORE_DIR}/gb_core/Infrared_Transceiver.cpp
         ${CORE_DIR}/libretro/dmy_renderer.cpp
         ${CORE_DIR}/libretro/libretro.cpp
         ${CORE_DIR}/gb_core/GbPalettes/GBPaletteManager.cpp
@@ -97,6 +98,8 @@ set(SOURCES
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.cpp
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
+        ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp
+        ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
 )
 
 # --- 2. Target erstellen ---

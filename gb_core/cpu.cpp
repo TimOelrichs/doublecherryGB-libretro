@@ -30,8 +30,9 @@
 
 #include <extern/libretro-common/include/retro_timers.h>
 //#include "libretro-common/include/retro_timers.h"
-#include "Infrared_Transceiver.h"
-#include "libretro-common/include/retro_timers.h"
+#include <iomanip>
+
+//#include "../extern/libretro-common/include/retro_timers.h"
 #include "../libretro/DoubleCherryEngine/Netplay/NetPacketManager.h"
 
 extern retro_log_printf_t log_cb;
@@ -901,6 +902,26 @@ void cpu::log_ir_traffic(Infrared_Signal *signal, bool incoming) {
     }
 }
 */
+
+void cpu::log_link_traffic(byte a, byte b)
+{
+	if (logging_transfers_to_file_allowed)
+	{
+		std::string filePath = "./2_Player_Link_cable.txt";
+		std::ofstream ofs(filePath.c_str(), std::ios_base::out | std::ios_base::app);
+
+		int duration = total_clock - clocks_since_last_serial;
+
+		ofs << duration << "\t\t\t\t"
+			<< "0x" << std::hex << std::setw(2) << std::setfill('0') << (int)a << "\t"
+			<< "0x" << std::setw(2) << std::setfill('0') << (int)b << std::dec << "\t"
+			<< std::endl;
+
+		ofs.close();
+
+		clocks_since_last_serial = total_clock;
+	}
+}
 
 void cpu::irq(int irq_type)
 {

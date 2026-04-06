@@ -315,7 +315,7 @@ public:
 class I_Linkcable_Target {
 	
 public:
-	virtual ~I_linkcable_target() = default;
+	virtual ~I_Linkcable_Target() = default;
 	virtual byte receive_from_linkcable(byte) = 0;	
 
 };
