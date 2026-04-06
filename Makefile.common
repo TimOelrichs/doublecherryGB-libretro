@@ -1,51 +1,83 @@
-﻿LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
+﻿# Externe Bibliotheken (neuer extern/-Ordner, wie in CMakeLists.txt)
+EXTERN_DIR           := $(CORE_DIR)/extern
+LIBMOBILE_DIR        := $(EXTERN_DIR)/libmobile
+LIBRETRO_COMMON_DIR  := $(EXTERN_DIR)/libretro-common
 
-# Include-Pfade - HIER gehören die Header-Verzeichnisse hin!
-INCFLAGS := -I$(CORE_DIR) \
-            -I$(CORE_DIR)/gb_core \
-            -I$(CORE_DIR)/libretro \
-            -I$(CORE_DIR)/libretro/DoubleCherryEngine \
-            -I$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay \
-            -I$(CORE_DIR)/libretro/DoubleCherryEngine/common/interfaces
+# Include-Pfade
+INCFLAGS := \
+	-I$(CORE_DIR) \
+	-I$(CORE_DIR)/gb_core \
+	-I$(CORE_DIR)/libretro \
+	-I$(CORE_DIR)/libretro/DoubleCherryEngine \
+	-I$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay \
+	-I$(CORE_DIR)/libretro/DoubleCherryEngine/common/interfaces \
+	-I$(LIBMOBILE_DIR) \
+	-I$(LIBRETRO_COMMON_DIR)/include
 
 ifneq (,$(findstring msvc200,$(platform)))
-INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
+INCFLAGS += -I$(LIBRETRO_COMMON_DIR)/include/compat/msvc
 endif
 
-# NUR .cpp Dateien! KEINE Header!
-SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
-    $(CORE_DIR)/gb_core/cheat.cpp \
-    $(CORE_DIR)/gb_core/cpu.cpp \
-    $(CORE_DIR)/gb_core/gb.cpp \
-    $(CORE_DIR)/gb_core/lcd.cpp \
-    $(CORE_DIR)/gb_core/mbc.cpp \
-    $(CORE_DIR)/gb_core/rom.cpp \
-    $(CORE_DIR)/libretro/dmy_renderer.cpp \
-    $(CORE_DIR)/libretro/libretro.cpp \
-    $(CORE_DIR)/gb_core/GbPalettes/GBPaletteManager.cpp \
-    $(CORE_DIR)/gb_core/linkcable/alleyway_link_controller.cpp \
-    $(CORE_DIR)/gb_core/linkcable/link_master_device.cpp \
-    $(CORE_DIR)/gb_core/linkcable/linkcable_hub.cpp \
-    $(CORE_DIR)/gb_core/linkcable/dmg07.cpp \
-    $(CORE_DIR)/gb_core/linkcable/dmg07x4.cpp \
-    $(CORE_DIR)/gb_core/linkcable/hack_4p_tetris.cpp \
-    $(CORE_DIR)/gb_core/linkcable/hack_4p_kwirk.cpp \
-    $(CORE_DIR)/gb_core/linkcable/hack_4p_burger_time_deluxe.cpp \
-    $(CORE_DIR)/gb_core/linkcable/barcodeboy.cpp \
-    $(CORE_DIR)/gb_core/linkcable/barcode_taisen_bardigun.cpp \
-    $(CORE_DIR)/gb_core/linkcable/faceball2000_cable.cpp \
-    $(CORE_DIR)/gb_core/linkcable/gameboy_printer.cpp \
-    $(CORE_DIR)/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp \
-    $(CORE_DIR)/gb_core/linkcable/power_antenna.cpp \
-    $(CORE_DIR)/gb_core/linkcable/pokebuddy_gen1.cpp \
-    $(CORE_DIR)/gb_core/infrared/pikachu_2_gs.cpp \
-    $(CORE_DIR)/gb_core/infrared/ubikey_unlocker.cpp \
-    $(CORE_DIR)/gb_core/infrared/tv_remote.cpp \
-    $(CORE_DIR)/gb_core/infrared/full_changer.cpp \
-    $(CORE_DIR)/services/printer/bmp_printer.cpp \
-    $(CORE_DIR)/services/printer/png_printer.cpp \
-    $(CORE_DIR)/services/printer/image_scaler.cpp \
-    $(CORE_DIR)/services/printer/printer_registry.cpp \
-    $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetplayManager.cpp \
-    $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp \
-    $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
+# --- C-Quellen: libmobile + libretro-common ---
+SOURCES_C := \
+	$(LIBMOBILE_DIR)/mobile.c \
+	$(LIBMOBILE_DIR)/commands.c \
+	$(LIBMOBILE_DIR)/config.c \
+	$(LIBMOBILE_DIR)/callback.c \
+	$(LIBMOBILE_DIR)/debug.c \
+	$(LIBMOBILE_DIR)/serial.c \
+	$(LIBMOBILE_DIR)/dns.c \
+	$(LIBMOBILE_DIR)/relay.c \
+	$(LIBMOBILE_DIR)/util.c \
+	$(LIBMOBILE_DIR)/inet_pton.c \
+	$(LIBRETRO_COMMON_DIR)/net/net_socket.c \
+	$(LIBRETRO_COMMON_DIR)/net/net_compat.c \
+	$(LIBRETRO_COMMON_DIR)/features/features_cpu.c \
+	$(LIBRETRO_COMMON_DIR)/string/stdstring.c
+
+# --- C++-Quellen ---
+SOURCES_CXX := \
+	$(CORE_DIR)/gb_core/apu.cpp \
+	$(CORE_DIR)/gb_core/cheat.cpp \
+	$(CORE_DIR)/gb_core/cpu.cpp \
+	$(CORE_DIR)/gb_core/gb.cpp \
+	$(CORE_DIR)/gb_core/lcd.cpp \
+	$(CORE_DIR)/gb_core/mbc.cpp \
+	$(CORE_DIR)/gb_core/rom.cpp \
+	$(CORE_DIR)/gb_core/Infrared_Transceiver.cpp \
+	$(CORE_DIR)/libretro/dmy_renderer.cpp \
+	$(CORE_DIR)/libretro/libretro.cpp \
+	$(CORE_DIR)/gb_core/GbPalettes/GBPaletteManager.cpp \
+	\
+	$(CORE_DIR)/gb_core/linkcable/alleyway_link_controller.cpp \
+	$(CORE_DIR)/gb_core/linkcable/link_master_device.cpp \
+	$(CORE_DIR)/gb_core/linkcable/linkcable_hub.cpp \
+	$(CORE_DIR)/gb_core/linkcable/dmg07.cpp \
+	$(CORE_DIR)/gb_core/linkcable/dmg07x4.cpp \
+	$(CORE_DIR)/gb_core/linkcable/hack_4p_tetris.cpp \
+	$(CORE_DIR)/gb_core/linkcable/hack_4p_kwirk.cpp \
+	$(CORE_DIR)/gb_core/linkcable/hack_4p_burger_time_deluxe.cpp \
+	$(CORE_DIR)/gb_core/linkcable/barcodeboy.cpp \
+	$(CORE_DIR)/gb_core/linkcable/barcode_taisen_bardigun.cpp \
+	$(CORE_DIR)/gb_core/linkcable/faceball2000_cable.cpp \
+	$(CORE_DIR)/gb_core/linkcable/gameboy_printer.cpp \
+	$(CORE_DIR)/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp \
+	$(CORE_DIR)/gb_core/linkcable/power_antenna.cpp \
+	$(CORE_DIR)/gb_core/linkcable/pokebuddy_gen1.cpp \
+	$(CORE_DIR)/gb_core/linkcable/Mobil_Adapter_GB.cpp \
+	\
+	$(CORE_DIR)/gb_core/infrared/pikachu_2_gs.cpp \
+	$(CORE_DIR)/gb_core/infrared/ubikey_unlocker.cpp \
+	$(CORE_DIR)/gb_core/infrared/tv_remote.cpp \
+	$(CORE_DIR)/gb_core/infrared/full_changer.cpp \
+	\
+	$(CORE_DIR)/services/printer/bmp_printer.cpp \
+	$(CORE_DIR)/services/printer/png_printer.cpp \
+	$(CORE_DIR)/services/printer/image_scaler.cpp \
+	$(CORE_DIR)/services/printer/printer_registry.cpp \
+	\
+	$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetplayManager.cpp \
+	$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp \
+	$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp \
+	$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp \
+	$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
