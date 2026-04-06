@@ -100,7 +100,6 @@ void PokemonTcgNetpacketHandler::handleSend(uint16_t client_id, const void* buf,
 }
 
 
-
 void PokemonTcgNetpacketHandler::handleReceive(const void* buf, std::size_t len, uint16_t client_id)
 {
     if (!got_receiver_id)
