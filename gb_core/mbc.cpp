@@ -800,7 +800,7 @@ void mbc::huc3_write(word adr,byte dat)
 					//correct last duration value
 					int size = ref_gb->get_cpu()->out_ir_signal_que.size();
 					ref_gb->get_cpu()->out_ir_signal_que[size - 1]->duration = ref_gb->get_cpu()->get_clock() - ref_gb->get_cpu()->out_ir_signal_que[size - 1]->duration;
-					ref_gb->get_cpu()->log_ir_traffic(ref_gb->get_cpu()->out_ir_signal_que[size - 1], false);
+					//ref_gb->get_cpu()->log_ir_traffic(ref_gb->get_cpu()->out_ir_signal_que[size - 1], false);
 					//ref_gb->send_ir_signal(ref_gb->get_cpu()->out_ir_signal_que[size - 1]);
 				}
 

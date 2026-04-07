@@ -125,7 +125,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         ${CORE_DIR}
         ${CORE_DIR}/gb_core
         ${CORE_DIR}/libretro
-        ${CORE_DIR}/libretro-common/include
+        ${CORE_DIR}/extern/libretro-common/include
+        ${CORE_DIR}/extern/libmobile
+        ${CORE_DIR}/extern/stb
 )
 
 # Libretro-spezifische Einstellungen

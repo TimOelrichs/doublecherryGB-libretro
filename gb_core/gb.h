@@ -802,7 +802,7 @@ public:
 	//void set_is_seri_master(bool enable);
 
 	void log_link_traffic(byte a, byte b);
-	void log_ir_traffic(Infrared_Signal *signal, bool incoming);
+	//void log_ir_traffic(Infrared_Signal *signal, bool incoming);
 
 	int next_ir_clock = INT_MIN;
 	std::vector<Infrared_Signal*> out_ir_signal_que;
