@@ -40,10 +40,11 @@ endif
 
 TARGET_NAME := DoubleCherryGB
 CXXFLAGS += -std=c++17
+GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
+ifneq ($(GIT_VERSION)," unknown")
+	CXXFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+endif
 
-# Git-Hash als BUILD_VERSION (wie in CMakeLists.txt)
-GIT_HASH := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
-CXXFLAGS += -DBUILD_VERSION=\"$(GIT_HASH)\"
 
 SPACE :=
 SPACE := $(SPACE) $(SPACE)
@@ -53,11 +54,6 @@ filter_out1 = $(filter-out $(firstword $1),$1)
 filter_out2 = $(call filter_out1,$(call filter_out1,$1))
 unixpath = $(subst \,/,$1)
 unixcygpath = /$(subst :,,$(call unixpath,$1))
-
-# --- Externe Bibliotheken (jetzt im extern/-Ordner) ---
-EXTERN_DIR  := extern
-LIBMOBILE_DIR        := $(EXTERN_DIR)/libmobile
-LIBRETRO_COMMON_DIR  := $(EXTERN_DIR)/libretro-common
 
 # Unix
 ifeq ($(platform), unix)
@@ -97,7 +93,7 @@ else ifeq ($(platform),$(filter $(platform),classic_armv7_a7 unix-armv7-hardfloa
 	    LDFLAGS += -static-libgcc -static-libstdc++
 	  endif
 	endif
-
+#######################################
 # Android
 else ifeq ($(platform), android)
     TARGET := $(TARGET_NAME)_libretro_$(platform).so
@@ -105,40 +101,6 @@ else ifeq ($(platform), android)
     CFLAGS  := $(DEFINES) -O3 -fPIC $(INCDIRS) -std=gnu11
     CXXFLAGS += -O3 -fPIC -std=gnu++17 $(INCDIRS) $(DEFINES)
     STATIC_LINKING = 0
-
-# Miyoo Mini
-else ifeq ($(platform), miyoo)
-	TARGET := $(TARGET_NAME)_libretro.so
-	CC  = $(MIYOO_CC)
-	CXX = $(MIYOO_CXX)
-	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T
-	CFLAGS   += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm -Os
-	CXXFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -marm -Os
-	DEFINES  += -DMIYOO_MINI
-
-# Trimui Smart Pro
-else ifeq ($(platform), trimui)
-	TARGET := $(TARGET_NAME)_libretro.so
-	CC  = $(TRIMUI_CC)
-	CXX = $(TRIMUI_CXX)
-	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T
-	CFLAGS   += -mcpu=cortex-a35 -march=armv8-a -mtune=cortex-a35 -O2
-	CXXFLAGS += -mcpu=cortex-a35 -march=armv8-a -mtune=cortex-a35 -O2
-	DEFINES  += -DTRIMUI_SMART_PRO
-
-# Trimui Brick
-else ifeq ($(platform), brick)
-	TARGET := $(TARGET_NAME)_libretro.so
-	CC  = $(BRICK_CC)
-	CXX = $(BRICK_CXX)
-	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T
-	CFLAGS   += -march=mips32 -mtune=x1000 -msoft-float -Os
-	CXXFLAGS += -march=mips32 -mtune=x1000 -msoft-float -Os
-	DEFINES  += -DTRIMUI_BRICK
-
 # OS X
 else ifeq ($(platform), osx)
    TARGET := $(TARGET_NAME)_libretro.dylib
@@ -184,6 +146,7 @@ endif
 
    fpic += $(MINVERSION) -stdlib=libc++
 
+
 # iOS
 else ifneq (,$(findstring ios,$(platform)))
    TARGET := $(TARGET_NAME)_libretro_ios.dylib
@@ -208,6 +171,7 @@ endif
    SHARED += $(MINVERSION)
    CFLAGS += $(MINVERSION)
    CXXFLAGS += $(MINVERSION)
+
 
 else ifeq ($(platform), tvos-arm64)
    TARGET := $(TARGET_NAME)_libretro_tvos.dylib
@@ -267,10 +231,9 @@ else ifeq ($(platform), ps2)
 	CC = mips64r5900el-ps2-elf-gcc$(EXE_EXT)
 	CXX = mips64r5900el-ps2-elf-g++$(EXE_EXT)
 	AR = mips64r5900el-ps2-elf-ar$(EXE_EXT)
-	STATIC_LINKING = 1
-	OLD_GCC = 1
+   STATIC_LINKING = 1
+   OLD_GCC = 1
 	FLAGS += -G0 -O3 -DSKIP_COLOR_CORRECTION
-	LIBS += -lsifrpc -lsifcmd -lps2ipc
 
 # PSP
 else ifeq ($(platform), psp1)
@@ -280,6 +243,7 @@ else ifeq ($(platform), psp1)
 	AR = psp-ar$(EXE_EXT)
    STATIC_LINKING = 1
 	FLAGS += -G0
+
 	CXXFLAGS += -O1 -DNDEBUG -ffast-math -DFRONTEND_SUPPORTS_RGB565
 
 # Vita
@@ -297,17 +261,22 @@ else ifeq ($(platform), ctr)
 	CC = $(DEVKITARM)/bin/arm-none-eabi-gcc$(EXE_EXT)
 	CXX = $(DEVKITARM)/bin/arm-none-eabi-g++$(EXE_EXT)
 	AR = $(DEVKITARM)/bin/arm-none-eabi-ar$(EXE_EXT)
+
 	CFLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard
 	CFLAGS += -Wall -mword-relocations -fomit-frame-pointer -ffast-math
 	CFLAGS += -DARM11 -D_3DS -DHAVE_3DS_HEADERS
+	CFLAGS += -I$(DEVKITPRO)/libctru/include
+
+	# Prüfe ob DEVKITPRO verfügbar ist
 	ifneq ($(DEVKITPRO),)
 		CFLAGS += -I$(DEVKITPRO)/libctru/include
 	else
+		# Fallback für Build-Bot
 		$(warning DEVKITPRO not set, 3DS support limited)
 	endif
+
 	CXXFLAGS += $(CFLAGS)
 	STATIC_LINKING = 1
-
 # Nintendo Switch (libtransistor)
 else ifeq ($(platform), switch)
 	EXT=a
@@ -337,6 +306,7 @@ TARGET := $(TARGET_NAME)_libretro_xdk1.lib
 CC  = CL.exe
 CXX  = CL.exe
 LD   = lib.exe
+
 export INCLUDE := $(XDK)/xbox/include
 export LIB := $(XDK)/xbox/lib
 PATH := $(call unixcygpath,$(XDK)/xbox/bin/vc71):$(PATH)
@@ -345,7 +315,6 @@ CFLAGS   += -D_XBOX -D_XBOX1
 CXXFLAGS += -D_XBOX -D_XBOX1
 STATIC_LINKING=1
 HAS_GCC := 0
-
 # Windows MSVC 2010 Xbox 360
 else ifeq ($(platform), xbox360_msvc2010)
 TARGET := $(TARGET_NAME)_libretro_xdk360.lib
@@ -353,6 +322,7 @@ MSVCBINDIRPREFIX = $(XEDK)/bin/win32
 CC  = "$(MSVCBINDIRPREFIX)/cl.exe"
 CXX  = "$(MSVCBINDIRPREFIX)/cl.exe"
 LD   = "$(MSVCBINDIRPREFIX)/lib.exe"
+
 export INCLUDE := $(XEDK)/include/xbox
 export LIB := $(XEDK)/lib/xbox
 PSS_STYLE :=2
@@ -366,12 +336,15 @@ HAS_GCC := 0
 else ifeq ($(platform), windows_msvc2003_x86)
 	CC  = cl.exe
 	CXX = cl.exe
+
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS71COMNTOOLS)../../Vc7/bin"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS71COMNTOOLS)../IDE")
 INCLUDE := $(shell IFS=$$'\n'; cygpath "$(VS71COMNTOOLS)../../Vc7/include")
 LIB := $(shell IFS=$$'\n'; cygpath -w "$(VS71COMNTOOLS)../../Vc7/lib")
 BIN := $(shell IFS=$$'\n'; cygpath "$(VS71COMNTOOLS)../../Vc7/bin")
+
 WindowsSdkDir := $(INETSDK)
+
 export INCLUDE := $(INCLUDE);$(INETSDK)/Include;src/drivers/libretro/msvc/msvc-2005
 export LIB := $(LIB);$(WindowsSdkDir);$(INETSDK)/Lib
 TARGET := $(TARGET_NAME)_libretro.dll
@@ -383,35 +356,42 @@ CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 else ifeq ($(platform), windows_msvc2010_x64)
 	CC  = cl.exe
 	CXX = cl.exe
+
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/bin/amd64"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../IDE")
 LIB := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/lib/amd64")
 INCLUDE := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/include")
+
 WindowsSdkDir := $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')
 WindowsSdkDir ?= $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')
+
 WindowsSDKIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include")
 WindowsSDKGlIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\gl")
 WindowsSDKLibDir := $(shell cygpath -w "$(WindowsSdkDir)\Lib\x64")
+
 INCFLAGS_PLATFORM = -I"$(WindowsSDKIncludeDir)"
 export INCLUDE := $(INCLUDE);$(WindowsSDKIncludeDir);$(WindowsSDKGlIncludeDir)
 export LIB := $(LIB);$(WindowsSDKLibDir)
 TARGET := $(TARGET_NAME)_libretro.dll
 PSS_STYLE :=2
 LDFLAGS += -DLL
-
 # Windows MSVC 2010 x86
 else ifeq ($(platform), windows_msvc2010_x86)
 	CC  = cl.exe
 	CXX = cl.exe
+
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/bin"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../IDE")
 LIB := $(shell IFS=$$'\n'; cygpath -w "$(VS100COMNTOOLS)../../VC/lib")
 INCLUDE := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/include")
+
 WindowsSdkDir := $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')
 WindowsSdkDir ?= $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')
+
 WindowsSDKIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include")
 WindowsSDKGlIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\gl")
 WindowsSDKLibDir := $(shell cygpath -w "$(WindowsSdkDir)\Lib")
+
 INCFLAGS_PLATFORM = -I"$(WindowsSDKIncludeDir)"
 export INCLUDE := $(INCLUDE);$(WindowsSDKIncludeDir);$(WindowsSDKGlIncludeDir)
 export LIB := $(LIB);$(WindowsSDKLibDir)
@@ -423,18 +403,22 @@ LDFLAGS += -DLL
 else ifeq ($(platform), windows_msvc2005_x86)
 	CC  = cl.exe
 	CXX = cl.exe
+
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../../VC/bin"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../IDE")
 INCLUDE := $(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../../VC/include")
 LIB := $(shell IFS=$$'\n'; cygpath -w "$(VS80COMNTOOLS)../../VC/lib")
 BIN := $(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../../VC/bin")
+
 WindowsSdkDir := $(shell reg query "HKLM\SOFTWARE\Microsoft\MicrosoftSDK\InstalledSDKs\8F9E5EF3-A9A5-491B-A889-C58EFFECE8B3" -v "Install Dir" | grep -o '[A-Z]:\\.*')
+
 WindowsSDKIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include")
 WindowsSDKAtlIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\atl")
 WindowsSDKCrtIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\crt")
 WindowsSDKGlIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\gl")
 WindowsSDKMfcIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\mfc")
 WindowsSDKLibDir := $(shell cygpath -w "$(WindowsSdkDir)\Lib")
+
 export INCLUDE := $(INCLUDE);$(WindowsSDKIncludeDir);$(WindowsSDKAtlIncludeDir);$(WindowsSDKCrtIncludeDir);$(WindowsSDKGlIncludeDir);$(WindowsSDKMfcIncludeDir)
 export LIB := $(LIB);$(WindowsSDKLibDir)
 TARGET := $(TARGET_NAME)_libretro.dll
@@ -444,10 +428,12 @@ CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 
 # Windows MSVC 2017 all architectures
 else ifneq (,$(findstring windows_msvc2017,$(platform)))
+
     NO_GCC := 1
     CFLAGS += -DNOMINMAX
     CXXFLAGS += -DNOMINMAX
     WINDOWS_VERSION = 1
+
 	PlatformSuffix = $(subst windows_msvc2017_,,$(platform))
 	ifneq (,$(findstring desktop,$(PlatformSuffix)))
 		WinPartition = desktop
@@ -460,27 +446,36 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 		LDFLAGS += -APPCONTAINER -NXCOMPAT -DYNAMICBASE -MANIFEST:NO -LTCG -OPT:REF -SUBSYSTEM:CONSOLE -MANIFESTUAC:NO -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1 -DEBUG:FULL -WINMD:NO
 		LIBS += WindowsApp.lib
 	endif
+
 	CFLAGS += $(MSVC2017CompileFlags)
 	CXXFLAGS += $(MSVC2017CompileFlags)
+
 	TargetArchMoniker = $(subst $(WinPartition)_,,$(PlatformSuffix))
+
 	CC  = cl.exe
 	CXX = cl.exe
 	LD = link.exe
+
 	reg_query = $(call filter_out2,$(subst $2,,$(shell reg query "$2" -v "$1" 2>nul)))
 	fix_path = $(subst $(SPACE),\ ,$(subst \,/,$1))
+
 	ProgramFiles86w := $(shell cmd //c "echo %PROGRAMFILES(x86)%")
 	ProgramFiles86 := $(shell cygpath "$(ProgramFiles86w)")
+
 	WindowsSdkDir ?= $(call reg_query,InstallationFolder,HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0)
 	WindowsSdkDir ?= $(call reg_query,InstallationFolder,HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows\v10.0)
 	WindowsSdkDir ?= $(call reg_query,InstallationFolder,HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0)
 	WindowsSdkDir ?= $(call reg_query,InstallationFolder,HKEY_CURRENT_USER\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0)
 	WindowsSdkDir := $(WindowsSdkDir)
+
 	WindowsSDKVersion ?= $(firstword $(foreach folder,$(subst $(subst \,/,$(WindowsSdkDir)Include/),,$(wildcard $(call fix_path,$(WindowsSdkDir)Include\*))),$(if $(wildcard $(call fix_path,$(WindowsSdkDir)Include/$(folder)/um/Windows.h)),$(folder),)))$(BACKSLASH)
 	WindowsSDKVersion := $(WindowsSDKVersion)
+
 	VsInstallBuildTools = $(ProgramFiles86)/Microsoft Visual Studio/2017/BuildTools
 	VsInstallEnterprise = $(ProgramFiles86)/Microsoft Visual Studio/2017/Enterprise
 	VsInstallProfessional = $(ProgramFiles86)/Microsoft Visual Studio/2017/Professional
 	VsInstallCommunity = $(ProgramFiles86)/Microsoft Visual Studio/2017/Community
+
 	VsInstallRoot ?= $(shell if [ -d "$(VsInstallBuildTools)" ]; then echo "$(VsInstallBuildTools)"; fi)
 	ifeq ($(VsInstallRoot), )
 		VsInstallRoot = $(shell if [ -d "$(VsInstallEnterprise)" ]; then echo "$(VsInstallEnterprise)"; fi)
@@ -492,18 +487,26 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 		VsInstallRoot = $(shell if [ -d "$(VsInstallCommunity)" ]; then echo "$(VsInstallCommunity)"; fi)
 	endif
 	VsInstallRoot := $(VsInstallRoot)
+
 	VcCompilerToolsVer := $(shell cat "$(VsInstallRoot)/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt" | grep -o '[0-9\.]*')
 	VcCompilerToolsDir := $(VsInstallRoot)/VC/Tools/MSVC/$(VcCompilerToolsVer)
+
 	WindowsSDKSharedIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\$(WindowsSDKVersion)\shared")
 	WindowsSDKUCRTIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\$(WindowsSDKVersion)\ucrt")
 	WindowsSDKUMIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\$(WindowsSDKVersion)\um")
 	WindowsSDKUCRTLibDir := $(shell cygpath -w "$(WindowsSdkDir)\Lib\$(WindowsSDKVersion)\ucrt\$(TargetArchMoniker)")
 	WindowsSDKUMLibDir := $(shell cygpath -w "$(WindowsSdkDir)\Lib\$(WindowsSDKVersion)\um\$(TargetArchMoniker)")
+
+	# For some reason the HostX86 compiler doesn't like compiling for x64
+	# ("no such file" opening a shared library), and vice-versa.
+	# Work around it for now by using the strictly x86 compiler for x86, and x64 for x64.
+	# NOTE: What about ARM?
 	ifneq (,$(findstring x64,$(TargetArchMoniker)))
 		VCCompilerToolsBinDir := $(VcCompilerToolsDir)\bin\HostX64
 	else
 		VCCompilerToolsBinDir := $(VcCompilerToolsDir)\bin\HostX86
 	endif
+
 	PATH := $(shell IFS=$$'\n'; cygpath "$(VCCompilerToolsBinDir)/$(TargetArchMoniker)"):$(PATH)
 	PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VsInstallRoot)/Common7/IDE")
 	INCLUDE := $(shell IFS=$$'\n'; cygpath -w "$(VcCompilerToolsDir)/include")
@@ -511,12 +514,13 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	ifneq (,$(findstring uwp,$(PlatformSuffix)))
 		LIB := $(shell IFS=$$'\n'; cygpath -w "$(LIB)/store")
 	endif
+
 	export INCLUDE := $(INCLUDE);$(WindowsSDKSharedIncludeDir);$(WindowsSDKUCRTIncludeDir);$(WindowsSDKUMIncludeDir)
 	export LIB := $(LIB);$(WindowsSDKUCRTLibDir);$(WindowsSDKUMLibDir)
 	TARGET := $(TARGET_NAME)_libretro.dll
 	PSS_STYLE :=2
 	LDFLAGS += -DLL
-	CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
+CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 
 # Windows
 else
@@ -529,20 +533,9 @@ endif
 
 CORE_DIR := .
 
-# --- Include-Pfade ---
-# libmobile liegt direkt im extern/libmobile-Ordner (kein /include-Unterordner)
-# libretro-common nutzt extern/libretro-common/include
-INCFLAGS += \
-	-I$(CORE_DIR) \
-	-I$(CORE_DIR)/gb_core \
-	-I$(CORE_DIR)/libretro \
-	-I$(LIBMOBILE_DIR) \
-	-I$(LIBRETRO_COMMON_DIR)/include
-
 include Makefile.common
 
-OBJECTS  := $(SOURCES_CXX:.cpp=.o)
-OBJECTS  += $(SOURCES_C:.c=.o)
+OBJECTS := $(SOURCES_CXX:.cpp=.o)
 
 ifeq ($(DEBUG), 1)
 ifneq (,$(findstring msvc,$(platform)))
@@ -570,6 +563,7 @@ endif
    CFLAGS   += -D_CRT_SECURE_NO_DEPRECATE
    CXXFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 endif
+
 
 ifneq (,$(findstring msvc,$(platform)))
 else
@@ -599,16 +593,16 @@ WARNINGS := -Wall \
 	-fno-strict-overflow
 endif
 
-FLAGS += -D__LIBRETRO__ $(WARNINGS) $(DEFINES)
+FLAGS += -D__LIBRETRO__ $(WARNINGS)
 
 CXXFLAGS += $(FLAGS)
-CFLAGS   += $(FLAGS)
+CFLAGS += $(FLAGS)
 
 ifeq ($(platform), osx)
 ifndef ($(NOUNIVERSAL))
-   CFLAGS   += $(ARCHFLAGS)
+   CFLAGS += $(ARCHFLAGS)
    CXXFLAGS += $(ARCHFLAGS)
-   LFLAGS   += $(ARCHFLAGS)
+   LFLAGS += $(ARCHFLAGS)
 endif
 endif
 
@@ -628,12 +622,6 @@ else
 	LD = $(CXX)
 endif
 
-# Mathe-Bibliothek (wie in CMakeLists.txt: nicht für MSVC)
-ifneq (,$(findstring msvc,$(platform)))
-else
-   LIBS += -lm
-endif
-
 INCFLAGS += $(INCFLAGS_PLATFORM)
 
 ifeq ($(platform), theos_ios)
@@ -644,7 +632,6 @@ ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C)
 include $(THEOS_MAKE_PATH)/library.mk
 else
 all: $(TARGET)
-
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
