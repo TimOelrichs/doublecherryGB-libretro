@@ -1540,10 +1540,10 @@ void set_memory_maps() {
        { mainram, v_gb[0]->get_cpu()->get_ram(),     0x1000, 0xD000,          0, 0, 0x1000, NULL },
        { mainram, v_gb[0]->get_cpu()->get_stack() ,     0, 0xFF80,          0, 0, 0x0080, NULL},
        { vram,    v_gb[0]->get_cpu()->get_vram(),         0, 0x8000,          0, 0, 0x2000, NULL},
-       {       0, v_gb[0]->get_cpu()->get_oam(),       0, 0xFE00, 0, 0, 0x00A0, NULL},
+       {       0, v_gb[0]->get_cpu()->get_oam(),       0, 0xFE00, 0xFFFFFFE0, 0, 0x00A0, NULL},
        {     rom, v_gb[0]->get_rom()->get_rom(),     0, 0x0000,          0, 0, 0x4000, NULL },
        {     rom, v_gb[0]->get_rom()->get_rom(),     0x4000, 0x4000,          0, 0, 0x4000, NULL },
-       {       0, v_gb[0]->get_cpu()->get_oam(),   0, 0xFF00,          0, 0, 0x0080, NULL },
+       {       0, v_gb[0]->get_cpu()->get_oam(),   0x100, 0xFF00,          0, 0, 0x0080, NULL },
        {       0, 0,                     0,      0,          0, 0,      0,    0 },
        {       0, 0,                     0,      0,          0, 0,      0,    0 }
     };
