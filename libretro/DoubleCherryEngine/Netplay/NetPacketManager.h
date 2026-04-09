@@ -67,6 +67,7 @@ public:
 
     bool waiting_for_netpacket = false;
     bool lockstep_mode_enabled = false;
+    int lock_step_transfer_interval = 17336;
     std::queue<byte> received_netpacket_data;
 
 private:

@@ -460,13 +460,14 @@ void auto_config_4p_hack()
 };
 
 #include "../libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.h"
-inline auto shared_handler = std::make_shared<PokemonTcgNetpacketHandler>();
+ std::shared_ptr<PokemonTcgNetpacketHandler> shared_handler; // = std::make_shared<PokemonTcgNetpacketHandler>();
 
 void auto_config_1p_link() {
 
-    //TODO: POKEMON TCG 2
-    if (!strcmp(cart_name, "POKECARD"))
-    {
+    //POKEMON TCG  - Netplay Hack
+    if (!strncmp(cart_name, "POKECARD", 8 )|| !strcmp(cart_name, "POKEMON CARD GB") )
+    {   shared_handler = std::make_shared<PokemonTcgNetpacketHandler>(130, 17336);
+        shared_handler->setHandshakeBytes(0x29, 0x12);
         log_cb(RETRO_LOG_INFO, "Trying to set custom NetpacketHandler\n");
         shared_handler->gb_instance = v_gb[0];
         master_link = shared_handler.get();
@@ -479,10 +480,32 @@ void auto_config_1p_link() {
         log_cb(RETRO_LOG_INFO, "Set SendHandler\n");
         NetpacketManager::getInstance().setReceiveHandler(shared_handler);
         log_cb(RETRO_LOG_INFO, "Set ReceiverHandler\n");
-        display_message("Set Netpacket Handler for Pokemon TCG\n");
 
         return;
     }
+
+    //Pokemon Trading Card Game 2 - Netplay Hack
+    if (!strncmp(cart_name, "POKEMON-CG2", 11 ))
+    {   shared_handler = std::make_shared<PokemonTcgNetpacketHandler>(150, 34656);
+        shared_handler->setHandshakeBytes(0x92, 0x21);
+        log_cb(RETRO_LOG_INFO, "Trying to set custom NetpacketHandler\n");
+        shared_handler->gb_instance = v_gb[0];
+        master_link = shared_handler.get();
+        log_cb(RETRO_LOG_INFO, "Set Masterlink");
+
+        auto send_handler = std::make_unique<PokemonTcgNetpacketHandler>(*shared_handler);
+        auto receive_handler = std::make_unique<PokemonTcgNetpacketHandler>(*shared_handler);
+
+        NetpacketManager::getInstance().setSendHandler(shared_handler);
+        log_cb(RETRO_LOG_INFO, "Set SendHandler\n");
+        NetpacketManager::getInstance().setReceiveHandler(shared_handler);
+        log_cb(RETRO_LOG_INFO, "Set ReceiverHandler\n");
+
+        return;
+    }
+
+
+
     //link Alleyway paddle controller
     if (!strcmp(cart_name, "ALLEY WAY"))
     {

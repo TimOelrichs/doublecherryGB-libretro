@@ -1089,8 +1089,11 @@ void cpu::exec(int clocks)
 
 					byte received_date = netpacket_manager.received_netpacket_data.front();
 					netpacket_manager.received_netpacket_data.pop();
-					ref_gb->receive_from_linkcable(received_date);
-					seri_occer = ref_gb->get_cpu()->get_clock() + 17328;
+					byte answer_data[1] = {ref_gb->receive_from_linkcable(received_date) };
+
+					netpacket_manager.send(!netpacket_manager.get_netpacket_id(), answer_data, 1);
+
+					seri_occer = ref_gb->get_cpu()->get_clock() + netpacket_manager.lock_step_transfer_interval;
 					return;
 				}
 				else if (!isMaster) return;
