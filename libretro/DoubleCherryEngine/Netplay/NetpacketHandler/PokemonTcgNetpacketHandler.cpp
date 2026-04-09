@@ -12,7 +12,7 @@ extern retro_log_printf_t log_cb;
 
 const byte LINKCABLE_SPEED_CHANGE = 0x01;
 const byte IDLE_CHANGE_COMMAND = 0x02;
-const byte IDLE_MAGIC_NUMBER = 0xAC;
+
 
 
 
@@ -124,17 +124,18 @@ void PokemonTcgNetpacketHandler::handleReceive(const void* buf, std::size_t len,
 
                 if (!is_in_idle_mode)
                 {
-
                     //byte answer_data[1] =  {gb_instance->receive_from_linkcable(data[0])};
                     byte answer_preview_data[1] =  {gb_instance->get_SB_value()};
-                    netpacket_manager.send(client_id, answer_preview_data, 1);
+                   // netpacket_manager.send(client_id, answer_preview_data, 1);
 
-                    bool freshconnection = received_data[0] == 0x29 && answer_preview_data[0] == 0x12;
+                    bool freshconnection = is_fresh_connection(received_data[0], answer_preview_data[0]);
                     if(freshconnection)    transfer_count = 1;
 
                     //lockstep, wait for next packet
                     netpacket_manager.received_netpacket_data.push(received_data[0]);
-                    gb_instance->get_cpu()->seri_occer = gb_instance->get_cpu()->total_clock - 1;
+                    if ( gb_instance->get_cpu()->seri_occer == 0x7fffffff)
+                        gb_instance->get_cpu()->seri_occer = gb_instance->get_cpu()->total_clock - 1;
+
                     return;
                 }
 
@@ -145,8 +146,8 @@ void PokemonTcgNetpacketHandler::handleReceive(const void* buf, std::size_t len,
 
             //Master should just turn idle by itseld (?)
             log_cb(RETRO_LOG_INFO, "Master Receive Context - Stored: %d, Received: %d, Instance: %p\n", this->my_last_send_byte, received_data[0], (void*)this);
-            bool freshconnection = received_data[0] == 0x12 && this->my_last_send_byte == 0x29;
-            if(freshconnection)    transfer_count = 1;
+
+            if(is_fresh_connection(my_last_send_byte, received_data[0]))    transfer_count = 1;
 
             if (!is_in_idle_mode && received_data[0] == IDLE_MAGIC_NUMBER &&  this->my_last_send_byte == IDLE_MAGIC_NUMBER && transfer_count > transfercount_before_ilde_allowed)
             {

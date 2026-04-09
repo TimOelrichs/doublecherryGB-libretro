@@ -574,7 +574,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
            "dcgb_dev_log_linkcable_to_file",
            "Log Linkcable Transfers",
            NULL,
-           "Logs Linkcable Transfer to file",
+           "Leave this off unless you want to reverse-engineer the meaning of certain hexadecimal values.\nLogging to file can slow down the emulation",
            NULL,
            "Developer",
            {
