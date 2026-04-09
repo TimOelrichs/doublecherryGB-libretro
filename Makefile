@@ -253,7 +253,8 @@ else ifeq ($(platform), vita)
 	CXX = arm-vita-eabi-g++$(EXE_EXT)
 	AR = arm-vita-eabi-ar$(EXE_EXT)
    STATIC_LINKING = 1
-	FLAGS += -DVITA -fno-short-enums
+	CFLAGS += -DVITA -fno-short-enums
+    CXXFLAGS += -DVITA -fno-short-enums
 
 # CTR (3DS)
 else ifeq ($(platform), ctr)
