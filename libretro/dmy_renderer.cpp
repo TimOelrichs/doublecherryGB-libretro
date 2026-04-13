@@ -65,6 +65,7 @@ extern bool cocktail_mode_vertical;
 
 extern bool gblink_enable;
 
+extern bool rgb565_mode;
 extern int audio_2p_mode;
 
 #define MSG_FRAMES 60
@@ -194,31 +195,21 @@ static inline void temperature_tint(double temperature, double* r, double* g, do
 
 dmy_renderer::dmy_renderer(int which)
 {
-   which_gb = which;
+    which_gb = which;
 
-  //  if (!rgb565_checked)
-  {
+    //  if (!rgb565_checked)
+    {
         rgb565_checked = true;
 
-        retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-        rgb565 = false; // Default
+        //retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+        rgb565 = rgb565_mode; // Default
 
-        if (environ_cb) {
-            // Prüfe ob RGB565 unterstützt wird
-            fmt = RETRO_PIXEL_FORMAT_RGB565;
-            if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
-                rgb565 = true;
-            } else {
-                // Fallback zu XRGB8888
-                fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-                environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
-            }
-        }
+        //gradient for DMG LCD Ghosting effect
+        generateGradient();
+        std::fill_n(last_frame, 160 * 144, 0xFFFF);
     }
-   //gradient for DMG LCD Ghosting effect
-   generateGradient();
-   std::fill_n(last_frame, 160 * 144, 0xFFFF);
 }
+
 word dmy_renderer::get_sensor(bool x_y) {    // Libretro Input State abfragen
 
     /*

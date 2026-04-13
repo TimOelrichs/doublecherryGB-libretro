@@ -196,7 +196,7 @@ bool use_multi_adapter = false;
 bool use_tetris_4p_hack = false;
 bool log_2p_link = false;
 bool logging_transfers_to_file_allowed = false;
-bool detect_as_gba = true;
+bool detect_as_gba = false;
 unsigned short max_gbs = 16;
 
 
@@ -226,6 +226,8 @@ int audio_2p_mode = 0;
 bool already_checked_options = false;
 bool libretro_supports_persistent_buffer = false;
 bool libretro_supports_bitmasks = false;
+
+bool rgb565_mode = false;
 //struct retro_system_av_info* my_av_info = (retro_system_av_info*)malloc(sizeof(*my_av_info));
 static struct retro_system_av_info my_av_info;
 //static struct retro_system_av_info my_av_info;

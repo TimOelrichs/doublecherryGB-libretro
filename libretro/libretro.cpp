@@ -141,7 +141,14 @@ void retro_init(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
         libretro_supports_bitmasks = true;
 
-
+    retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
+    if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt)) {
+        rgb565_mode = true;
+    } else {
+        fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+        environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
+        rgb565_mode = false;
+    }
 
 }
 
