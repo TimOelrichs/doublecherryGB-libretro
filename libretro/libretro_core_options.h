@@ -27,13 +27,16 @@ struct retro_core_option_v2_category option_cats_us[] = {
     "Core Audio Settings",
     "Core Audio Settings"
     },
-
-
       {
       "Linkcable",
-      "GameBoy Linkcable",
+      "GameBoy Linkcable Emulation",
       "Settings for different emulated Gameboy Periphererals"
       },
+{
+    "Infrared",
+    "GameBoy Infrared Emulation",
+    "Settings for different emulated Infrared feature"
+    },
       {
       "Multiplayer",
       "Multiplayer",
@@ -403,6 +406,36 @@ static struct retro_core_option_v2_definition core_options_us[] = {
  },
  //********************Linkcable Devices OPTIONS END*********************************
 
+
+{
+    "dcgb_infrared_lockstep",
+    "Infrared Multiplayer Lockstep",
+    NULL,
+    "Runs each instance for one step only. Only recommended for emulating Infrared Multiplayer features like CardPop!. Note: Infrared emulation is currently in an early stage.",
+    NULL,
+    "Infrared",
+    {
+                {"0", "Off"},
+                {"1", "On"},
+                { NULL, NULL }
+    },
+    "0"
+},
+{
+    "dcgb_infrared_tv_remote_auto_signal",
+    "TV Remote - Auto Random Signal",
+    NULL,
+    "Some GBC games can unlock features via a TV remote. While the Numpad is used for manual signals, this option automatically sends random infrared signals when enabled.",
+    NULL,
+    "Infrared",
+    {
+                {"0", "Off"},
+                {"1", "On"},
+                { NULL, NULL }
+    },
+    "0"
+},
+
   //********************Multiplayer OPTIONS START*********************************
 
  {
@@ -476,7 +509,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
            "dcgb_screen_placement",
            "Screen layout",
            NULL,
-           "Leave this to auto, unless you want to force a device for unsupported software",
+           "local Multiplayer Splitscreen",
            NULL,
            "Multiplayer",
            {
@@ -495,7 +528,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
           "dcgb_single_screen_mp",
           "Show player screens",
           NULL,
-          "Leave this to auto, unless you want to force a device for unsupported software",
+          "Netplay Screen settings",
           NULL,
           "Multiplayer",
           {
@@ -526,7 +559,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
              "dcgb_audio_output",
              "Multiplayer Audio output",
              NULL,
-             "Leave this to auto, unless you want to force a device for unsupported software",
+             "Multiplayer Audio output",
              NULL,
              "Multiplayer",
              {
@@ -587,6 +620,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
           "0"
 
        },
+
     { NULL, NULL, NULL, NULL , NULL }
 };
 

@@ -1156,17 +1156,23 @@ static void check_variables(void)
             power_antenna_use_rumble = 2;
     }
 
-    var.key = "dcgb_tv_remote";
+    var.key = "dcgb_infrared_tv_remote_auto_signal";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        if (!strncmp(var.value, "use Numpad", 9))
-            auto_random_tv_remote = false;
-        else
-            auto_random_tv_remote = true;
+        int value = atoi(var.value);
+        auto_random_tv_remote = (bool)value;
+
     }
 
+    var.key = "dcgb_infrared_lockstep";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int value = atoi(var.value);
+        infrared_lockstep = (bool)value;
 
+    }
     var.key = "dcgb_audio_filter";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)

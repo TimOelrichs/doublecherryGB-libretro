@@ -199,6 +199,7 @@ bool logging_transfers_to_file_allowed = false;
 bool detect_as_gba = false;
 unsigned short max_gbs = 16;
 
+bool infrared_lockstep = false;
 
 retro_log_printf_t log_cb;
 retro_video_refresh_t video_cb;
