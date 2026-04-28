@@ -82,9 +82,15 @@ lcd::lcd(gb* ref)
 	ref_gb = ref;
 
 	byte dat[] = { 31,21,11,0 };
+	const GBPalette& active_pal = this->ref_gb->get_paletteManager()->GetCurrent();
 
 	for (int i = 0; i < 4; i++) {
-		m_pal16[i] = ref_gb->get_renderer()->map_color(dat[i] | (dat[i] << 5) | (dat[i] << 10));
+
+		const GBColor& color = active_pal.colors[i];
+
+		word packed_555 = (color.r >> 3) | ((color.g >> 3) << 5) | ((color.b >> 3) << 10);
+		m_pal16[i] = ref_gb->get_renderer()->map_color(packed_555);
+		//m_pal16[i] = ref_gb->get_renderer()->map_color(dat[i] | (dat[i] << 5) | (dat[i] << 10));
 		m_pal32[i] = ((dat[i] << 16) | (dat[i] << 8) | dat[i]);
 	}
 

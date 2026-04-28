@@ -37,7 +37,7 @@
 #include "gb_types.h"
 #include "renderer.h"
 #include "serializer.h"
-#include "GbPalettes/GBPaletteManager.hpp"
+#include "GBPaletteManager.hpp"
 
 
 
@@ -371,7 +371,8 @@ public:
 	apu *get_apu() { return m_apu; }
 	rom *get_rom() { return m_rom; }
 	mbc *get_mbc() { return m_mbc; }
-	Infrared_Transceiver *get_infrared_transceiver(){ return infrared_transceiver; };
+	GBPaletteManager *get_paletteManager() { return m_paletteManager; }
+	Infrared_Transceiver *get_infrared_transceiver(){ return infrared_transceiver; }
 	renderer *get_renderer() { return m_renderer; }
 	cheat *get_cheat() { return m_cheat; }
 
@@ -442,6 +443,7 @@ private:
 	rom *m_rom;
 	mbc *m_mbc;
 	renderer *m_renderer;
+	GBPaletteManager *m_paletteManager;
 
 	cheat *m_cheat;
 	Infrared_Transceiver *infrared_transceiver;

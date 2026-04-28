@@ -39,8 +39,6 @@ set(SOURCES
         ${CORE_DIR}/libretro/dmy_renderer.cpp
         ${CORE_DIR}/libretro/libretro.cpp
 
-        ${CORE_DIR}/gb_core/GbPalettes/GBPaletteManager.cpp
-
         ${CORE_DIR}/gb_core/linkcable/alleyway_link_controller.cpp
         ${CORE_DIR}/gb_core/linkcable/link_master_device.cpp
         ${CORE_DIR}/gb_core/linkcable/linkcable_hub.cpp
