@@ -31,8 +31,8 @@ extern retro_log_printf_t log_cb;
 gb::gb(renderer *ref,bool b_lcd,bool b_apu)
 {
 	m_renderer=ref;
-	m_paletteManager=new GBPaletteManager();
-	m_lcd=new lcd(this);
+	m_paletteManager=new GBPaletteManager(this);
+	m_lcd=new lcd(this, m_paletteManager);
 	m_rom=new rom();
 	m_apu=new apu(this);// ROMより後に作られたし // I was made ​​later than the ROM
 	m_mbc=new mbc(this);

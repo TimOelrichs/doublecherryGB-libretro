@@ -151,10 +151,7 @@ constexpr std::array<uint32_t, 4> DMG_PALETTE_green = {
 constexpr int GRADIENT_STEPS = 64;
 extern std::array<uint16_t, GRADIENT_STEPS> blended_palette;
 
-enum class GhostingMode {
-	RGB565_BLEND,
-	PALETTE_BLEND
-};
+
 
 
 class dmy_renderer : public renderer
@@ -312,7 +309,8 @@ public:
 		return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 	}
 
-	void generateGradient();
+	void generateGradient() override;
+	static void generateGradientInit();
 /*
 	void generateGradient() {
 		for (int i = 0; i < GRADIENT_STEPS; ++i) {
@@ -386,8 +384,6 @@ private:
 
 	word last_frame_4p_slit[160 * 144 * 4];
 	word current_frame_4p_split[160 * 144 * 4];
-
-	GhostingMode ghosting_mode = GhostingMode::PALETTE_BLEND;
 
 	bool last_rumble = false;
 

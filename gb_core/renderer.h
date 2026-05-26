@@ -26,6 +26,12 @@
 
 #include "gb_types.h"
 
+enum class GhostingMode {
+	RGB565_BLEND,
+	PALETTE_BLEND
+};
+
+
 class sound_renderer
 {
 public:
@@ -52,6 +58,10 @@ public:
 	virtual void set_bibrate(bool bibrate)=0;
 
 	int get_gb_id(){return which_gb;};
+
+	virtual void generateGradient(){};
+
+	GhostingMode ghosting_mode = GhostingMode::PALETTE_BLEND;
 
 protected:
 	sound_renderer *snd_render;

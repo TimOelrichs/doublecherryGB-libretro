@@ -3,7 +3,7 @@
 #include "../../Util/PixelUtil.hpp"
 
 const uint16_t* DmgDotMatrixUpscale(
-    const uint16_t* src, int scale_factor)
+    const uint16_t* src, int scale_factor, uint16_t gridcolor)
 {
     int height = 144;
     int width = 160;
@@ -15,7 +15,7 @@ const uint16_t* DmgDotMatrixUpscale(
         frameBuffer.assign(outWidth * outHeight, 0);
     }
 
-    constexpr uint16_t GRIDCOLOR = 0x5BEB; // #5B5D5B in RGB565
+    //constexpr uint16_t GRIDCOLOR = 0x5BEB; // #5B5D5B in RGB565
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -34,11 +34,13 @@ const uint16_t* DmgDotMatrixUpscale(
                     }
                     else if (xx == (scale_factor - 1) && yy == (scale_factor - 1)) {
                         // rechte untere Ecke = Gridfarbe
-                        outC = GRIDCOLOR;
+                        //outC = GRIDCOLOR;
+                        outC = gridcolor;
                     }
                     else {
                         // Rest = Blend mit Gridfarbe
-                        outC = blend565(baseColor, GRIDCOLOR, 0.5f);
+                        //outC = blend565(baseColor, GRIDCOLOR, 0.5f);
+                        outC = blend565(baseColor, gridcolor, 0.5f);
                     }
 
                     frameBuffer[(dy + yy) * outWidth + (dx + xx)] = outC;
