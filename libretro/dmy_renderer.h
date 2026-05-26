@@ -331,6 +331,7 @@ public:
 	}
 */
 	uint16_t blendPixels(uint16_t pixel1, uint16_t pixel2) {
+
 		if (ghosting_mode == GhostingMode::RGB565_BLEND) {
 			// Direktes RGB565-Mischen
 			uint8_t r1 = (pixel1 >> 11) & 0x1F;
@@ -381,6 +382,9 @@ private:
 
 	word last_frame[160*144];
 	word current_frame[160*144];
+
+	word last_frame_2p[160*144*2];
+	word current_frame_2p[160*144*2];
 
 	word last_frame_4p_slit[160 * 144 * 4];
 	word current_frame_4p_split[160 * 144 * 4];

@@ -401,7 +401,7 @@ void checkForJoinedMultiplayer()
     int16_t key_state;
     //check if also the start button is pressed
 
-    if (emulated_gbs_changed_in_options)
+    if (emulated_gbs_changed_in_options && !player_joined_with_joypad_press)
     {
         handlePlayerJoined();
         emulated_gbs_changed_in_options = false;

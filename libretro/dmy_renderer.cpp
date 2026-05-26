@@ -739,10 +739,22 @@ void dmy_renderer::apply_all_gb_effects_and_render(byte* buf, int width, int hei
         // Cast buf to 16-bit to work with 16-bit color values
         word* frame_buffer = reinterpret_cast<word*>(buf);
 
-        for (int i = 0; i < width * height; ++i) {
-            word blended = blendPixels(last_frame[i], frame_buffer[i]);
-            last_frame[i] = frame_buffer[i]; // Update last_frame direkt
-            frame_buffer[i] = blended;        // Überschreibe buf sofort
+        if (emulated_gbs == 1)
+        {
+            for (int i = 0; i < width * height; ++i) {
+                word blended = blendPixels(last_frame[i], frame_buffer[i]);
+                last_frame[i] = frame_buffer[i]; // Update last_frame direkt
+                frame_buffer[i] = blended;        // Überschreibe buf sofort
+            }
+        }
+
+        if (emulated_gbs == 2)
+        {
+            for (int i = 0; i < width * height; ++i) {
+                word blended = blendPixels(last_frame_2p[i], frame_buffer[i]);
+                last_frame_2p[i] = frame_buffer[i]; // Update last_frame direkt
+                frame_buffer[i] = blended;        // Überschreibe buf sofort
+            }
         }
     }
 
@@ -759,7 +771,7 @@ void dmy_renderer::apply_all_gb_effects_and_render(byte* buf, int width, int hei
         }
 
         uint16_t gridcolor = v_gb[which_gb]->get_paletteManager()->GetCurrent().colors[1].toRGB565();
-        const uint16_t* buffer = DmgDotMatrixUpscale(reinterpret_cast<const word*>(buf), gb_dotMarix_upscale_factor,gridcolor );
+        const uint16_t* buffer = DmgDotMatrixUpscale(reinterpret_cast<const word*>(buf),width, height, gb_dotMarix_upscale_factor,gridcolor );
         int new_pitch = width * gb_dotMarix_upscale_factor * ((depth + 7) / 8);
         video_cb(buffer, width * gb_dotMarix_upscale_factor, height * gb_dotMarix_upscale_factor, new_pitch);
         return;

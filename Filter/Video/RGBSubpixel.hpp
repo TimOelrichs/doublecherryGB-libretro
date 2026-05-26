@@ -9,7 +9,6 @@
 #include <cstdint>
 
 
-
 const uint16_t* toSubpixelRGB6x6Bleed(
     const uint16_t* src, int width, int height,
     int bleed = 224 // 87% Basis, 13% Nachbar
@@ -57,6 +56,7 @@ const uint16_t* toSubpixelRGB6x6Bleed(
     }
     return frameBuffer.data();
 }
+
 const uint16_t* toSubpixelRGB9x9Bleed(
     const uint16_t* src, int width, int height,
     int bleed = 224 // 87% Basis, 13% Nachbar

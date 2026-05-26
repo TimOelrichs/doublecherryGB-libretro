@@ -3,10 +3,10 @@
 #include "../../Util/PixelUtil.hpp"
 
 const uint16_t* DmgDotMatrixUpscale(
-    const uint16_t* src, int scale_factor, uint16_t gridcolor)
+    const uint16_t* src, int width, int height, int scale_factor, uint16_t gridcolor)
 {
-    int height = 144;
-    int width = 160;
+    //int height = 144;
+    //int width = 160;
 
     int outWidth = width * scale_factor;
     int outHeight = height * scale_factor;

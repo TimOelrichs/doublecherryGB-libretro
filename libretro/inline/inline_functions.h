@@ -891,7 +891,7 @@ static void update_multiplayer_geometry() {
     if (cocktail_mode_vertical && _show_player_screen == 2 && emulated_gbs == 2)
     {
         base_w = 144;
-        base_h = 166;
+        base_h = 160;
     }
 
     int screenw = base_w;
@@ -1162,7 +1162,7 @@ static void check_variables(void)
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
         for (size_t i = 0; i < v_gb.size(); ++i)
-            v_gb[0]->get_paletteManager()->SetPalette(var.value);
+            v_gb[i]->get_paletteManager()->SetPalette(var.value);
 
 
     var.key = "dcgb_power_antenna_use_rumble";
