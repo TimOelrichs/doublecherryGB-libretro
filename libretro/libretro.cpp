@@ -150,7 +150,12 @@ void retro_init(void)
         rgb565_mode = false;
     }
 
+    libretro_supports_ff_override = false;
+    if (environ_cb(RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE, NULL))
+        libretro_supports_ff_override = true;
 }
+
+
 
 void retro_deinit(void)
 {
@@ -466,16 +471,22 @@ void checkAndUpdateVariable()
         check_variables();
 }
 
+inline void check_special_inputs()
+{
+    hotkey_handle();
+    checkForJoinedMultiplayer();
+    check_fastforward_override();
+    if (!is_gbc_rom)check_palette_change_by_button_press();
+}
+
+
 void retro_run(void)
 {
 
     checkAndUpdateVariable();
-
     get_monotonic_time(&inputpoll_start_time);
     input_poll_cb();
-    hotkey_handle();
-    checkForJoinedMultiplayer();
-    if (!is_gbc_rom)check_palette_change_by_button_press();
+    check_special_inputs();
     run_main_loop();
 
 }

@@ -228,6 +228,11 @@ bool already_checked_options = false;
 bool libretro_supports_persistent_buffer = false;
 bool libretro_supports_bitmasks = false;
 
+static bool libretro_supports_ff_override       = false;
+static bool libretro_ff_enabled                 = false;
+static bool libretro_ff_enabled_prev            = false;
+static float libretro_ff_prev_ratio            = -1.0f;
+
 bool rgb565_mode = false;
 //struct retro_system_av_info* my_av_info = (retro_system_av_info*)malloc(sizeof(*my_av_info));
 static struct retro_system_av_info my_av_info;

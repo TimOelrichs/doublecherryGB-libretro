@@ -1633,3 +1633,71 @@ void handlePlayerJoined()
     else _screen_4p_split = true;
     update_multiplayer_geometry();
 }
+
+
+static void set_fastforward_override(bool fastforward, float target_ratio)
+{
+    struct retro_fastforwarding_override ff_override = {};
+
+    if (!libretro_supports_ff_override)
+        return;
+
+    ff_override.ratio        = target_ratio;
+    ff_override.notification = true;
+
+    if (fastforward)
+    {
+        ff_override.fastforward    = true;
+        ff_override.inhibit_toggle = true;
+    }
+    else
+    {
+        ff_override.fastforward    = false;
+        ff_override.inhibit_toggle = false;
+    }
+
+    environ_cb(RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE, &ff_override);
+}
+
+static void check_fastforward_override()
+{
+    // 1. Raw-Wert holen und bereinigen
+    int16_t r2_raw = input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2);
+    if (r2_raw < 0) r2_raw = 0;
+
+    // 2. Standardwerte für DIESEN Frame setzen
+    float target_ratio = -1.0f;
+
+    // Prüfen, ob die Taste digital ODER analog gedrückt ist
+    bool is_pressed = (r2_raw > 500) || input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2);
+    libretro_ff_enabled = libretro_supports_ff_override && is_pressed;
+
+    // 3. Wenn analoger Druck da ist, berechne die dynamische Ratio
+    if (r2_raw > 500)
+    {
+        float trigger_val = (float)r2_raw / 32767.0f;
+        float min_speed = 1.0f;
+        float max_speed = 10.0f;
+
+        target_ratio = min_speed + (trigger_val * (max_speed - min_speed));
+    }
+    // Wenn NUR digital gedrückt (Fallback), nutze den Standardwert des Frontends (-1.0f)
+    else if (libretro_ff_enabled)
+    {
+        target_ratio = -1.0f;
+    }
+
+    // 4. Prüfen, ob sich im Vergleich zum LETZTEN Frame etwas geändert hat
+    bool ratio_changed = fabsf(libretro_ff_prev_ratio - target_ratio) > 0.01f;
+    bool state_changed = libretro_ff_enabled != libretro_ff_enabled_prev;
+
+    if (ratio_changed || state_changed)
+    {
+        // Update senden
+        set_fastforward_override(libretro_ff_enabled, target_ratio);
+
+        // Tracking-Variablen für den nächsten Frame sichern
+        libretro_ff_prev_ratio = target_ratio;
+        libretro_ff_enabled_prev = libretro_ff_enabled;
+    }
+}
