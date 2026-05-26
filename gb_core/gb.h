@@ -37,9 +37,7 @@
 #include "gb_types.h"
 #include "renderer.h"
 #include "serializer.h"
-#include "GbPalettes/GBPaletteManager.hpp"
-
-
+#include "GBPaletteManager.hpp"
 
 
 
@@ -371,7 +369,8 @@ public:
 	apu *get_apu() { return m_apu; }
 	rom *get_rom() { return m_rom; }
 	mbc *get_mbc() { return m_mbc; }
-	Infrared_Transceiver *get_infrared_transceiver(){ return infrared_transceiver; };
+	GBPaletteManager *get_paletteManager() { return m_paletteManager; }
+	Infrared_Transceiver *get_infrared_transceiver(){ return infrared_transceiver; }
 	renderer *get_renderer() { return m_renderer; }
 	cheat *get_cheat() { return m_cheat; }
 
@@ -442,6 +441,7 @@ private:
 	rom *m_rom;
 	mbc *m_mbc;
 	renderer *m_renderer;
+	GBPaletteManager *m_paletteManager;
 
 	cheat *m_cheat;
 	Infrared_Transceiver *infrared_transceiver;
@@ -507,7 +507,7 @@ private:
 class lcd
 {
 public:
-	lcd(gb *ref);
+	lcd(gb *ref, GBPaletteManager* GbPalettemanager);
 	~lcd();
 
 	void render(void *buf,int scanline);
@@ -517,7 +517,7 @@ public:
 	word *get_mapped_pal(int num) { return mapped_pal[num]; }
 
 	void remap_all_palettes();
-
+	void update_dmg_pallete();
 	void set_enable(int layer,bool enable);
 	bool get_enable(int layer);
 
@@ -547,7 +547,7 @@ private:
 	bool layer_enable[3];
 
 	gb *ref_gb;
-	GBPaletteManager paletteManager;
+	GBPaletteManager *paletteManager;
 };
 
 class apu

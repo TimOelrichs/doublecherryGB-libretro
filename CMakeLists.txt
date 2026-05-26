@@ -35,11 +35,10 @@ set(SOURCES
         ${CORE_DIR}/gb_core/mbc.cpp
         ${CORE_DIR}/gb_core/rom.cpp
         ${CORE_DIR}/gb_core/Infrared_Transceiver.cpp
+        ${CORE_DIR}/gb_core/GBPaletteManager.cpp
 
         ${CORE_DIR}/libretro/dmy_renderer.cpp
         ${CORE_DIR}/libretro/libretro.cpp
-
-        ${CORE_DIR}/gb_core/GbPalettes/GBPaletteManager.cpp
 
         ${CORE_DIR}/gb_core/linkcable/alleyway_link_controller.cpp
         ${CORE_DIR}/gb_core/linkcable/link_master_device.cpp
@@ -56,6 +55,7 @@ set(SOURCES
         ${CORE_DIR}/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp
         ${CORE_DIR}/gb_core/linkcable/power_antenna.cpp
         ${CORE_DIR}/gb_core/linkcable/pokebuddy_gen1.cpp
+
 
         ${CORE_DIR}/gb_core/infrared/pikachu_2_gs.cpp
         ${CORE_DIR}/gb_core/infrared/ubikey_unlocker.cpp
@@ -76,6 +76,7 @@ set(SOURCES
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
         ${CORE_DIR}/libretro/DoubleCherryEngine/DoubleCherryEngine.h
+
 )
 
 # Bibliothek erstellen

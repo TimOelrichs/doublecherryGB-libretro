@@ -13,6 +13,7 @@ extern "C" uint64_t OSGetTime(void);
 
 #include <chrono>
 #include <thread>
+#include <thread>
 
 // Netplay (Netpacket) interface
 void handlePlayerJoined();
@@ -1062,6 +1063,18 @@ static void check_variables(void)
     {
         int value = atoi(var.value);
         useDmgGhosting = (bool)value;
+        if (value == 1)
+        {
+            for (auto & i : v_gb)
+                i->get_renderer()->ghosting_mode = GhostingMode::PALETTE_BLEND;
+
+        }
+        if (value == 2)
+        {
+            for (auto & i : v_gb)
+                i->get_renderer()->ghosting_mode = GhostingMode::RGB565_BLEND;
+
+        }
 
     }
 
@@ -1144,6 +1157,14 @@ static void check_variables(void)
     }
     */
 
+
+    var.key = "dcgb_gb_default_palette";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+        for (size_t i = 0; i < v_gb.size(); ++i)
+            v_gb[0]->get_paletteManager()->SetPalette(var.value);
+
+
     var.key = "dcgb_power_antenna_use_rumble";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1165,14 +1186,7 @@ static void check_variables(void)
 
     }
 
-    var.key = "dcgb_infrared_lockstep";
-    var.value = NULL;
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-    {
-        int value = atoi(var.value);
-        infrared_lockstep = (bool)value;
 
-    }
     var.key = "dcgb_audio_filter";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1289,7 +1303,14 @@ static void check_variables(void)
         else
             gblink_enable = false;
 
+        var.key = "dcgb_infrared_lockstep";
+        var.value = NULL;
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+        {
+            int value = atoi(var.value);
+            infrared_lockstep = (bool)value;
 
+        }
 
 
         var.key = "dcgb_screen_placement";

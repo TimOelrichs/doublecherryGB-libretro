@@ -23,6 +23,7 @@
 #include <cmath>
 #include <array>
 #include "../gb_core/renderer.h"
+#include "../gb_core/GBPaletteManager.hpp"
 #include "DoubleCherryEngine/libretro.h"
 
 extern retro_environment_t environ_cb;
@@ -138,13 +139,19 @@ constexpr std::array<uint32_t, 4> DMG_PALETTE = {
 0x000000FF  // Schwarz
 };
 
+constexpr std::array<uint32_t, 4> DMG_PALETTE_green = {
+	0xCADC06FF, // Hellstes Grün (ehemals Weiß)
+	0x8BAC0FFF, // Hellgrün      (ehemals Hellgrau)
+	0x306230FF, // Dunkelgrün    (ehemals Dunkelgrau)
+	0x0F380FFF  // Fast Schwarz  (ehemals Schwarz)
+};
+
+
+
 constexpr int GRADIENT_STEPS = 64;
 extern std::array<uint16_t, GRADIENT_STEPS> blended_palette;
 
-enum class GhostingMode {
-	RGB565_BLEND,
-	PALETTE_BLEND
-};
+
 
 
 class dmy_renderer : public renderer
@@ -301,6 +308,10 @@ public:
 	uint16_t rgb888_to_rgb565(uint8_t r, uint8_t g, uint8_t b) {
 		return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 	}
+
+	void generateGradient() override;
+	static void generateGradientInit();
+/*
 	void generateGradient() {
 		for (int i = 0; i < GRADIENT_STEPS; ++i) {
 			float t = static_cast<float>(i) / (GRADIENT_STEPS - 1);
@@ -318,7 +329,7 @@ public:
 			blended_palette[i] = rgb888_to_rgb565(r, g, b);
 		}
 	}
-
+*/
 	uint16_t blendPixels(uint16_t pixel1, uint16_t pixel2) {
 		if (ghosting_mode == GhostingMode::RGB565_BLEND) {
 			// Direktes RGB565-Mischen
@@ -373,8 +384,6 @@ private:
 
 	word last_frame_4p_slit[160 * 144 * 4];
 	word current_frame_4p_split[160 * 144 * 4];
-
-	GhostingMode ghosting_mode = GhostingMode::PALETTE_BLEND;
 
 	bool last_rumble = false;
 

@@ -77,16 +77,13 @@ inline uint16_t rgb888_to_rgb555(uint32_t rgb888) {
 	return ((b >> 3) << 10) | ((g >> 3) << 5) | (r >> 3);
 }
 
-lcd::lcd(gb* ref)
+lcd::lcd(gb* ref, GBPaletteManager* GBPaletteManager)
 {
 	ref_gb = ref;
+	paletteManager=GBPaletteManager;
 
-	byte dat[] = { 31,21,11,0 };
 
-	for (int i = 0; i < 4; i++) {
-		m_pal16[i] = ref_gb->get_renderer()->map_color(dat[i] | (dat[i] << 5) | (dat[i] << 10));
-		m_pal32[i] = ((dat[i] << 16) | (dat[i] << 8) | dat[i]);
-	}
+	update_dmg_pallete();
 
 	reset();
 }
@@ -578,6 +575,26 @@ void lcd::remap_all_palettes() {
 		{
 			mapped_pal[pal][col] = ref_gb->get_renderer()->map_color(col_pal[pal][col]);
 		}
+	}
+}
+
+void lcd::update_dmg_pallete()
+{
+	const GBPalette& active_pal = this->ref_gb->get_paletteManager()->GetCurrent();
+
+	byte dat[] = { 31,21,11,0 };
+
+	for (int i = 0; i < 4; i++) {
+
+		const GBColor& color = active_pal.colors[i];
+
+
+		word packed_555 = (color.r >> 3) | ((color.g >> 3) << 5) | ((color.b >> 3) << 10);
+		m_pal16[i] = ref_gb->get_renderer()->map_color(packed_555);
+
+		//m_pal16[i] = ((color.r >> 3) << 11) | ((color.g >> 2) << 5) | (color.b >> 3);
+
+		m_pal32[i] = ((dat[i] << 16) | (dat[i] << 8) | dat[i]);
 	}
 }
 

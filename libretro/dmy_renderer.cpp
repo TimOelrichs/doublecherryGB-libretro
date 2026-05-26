@@ -84,7 +84,76 @@ extern struct retro_sensor_interface sensor_interface;
 std::array<word, GRADIENT_STEPS> blended_palette;
 
 
+void dmy_renderer::generateGradientInit() {
 
+    GBPaletteManager::GlobalInit();
+    GBPalette& active = GBPaletteManager::paletteDatabase["Black and White"];
+
+    for (int i = 0; i < GRADIENT_STEPS; ++i) {
+        float t = static_cast<float>(i) / (GRADIENT_STEPS - 1);
+        int lower = static_cast<int>(t * 3.0f);
+        int upper = std::min(lower + 1, 3);
+        float local_t = (t * 3.0f) - lower;
+
+        // Direkter Zugriff auf die R, G, B Werte der Palette
+        const GBColor& c1 = active.colors[lower];
+        const GBColor& c2 = active.colors[upper];
+
+        uint8_t r = static_cast<uint8_t>(((1.0f - local_t) * c1.r) + (local_t * c2.r));
+        uint8_t g = static_cast<uint8_t>(((1.0f - local_t) * c1.g) + (local_t * c2.g));
+        uint8_t b = static_cast<uint8_t>(((1.0f - local_t) * c1.b) + (local_t * c2.b));
+
+
+        blended_palette[i] = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+        //blended_palette[i] = rgb888_to_rgb565(r, g, b);
+    }
+}
+
+void dmy_renderer::generateGradient() {
+
+    GBPaletteManager::GlobalInit();
+    const GBPalette& active = v_gb[which_gb]->get_paletteManager()->GetCurrent();
+
+    for (int i = 0; i < GRADIENT_STEPS; ++i) {
+        float t = static_cast<float>(i) / (GRADIENT_STEPS - 1);
+        int lower = static_cast<int>(t * 3.0f);
+        int upper = std::min(lower + 1, 3);
+        float local_t = (t * 3.0f) - lower;
+
+        // Direkter Zugriff auf die R, G, B Werte der Palette
+        const GBColor& c1 = active.colors[lower];
+        const GBColor& c2 = active.colors[upper];
+
+        uint8_t r = static_cast<uint8_t>(((1.0f - local_t) * c1.r) + (local_t * c2.r));
+        uint8_t g = static_cast<uint8_t>(((1.0f - local_t) * c1.g) + (local_t * c2.g));
+        uint8_t b = static_cast<uint8_t>(((1.0f - local_t) * c1.b) + (local_t * c2.b));
+
+        // In das Format für den Buffer umwandeln (RGB565)
+         blended_palette[i] = ((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3);
+        //blended_palette[i] = rgb888_to_rgb565(r, g, b);
+    }
+}
+
+
+
+/*
+void dmy_renderer::generateGradient() {
+    for (int i = 0; i < GRADIENT_STEPS; ++i) {
+        float t = static_cast<float>(i) / (GRADIENT_STEPS - 1);
+        int lower = static_cast<int>(t * 3.0f);
+        int upper = std::min(lower + 1, 3);
+        float local_t = (t * 3.0f) - lower;
+
+        uint32_t c1 = DMG_PALETTE[lower];
+        uint32_t c2 = DMG_PALETTE[upper];
+
+        uint8_t r = static_cast<uint8_t>(((1.0f - local_t) * ((c1 >> 24) & 0xFF)) + (local_t * ((c2 >> 24) & 0xFF)));
+        uint8_t g = static_cast<uint8_t>(((1.0f - local_t) * ((c1 >> 16) & 0xFF)) + (local_t * ((c2 >> 16) & 0xFF)));
+        uint8_t b = static_cast<uint8_t>(((1.0f - local_t) * ((c1 >> 8) & 0xFF)) + (local_t * ((c2 >> 8) & 0xFF)));
+
+        blended_palette[i] = rgb888_to_rgb565(r, g, b);
+    }
+}*/
 
 extern bool useGbcLCDforDmG;
 
@@ -191,7 +260,7 @@ static inline void temperature_tint(double temperature, double* r, double* g, do
     }
 }
 
-
+void  generateGradient();
 
 dmy_renderer::dmy_renderer(int which)
 {
@@ -205,7 +274,9 @@ dmy_renderer::dmy_renderer(int which)
         rgb565 = rgb565_mode; // Default
 
         //gradient for DMG LCD Ghosting effect
-        generateGradient();
+        generateGradientInit();
+        //const GBPalette& active = GBPaletteManager::paletteDatabase["Black and White"];
+
         std::fill_n(last_frame, 160 * 144, 0xFFFF);
     }
 }
@@ -687,7 +758,8 @@ void dmy_renderer::apply_all_gb_effects_and_render(byte* buf, int width, int hei
             return;
         }
 
-        const uint16_t* buffer = DmgDotMatrixUpscale(reinterpret_cast<const word*>(buf), gb_dotMarix_upscale_factor);
+        uint16_t gridcolor = v_gb[which_gb]->get_paletteManager()->GetCurrent().colors[1].toRGB565();
+        const uint16_t* buffer = DmgDotMatrixUpscale(reinterpret_cast<const word*>(buf), gb_dotMarix_upscale_factor,gridcolor );
         int new_pitch = width * gb_dotMarix_upscale_factor * ((depth + 7) / 8);
         video_cb(buffer, width * gb_dotMarix_upscale_factor, height * gb_dotMarix_upscale_factor, new_pitch);
         return;

@@ -365,7 +365,30 @@ void retro_reset(void)
 
 }
 
+static bool last_R_Button_state[16] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+static bool last_L_Button_state[16] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
 
+void check_palette_change_by_button_press()
+{
+    for (size_t i = 0; i < emulated_gbs; ++i)
+    {
+        int16_t key_state;
+        key_state = input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R);
+        if (key_state && !last_R_Button_state[i])
+        {
+            v_gb[i]->get_paletteManager()->NextPalette();
+        }
+        last_R_Button_state[i] = key_state;
+
+        key_state = input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
+        if (key_state && !last_L_Button_state[i])
+        {
+            v_gb[i]->get_paletteManager()->PreviousPalette();
+        }
+        last_L_Button_state[i] = key_state;
+
+    }
+}
 
 void checkForJoinedMultiplayer()
 {
@@ -452,6 +475,7 @@ void retro_run(void)
     input_poll_cb();
     hotkey_handle();
     checkForJoinedMultiplayer();
+    if (!is_gbc_rom)check_palette_change_by_button_press();
     run_main_loop();
 
 }
