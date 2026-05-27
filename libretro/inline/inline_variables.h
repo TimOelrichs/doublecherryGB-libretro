@@ -220,6 +220,7 @@ bool show_all_screens = false;
 bool gblink_enable = false;
 bool emulated_gbs_changed_in_options = false;
 size_t emulated_gbs = 1;
+size_t emulated_gbs_before_playerjoined_bypress = 1;
 char cart_name[18];
 
 int audio_2p_mode = 0;

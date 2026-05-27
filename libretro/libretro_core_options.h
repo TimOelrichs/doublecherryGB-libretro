@@ -583,13 +583,13 @@ static struct retro_core_option_v2_definition core_options_us[] = {
            NULL,
            "Multiplayer",
            {
-             {"splitscreen", NULL},
+             {"grid", NULL},
              {"top-down", NULL},
              {"left-right", NULL},
              { NULL, NULL }
 
            },
-           "left-right",
+           "grid",
             },
 
 

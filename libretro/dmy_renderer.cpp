@@ -81,7 +81,7 @@ extern retro_set_sensor_state_t set_sensor_state;
 extern retro_sensor_get_input_t get_sensor_input;
 extern struct retro_sensor_interface sensor_interface;
 
-std::array<word, GRADIENT_STEPS> blended_palette;
+
 
 
 void dmy_renderer::generateGradientInit() {
@@ -732,20 +732,26 @@ const uint16_t* dmy_renderer::apply_gbc_rgb_subpixel_upscaling(const uint16_t* b
     }
 }
 
+void dmy_renderer::blend_lastframe(int width, int height, word* frame_buffer)
+{
+    for (int i = 0; i < width * height; ++i) {
+        word blended = blendPixels(last_frame[i], frame_buffer[i]);
+        last_frame[i] = frame_buffer[i];
+        frame_buffer[i] = blended;
+    }
+}
+
 void dmy_renderer::apply_all_gb_effects_and_render(byte* buf, int width, int height, int depth, int pitch)
 {
     // DMG Ghosting Effect
+    /*
     if (!is_gbc_rom && useDmgGhosting) {
         // Cast buf to 16-bit to work with 16-bit color values
         word* frame_buffer = reinterpret_cast<word*>(buf);
 
         if (emulated_gbs == 1)
         {
-            for (int i = 0; i < width * height; ++i) {
-                word blended = blendPixels(last_frame[i], frame_buffer[i]);
-                last_frame[i] = frame_buffer[i]; // Update last_frame direkt
-                frame_buffer[i] = blended;        // Überschreibe buf sofort
-            }
+            blend_lastframe(width, height, frame_buffer);
         }
 
         if (emulated_gbs == 2)
@@ -756,7 +762,7 @@ void dmy_renderer::apply_all_gb_effects_and_render(byte* buf, int width, int hei
                 frame_buffer[i] = blended;        // Überschreibe buf sofort
             }
         }
-    }
+    }*/
 
     // GBC Interlacing Effect
     if ((is_gbc_rom || useGbcLCDforDmG) && gbc_lcd_interlacing_enabled) {
@@ -813,12 +819,28 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
     if (_screen_switched)
         switched_gb = 1 - switched_gb;
 
-   
+
+    if (!is_gbc_rom && useDmgGhosting)
+    {
+        // Cast buf to 16-bit to work with 16-bit color values
+        word* frame_buffer = reinterpret_cast<word*>(buf);
+        blend_lastframe(width, height, frame_buffer);
+    }
+
     if (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)
     {
         switch (emulated_gbs)
         {
         case 1: {
+
+                /*
+                if (!is_gbc_rom && useDmgGhosting)
+                {
+                    // Cast buf to 16-bit to work with 16-bit color values
+                    word* frame_buffer = reinterpret_cast<word*>(buf);
+                    blend_lastframe(width, height, frame_buffer);
+                }*/
+
                 apply_all_gb_effects_and_render(buf, width, height, depth, pitch);
                 return;
         }
@@ -895,6 +917,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
 
                 if (_screen_vertical)
                 {
+
                     memcpy(
                         joined_buf + switched_gb * out_pitch * out_height,
                         src_buf,
@@ -910,6 +933,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                 else
                 {
                     //const int final_pitch = out_pitch*2;
+
                     for (int row = 0; row < out_height; ++row)
                         memcpy(joined_buf + out_pitch * (2 * row + switched_gb), src_buf + out_pitch * row, out_pitch);
 
@@ -940,6 +964,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
         }
         case 3:
         {
+
             if (_show_player_screen == emulated_gbs) {
                 if (_screen_4p_split)
                 {
@@ -1014,6 +1039,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
         }
         case 4:
         {
+
             if (_show_player_screen == emulated_gbs) {
 
                 if (_screen_4p_split)
@@ -1029,19 +1055,32 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     if (which_gb == 3) {
                         memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
 
-                        //DMG Ghosting Effect
-                        if (!is_gbc_rom && useDmgGhosting) {
-
-                            //DMG Ghosting Effect
-                            // Cast buf to 16-bit to work with 16-bit color values
-                            word* frame_buffer = reinterpret_cast<word*>(joined_buf4);
-
-                            for (int i = 0; i < width * 4 * height; ++i) {
-                                word blended = blendPixels(last_frame_4p_slit[i], frame_buffer[i]);
-                                last_frame_4p_slit[i] = frame_buffer[i]; // Update last_frame direkt
-                                frame_buffer[i] = blended;        // Überschreibe buf sofort
+                        if (!(is_gbc_rom || useGbcLCDforDmG))
+                        {
+                            int scale_factor = 1;
+                            switch (gb_dotMarix_upscale_factor)
+                            {
+                            case 8:
+                                scale_factor = 4;
+                                break;
+                            case 9:
+                                scale_factor = 4;
+                                break;
+                            default:
+                                //don't apply dotmatrix upscaler
+                                int new_pitch = width * 2 * ((depth + 7) / 8);
+                                video_cb(joined_buf4, width * 2 , height * 2, new_pitch);
+                                return;
                             }
+
+                            uint16_t gridcolor = v_gb[which_gb]->get_paletteManager()->GetCurrent().colors[1].toRGB565();
+                            const uint16_t* buffer = DmgDotMatrixUpscale(reinterpret_cast<const word*>(joined_buf4),width*2, height*2, scale_factor,gridcolor );
+                            int new_pitch = width * 2 * scale_factor * ((depth + 7) / 8);
+                            video_cb(buffer, width * 2 * scale_factor, height * 2 * scale_factor, new_pitch);
+                            return;
                         }
+
+
 
 
                         //GBC Interlacing Effect
@@ -1052,7 +1091,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                         }
 
                         //Render GBC
-                        if (gbc_rgbSubpixel_upscale_factor == 1) {
+                        if (gbc_rgbSubpixel_upscale_factor == 1 || !(is_gbc_rom || useGbcLCDforDmG)) {
                             pitch = width * 2 * ((depth + 7) / 8);
                             video_cb(joined_buf4, width * 2, height * 2, pitch);
                             return;
@@ -1061,20 +1100,27 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
 
                         const uint16_t* buffer = reinterpret_cast<const word*>(joined_buf4);
 
-                        switch (gbc_rgbSubpixel_upscale_factor)
+                        int scale_factor = 1;
+                        if (is_gbc_rom || useGbcLCDforDmG)
                         {
-                        case 3:  
-                        case 6:
-                            buffer = toSubpixel3x3RGB565(buffer, width * 2, height*2);
-                            break;
-                        default:
-                            // Ensure all cases are handled, even if no specific action is required
-                            break;
+                            switch (gbc_rgbSubpixel_upscale_factor)
+                            {
+                            case 3:
+                            case 6:
+                            case 9:
+                                scale_factor = 3;
+                                buffer = toSubpixel3x3RGB565(buffer, width * 2, height*2);
+                                break;
+
+                            default:
+                                // Ensure all cases are handled, even if no specific action is required
+                                break;
+                            }
                         }
 
                         pitch = width * 3 * 2 * ((depth + 7) / 8);
 
-                        video_cb(buffer, width * 2 * 3, height * 2 * 3, pitch);
+                        video_cb(buffer, width * 2 * scale_factor, height * 2 * scale_factor, pitch);
                     }
                 }
 
@@ -1128,6 +1174,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
         case 8:
         case 9:
         {
+
             if (_show_player_screen == emulated_gbs)
             {
                 if (_screen_4p_split)
@@ -1198,6 +1245,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
         case 15:
         case 16:
         {
+
             if (_show_player_screen == emulated_gbs) {
 
 

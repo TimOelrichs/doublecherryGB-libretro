@@ -168,11 +168,20 @@ void retro_deinit(void)
     deinit_printer_registry();
     libretro_supports_bitmasks = false;
 
+    //emulated_gbs increase by joined player by buttonpress should be saved in the settings
     if (player_joined_with_joypad_press)
     {
         emulated_gbs = 1;
         player_joined_with_joypad_press = false;
+
+        struct retro_variable var;
+        var.key = "dcgb_emulated_gameboys";
+        std::string gbs_str = std::to_string(emulated_gbs_before_playerjoined_bypress);
+        var.value =  gbs_str.c_str();
+        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
     }
+
+
 
 }
 
@@ -412,15 +421,28 @@ void checkForJoinedMultiplayer()
         key_state = input_state_cb(emulated_gbs, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
         if (key_state)
         {
+            if (!player_joined_with_joypad_press)
+                emulated_gbs_before_playerjoined_bypress = emulated_gbs;
+
             ++emulated_gbs;
             show_all_screens = true;
             if (show_all_screens)
                 _show_player_screen = emulated_gbs;
 
             //check_variables();
+
+
             player_joined_with_joypad_press = true;
+            struct retro_variable var;
+
+            var.key = "dcgb_emulated_gameboys";
+            std::string gbs_str = std::to_string(emulated_gbs);
+            var.value =  gbs_str.c_str();
+            environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+
             display_message("Player Joined");
             handlePlayerJoined();
+
         }
     }
 
