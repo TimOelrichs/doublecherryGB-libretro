@@ -310,7 +310,7 @@ public:
 	}
 
 	void generateGradient() override;
-	static void generateGradientInit();
+	 void generateGradientInit();
 /*
 	void generateGradient() {
 		for (int i = 0; i < GRADIENT_STEPS; ++i) {
@@ -375,6 +375,7 @@ public:
 private:
 	void apply_all_gb_effects_and_render(byte* buf, int width, int height, int depth, int pitch);
 	const uint16_t* apply_gbc_rgb_subpixel_upscaling(const uint16_t* buffer, int width, int height);
+	void blend_lastframe(int width, int height, word* frame_buffer);
 	int cur_time;
 	static inline bool rgb565 = false;
 	static inline bool rgb565_checked = false;
@@ -383,12 +384,14 @@ private:
 	word last_frame[160*144];
 	word current_frame[160*144];
 
+	/*
 	word last_frame_2p[160*144*2];
 	word current_frame_2p[160*144*2];
 
 	word last_frame_4p_slit[160 * 144 * 4];
 	word current_frame_4p_split[160 * 144 * 4];
+	*/
 
 	bool last_rumble = false;
-
+	std::array<word, GRADIENT_STEPS> blended_palette;
 };

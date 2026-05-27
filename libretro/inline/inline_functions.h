@@ -632,7 +632,6 @@ void auto_config_1p_link() {
     //Full Changer Emulation Zok Zok Heroes
     if (!strncmp(cart_name, "ZOKZOK", 6))
     {
-
         
         //WIP not working yet
 
@@ -897,13 +896,14 @@ static void update_multiplayer_geometry() {
     int screenw = base_w;
     int screenh = base_h;
 
+
     auto split_factor = [](int n) {
         if (n < 5)  return 2;
         if (n < 10) return 3;
         return 4;
         };
 
-    if (_screen_4p_split && (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs)) {
+    if (_screen_4p_split && (_number_of_local_screens == 1 || _show_player_screen == emulated_gbs) && emulated_gbs != 2) {
         int f = split_factor(emulated_gbs);
         screenw *= f;
         screenh *= f;
@@ -920,6 +920,11 @@ static void update_multiplayer_geometry() {
         else
             screenw *= _number_of_local_screens;
     }
+    else if (_screen_vertical)
+        screenh *= emulated_gbs;
+    else
+        screenw *= emulated_gbs;
+
 
     my_av_info.geometry.base_width = screenw;
     my_av_info.geometry.base_height = screenh;
@@ -997,11 +1002,12 @@ static void check_variables(void)
         int value = atoi(var.value);
         gbc_rgbSubpixel_upscale_factor = value;
 
+
         int screenw = 160 * gbc_rgbSubpixel_upscale_factor;
         int screenh = 144 * gbc_rgbSubpixel_upscale_factor;
         my_av_info.geometry.base_width = screenw;
         my_av_info.geometry.base_height = screenh;
-        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
+        //my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
 
         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
@@ -1021,8 +1027,7 @@ static void check_variables(void)
         int screenh = 144 * gb_dotMarix_upscale_factor;
         my_av_info.geometry.base_width = screenw;
         my_av_info.geometry.base_height = screenh;
-        my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
-
+       // my_av_info.geometry.aspect_ratio = float(screenw) / float(screenh);
 
         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
 
@@ -1055,8 +1060,8 @@ static void check_variables(void)
         cocktail_mode_enabled = (bool)value;
         cocktail_mode_vertical = value == 1;
         update_multiplayer_geometry();
-
     }
+
     var.key = "dcgb_gb_lcd_ghosting";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1214,21 +1219,23 @@ static void check_variables(void)
             size_t value = atoi(var.value);
             //only update if not set to 1 to avoid conflicts with joined Multiplayer with Joypad
             bool value_changed = (bool)(value != emulated_gbs);
-            if (value_changed)
+            if (value_changed )
             {
-                display_message("Emulated GB changed %d to %d", emulated_gbs, value );
-                if (value > 1 )
-                {
                     emulated_gbs = value;
                     mode = (value == 1) ? MODE_SINGLE_GAME : mode;
                     emulated_gbs_changed_in_options = true;
-                }
-                if (value == 1)
-                {
-                    emulated_gbs = value;
-                    mode = (value == 1) ? MODE_SINGLE_GAME : mode;
-                    emulated_gbs_changed_in_options = true;
-                }
+
+                    if (emulated_gbs == 2)
+                    {
+                        _screen_vertical = false;
+                        _screen_4p_split = false;
+                    }
+                    if (emulated_gbs>2)
+                    {
+                        _screen_vertical = false;
+                        _screen_4p_split = true;
+                    }
+                update_multiplayer_geometry();
             }
         }
     }
@@ -1238,7 +1245,6 @@ static void check_variables(void)
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-
         //if (!already_checked_options) 
         { 
             if (!strcmp(var.value, "1"))
@@ -1327,7 +1333,7 @@ static void check_variables(void)
                 _screen_vertical = true;
                 _screen_4p_split = false;
             }
-            else if (!strcmp(var.value, "splitscreen"))
+            else if (!strcmp(var.value, "grid"))
             {
                 _screen_vertical = false;
                 _screen_4p_split = true;
@@ -1373,6 +1379,7 @@ static void check_variables(void)
                 var.key = "dcgb_audio_output";
                 char buf[32];
                 snprintf(buf, sizeof(buf), "Game Boy #%d", audio_2p_mode + 1);
+
                 var.value = buf;
                 environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
 
