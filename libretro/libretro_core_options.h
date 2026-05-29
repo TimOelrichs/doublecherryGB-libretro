@@ -43,6 +43,11 @@ struct retro_core_option_v2_category option_cats_us[] = {
       "Settings for 2-16 Players"
       },
 {
+    "Gameboy Mobile Adapter",
+    "Gameboy Mobile Adapter",
+    "Settings for Gameboy Mobile Adapter Emulation"
+    },
+{
     "Developer",
     "Developer",
     "Developer Settings"
@@ -690,6 +695,70 @@ static struct retro_core_option_v2_definition core_options_us[] = {
           "0"
 
        },
+
+    //********************Mobile Adapter Options OPTIONS END*********************************
+
+
+{
+    "dcgb_mobile_adatper_enabled",
+    "Mobile Adapter GB Emulation",
+    NULL,
+    "Enables the emulation of the Mobile Adapter GB:\n\n Games with Mobile Adapter support: \n - Pokemon Chrystal (Japan or patched)\n - Game Boy Wars 3\n Hello-kitty-happy-house\n - Mobile Golf\n - Mobile Trainer\n - Net-de-get",
+    NULL,
+    "Gameboy Mobile Adapter",
+    {
+                     {"0", "Off"},
+                     {"1", "On"}
+
+    },
+    "0",
+     },
+
+{
+    "dcgb_mobile_adatper_device_color",
+    "Mobile Adapter GB Device color",
+    NULL,
+    "Color of the Mobil Adapter",
+    NULL,
+    "Gameboy Mobile Adapter",
+    {
+                         {"8", "Blue"},
+                         {"9", "Yellow"},
+                        {"10", "Green"},
+                    {"11", "Red"},
+
+        },
+        "8",
+         },
+{
+    "dcgb_mobile_adatper_dns_ip",
+    "Mobile Adapter GB DNS Server IP",
+    NULL,
+    "REON Servers are not online yet, but can be hosted yourself https://github.com/REONTeam/reon",
+    NULL,
+    "Gameboy Mobile Adapter",
+    {
+                             {"127.0.0.1", "127.0.01 localhost"},
+                             {"172.18.0.1", "172.18.0.1 (local Docker)"},
+                            {"3", "custom"}
+
+            },
+            "127.0.0.1",
+    },
+{
+    "dcgb_mobile_adatper_dns_port",
+    "Mobile Adapter GB DNS Server port",
+    NULL,
+    "REON Servers are not online yet, but you host them yourself https://github.com/REONTeam/reon",
+    NULL,
+    "Gameboy Mobile Adapter",
+    {
+                                 {"1", "53 Default"},
+                                 {"2", "custom"},
+
+    },
+    "127.0.0.1",
+},
 
     { NULL, NULL, NULL, NULL , NULL }
 };

@@ -1,4 +1,5 @@
-﻿#ifndef _GNU_SOURCE
+﻿#include "linkcable/include/Mobil_Adapter_GB.h"
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1 // for fopencookie hack in serialize_size
 #endif
 
@@ -21,6 +22,7 @@
 #include "inline/inline_variables.h"
 #include "inline/inline_functions.h"
 
+#include "../gb_core/linkcable/Mobil_Adapter_GB.cpp"
 
 
 
@@ -214,6 +216,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     v_gb.reserve(max_gbs);
     render.reserve(max_gbs);
+    mobile_adapter = new Mobile_Adapter_GB(v_gb[0]);
 
     log_cb(RETRO_LOG_INFO, "BEFORE INIT GBS\n");
     for (byte i = 0; i < max_gbs; i++) {
@@ -241,13 +244,14 @@ bool retro_load_game(const struct retro_game_info *info)
     init_printer_registry();
     log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
 
-    auto_link_multiplayer();
+    //auto_link_multiplayer();
     check_variables();
     set_memory_maps();
     if (master_link)
         v_serializable_devices.push_back(master_link);
 
 
+    //if (mobile_adapter_enabled) v_gb[0]->set_linked_target(mobile_adapter);
 
    return true;
 }
@@ -452,10 +456,12 @@ void checkForJoinedMultiplayer()
 void run_main_loop()
 {
 
+
     if (!infrared_lockstep)
     {
         for (int line = 0; line < 154; line++)
         {
+            if (mobile_adapter) mobile_adapter->update();
             if (extra_inputpolling_enabled) performExtraInputPoll();
 
             for (size_t i = 0; i < emulated_gbs; i++)
@@ -471,6 +477,8 @@ void run_main_loop()
         const int steps = 70224 / 4; // ≈ 17556
         for (int cycle = 0; cycle < steps; cycle++)
         {
+            if (mobile_adapter) mobile_adapter->update();
+
             if (extra_inputpolling_enabled)
                 performExtraInputPoll();
 

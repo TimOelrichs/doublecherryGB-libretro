@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(DoubleCherryGB LANGUAGES CXX)
+project(DoubleCherryGB LANGUAGES C CXX) # C hinzugefügt, da libmobile C-Code ist
 
 # Basiseinstellungen
 set(CMAKE_CXX_STANDARD 17)
@@ -23,6 +23,12 @@ elseif(BRICK_BUILD)
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_SOURCE_DIR}/toolchains/brick.cmake)
     add_definitions(-DTRIMUI_BRICK)
 endif()
+
+# ==============================================================================
+# Externe Abhängigkeiten
+# ==============================================================================
+# Führt die CMakeLists.txt im Unterordner aus und stellt das Target bereit
+add_subdirectory(extern/libmobile)
 
 # Quell-Dateien (organisiert nach Modulen)
 set(CORE_DIR ${CMAKE_SOURCE_DIR})
@@ -56,7 +62,6 @@ set(SOURCES
         ${CORE_DIR}/gb_core/linkcable/power_antenna.cpp
         ${CORE_DIR}/gb_core/linkcable/pokebuddy_gen1.cpp
 
-
         ${CORE_DIR}/gb_core/infrared/pikachu_2_gs.cpp
         ${CORE_DIR}/gb_core/infrared/ubikey_unlocker.cpp
         ${CORE_DIR}/gb_core/infrared/tv_remote.cpp
@@ -66,21 +71,23 @@ set(SOURCES
         ${CORE_DIR}/services/printer/png_printer.cpp
         ${CORE_DIR}/services/printer/image_scaler.cpp
         ${CORE_DIR}/services/printer/printer_registry.cpp
+
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.cpp
-        ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetplayManager.h
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp
-        ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketManager.h
-        ${CORE_DIR}/libretro/DoubleCherryEngine/common/interfaces/ISingleton.hpp
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp
-        ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.h
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp
         ${CORE_DIR}/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
-        ${CORE_DIR}/libretro/DoubleCherryEngine/DoubleCherryEngine.h
 
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/net/net_socket.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/net/net_compat.c
 )
 
 # Bibliothek erstellen
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
+
+# Verlinkung mit libmobile (Target-Name aus der externen CMakeLists)
+# Das sorgt dafür, dass die Symbole beim Linken in deine .so-Datei wandern
+target_link_libraries(${PROJECT_NAME} PRIVATE libmobile_static)
 
 # Plattformspezifische Compiler-Flags
 if(MIYOO_BUILD)

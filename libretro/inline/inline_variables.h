@@ -1,155 +1,42 @@
 ﻿#pragma once
+
+// 1. System & Engine Includes
+#include <vector>
+#include <string_view>
+#include <ctime>
 #include "../dcgb_hotkey_target.hpp"
 #include "../DoubleCherryEngine/Netplay/NetPacketManager.h"
 #include "../DoubleCherryEngine/Netplay/NetplayManager.h"
+
+// 2. Services & Core Emulation Includes
 #include "../services/printer/include/image_scaler.hpp"
 #include "../gb_core/gb.h"
 #include "../libretro/dmy_renderer.h"
+
+// 3. Hardware Devices & Peripherals Includes
 #include "../gb_core/linkcable/include/sio_devices.hpp"
+#include "../gb_core/linkcable/include/alleyway_link_controller.hpp"
 #include "../gb_core/infrared/include/ir_devices.hpp"
 
-inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
-inline NetplayManager& netplay_manager = NetplayManager::getInstance();
-
+// -----------------------------------------------------------------------------
+// Libretro Subsystem & Memory Defines
+// -----------------------------------------------------------------------------
 #define RETRO_MEMORY_GAMEBOY_1_SRAM ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
-#define RETRO_MEMORY_GAMEBOY_1_RTC ((2 << 8) | RETRO_MEMORY_RTC)
+#define RETRO_MEMORY_GAMEBOY_1_RTC  ((2 << 8) | RETRO_MEMORY_RTC)
 #define RETRO_MEMORY_GAMEBOY_2_SRAM ((3 << 8) | RETRO_MEMORY_SAVE_RAM)
-#define RETRO_MEMORY_GAMEBOY_2_RTC ((3 << 8) | RETRO_MEMORY_RTC)
+#define RETRO_MEMORY_GAMEBOY_2_RTC  ((3 << 8) | RETRO_MEMORY_RTC)
 
 #define RETRO_GAME_TYPE_GAMEBOY_LINK_2P 0x101
 
-/*
-size_t num_clients = 0;
-unsigned short my_client_id = -1;
-static retro_netpacket_send_t netpacket_send_fn_ptr = NULL;
-static retro_netpacket_poll_receive_t netpacket_pollrcv_fn_ptr = NULL;
-*/
+// -----------------------------------------------------------------------------
+// Core Engine Singletons
+// -----------------------------------------------------------------------------
+inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
+inline NetplayManager& netplay_manager = NetplayManager::getInstance();
 
-struct retro_rumble_interface rumble;
-struct retro_led_interface led;
-retro_set_rumble_state_t rumble_state_cb;
-retro_set_led_state_t led_state_cb;
-
-unsigned int power_antenna_use_rumble = 0;
-bool auto_random_tv_remote; 
-bool alleyway_analog_controller_enabled = true;
-bool cocktail_mode_enabled = true;
-bool cocktail_mode_vertical = true;
-
-int dcgb_hotkey_pressed = -1;
-int dcgb_last_hotkey_pressed = -1;
-int dcgb_hotkey_frame_counter = 0;
-I_dcgb_hotkey_target* hotkey_target = NULL; 
-
-bool dcgb_audio_filter_enabled = true;
-//GB Printer Vars
-bool gb_printer_png_scale_enabled = true;
-ScaleTarget gb_printer_png_scale_mode = ScaleTarget::DIN_A4;
-Alignment gb_printer_png_alignment = Alignment::CENTER;
-bool player_joined_with_joypad_press = false;
-
-//Alleyway Analog Controller var, TODO: to set in core options 
-#include "../gb_core/linkcable/include/alleyway_link_controller.hpp"
-
-int16_t mouse_x;
-bool current_mouse_click;
-
-Alleyway_Controls_Mode AlleywayControlsMode = Alleyway_Controls_Mode::ANALOG_STICK;
-
-// Sensor Interface
-retro_set_sensor_state_t set_sensor_state = NULL;
-retro_sensor_get_input_t get_sensor_input = NULL;
-struct retro_sensor_interface sensor_interface = {
-    set_sensor_state,
-    get_sensor_input
-};
-
-/*
-static const struct retro_variable vars_single[] = {
-     { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
-     { "dcgb_gbc_lcd_interlacing", "GBC LCD Interlacing; Off|Fast|Linear"},
-     { "dcgb_gbc_lcd_interlacing_brightnesss", "GBC LCD Interlacing Brightnesss difference; 5|10|15|20|25|30|35|40|45|50"},
-     { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
-    // { "dcgb_alleyway_analog_enabled", "emulate Alleyway Analog controls; Off|On" },
-     { "dcgb_gb_printer_png_upscale", "GameBoy Printer Output Upscale; DIN A4|DIN A5|DIN A6|Thermalpaper|Off" },
-     { "dcgb_gb_printer_png_alignment", "GameBoy Printer Output Allignment; Center|Top" },
-    { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
-    { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
-    { "dcgb_power_antenna_use_rumble", "Power Antenna/Bugsensor use rumble; Strong|Weak|Off" },
-   
-    // { "doublecherrygb_detect_gba", "detect playing on gba (gba enhancements); Off|On" },
-    { NULL, NULL },
-};
-
-static const struct retro_variable vars_dual[] = {
-      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
-       { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
-    { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
-    { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
-    { "dcgb_screen_placement", "Screen layout; left-right|top-down" },
-   // { "dcgb_switch_screens", "Switch player screens; normal|switched" },
-    { "dcgb_single_screen_mp", "Show player screens; all players|player 1 only|player 2 only" },
-    { "dcgb_audio_output", "Audio output; Game Boy #1|Game Boy #2" },
-   // { "dcgb_log_link", "Log Link Cable Communication; Off|On" },
-    { NULL, NULL },
-};
-
-static const struct retro_variable vars_tripple[] = {  
-      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
-      { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
-    { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
-    { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
-     { "dcgbt_gblink_device", "Link cable device (reload); 4-player adapter" },
-     { "dcgb_screen_placement", "Screen layout; left-right|splitscreen|top-down" },
-    //{ "dcgb_switch_screens", "Switch player screens; normal|switched" },
-    { "dcgb_single_screen_mp", "Show player screens; all players|player 1 only|player 2 only|player 3 only" },
-    { "dcgb_audio_output", "Audio output; Game Boy #1|Game Boy #2|Game Boy #3" },
-     //{ "dcgb_log_link", "Log Link Cable Communication; Off|On" },
-    { NULL, NULL },
-};
-
-static const struct retro_variable vars_quad[] = {
-      { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
-     { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
-    { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
-     { "dcgb_gblink_enable", "Link cable emulation (reload); disabled|enabled" },
-    { "dcgbt_gblink_device", "Link cable device (reload); 4-player adapter|2x2-player link" },
-     { "dcgb_screen_placement", "Screen layout; splitscreen|top-down|left-right|" },
-    { "dcgb_number_of_local_screens", "Netplay: Nummer of local players (splitscreen); 1|2" },
-    { "dcgb_single_screen_mp", "Show player screens; all players|player 1 only|player 2 only|player 3 only|player 4 only|player 5 only|player 6 only|player 7 only|player 8 only|player 9 only|player 10 only|player 11 only|player 12 only|player 13 only|player 14 only|player 15 only|player 16 only" },
-     { "dcgb_audio_output", "Audio output; Game Boy #1|Game Boy #2|Game Boy #3|Game Boy #4|Game Boy #5|Game Boy #6|Game Boy #7|Game Boy #8|Game Boy #9|Game Boy #10|Game Boy #11|Game Boy #12|Game Boy #13|Game Boy #14|Game Boy #15|Game Boy #16" },
-   // { "dcgb_log_link", "Log Link Cable Communication; Off|On" },
-    { NULL, NULL },
-};
-
-static const struct retro_subsystem_memory_info gb1_memory[] = {
-    { "srm", RETRO_MEMORY_GAMEBOY_1_SRAM },
-    { "rtc", RETRO_MEMORY_GAMEBOY_1_RTC },
-};
-
-static const struct retro_subsystem_memory_info gb2_memory[] = {
-    { "srm", RETRO_MEMORY_GAMEBOY_2_SRAM },
-    { "rtc", RETRO_MEMORY_GAMEBOY_2_RTC },
-};
-
-static const struct retro_subsystem_rom_info gb_roms[] = {
-
-    { "GameBoy #1", "gb|gbc", false, false, false, gb1_memory, 1 },
-    { "GameBoy #2", "gb|gbc", false, false, false, gb2_memory, 1 },
-
-};
-
- //subsystem not working, for now disable
-static const struct retro_subsystem_info subsystems[] = {
-  { "2 Player Game Boy Link", "gb_link_2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-  { "3 Player Game Boy with 4-Player Adapter", "gb_3p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-  { "4 Player Game Boy with 4-Player Adapter", "gb_4p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-   //{ "4 Player Game Boy 2x 2-Player Link", "gb_2x2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-   { NULL },
-};
-*/
-
-
+// -----------------------------------------------------------------------------
+// Global Core Enums & States
+// -----------------------------------------------------------------------------
 enum mode {
     MODE_SINGLE_GAME,
     MODE_SINGLE_GAME_DUAL,
@@ -158,234 +45,165 @@ enum mode {
 
 static enum mode mode = MODE_SINGLE_GAME;
 
-static struct timespec inputpoll_start_time;
-bool extra_inputpolling_enabled = false;
-int extra_inputpolling_interval = 5;
+// -----------------------------------------------------------------------------
+// Libretro Environment Callbacks & System Information
+// -----------------------------------------------------------------------------
+inline retro_log_printf_t log_cb = nullptr;
+inline retro_video_refresh_t video_cb = nullptr;
+inline retro_audio_sample_batch_t audio_batch_cb = nullptr;
+inline retro_environment_t environ_cb = nullptr;
+inline retro_input_poll_t input_poll_cb = nullptr;
+inline retro_input_state_t input_state_cb = nullptr;
 
-bool is_gbc_rom = false; 
-int gbc_rgbSubpixel_upscale_factor = 1;
-int gb_dotMarix_upscale_factor = 1;
-bool gbc_lcd_blur_effect_enabled = false;
-bool gbc_color_correction_enabled = true; 
-bool gbc_lcd_interlacing_enabled = false; 
-bool gbc_lcd_interfacing_fast = true; 
-float gbc_lcd_interlacing_brightness = 1.05f;
-float light_temperature = 0.0f; 
-bool useGbcLCDforDmG = false;
-bool useDmgGhosting = true;
-bool force_linkcable_over_ip_mode = false;
+inline uint32_t libretro_msg_interface_version = 0;
+inline bool already_checked_options = false;
+inline char cart_name[18];
 
-/*
-bool i_am_netplay_client = false;
-bool i_am_netplay_host = false;
-__uint64_t my_random_netplay_id = 0;
-*/
-enum color_correction_mode gbc_cc_mode = GAMBATTE_ACCURATE;
+// Fast-Forward Support Flags
+static bool libretro_supports_ff_override = false;
+static bool libretro_ff_enabled           = false;
+static bool libretro_ff_enabled_prev      = false;
+static float libretro_ff_prev_ratio       = -1.0f;
 
-
-
-std::vector<gb*> v_gb;
-std::vector <dmy_renderer*> render;
-link_master_device* master_link;
-I_Linkcable_Target* linked_target_device;
-
-std::vector<I_Savestate*> v_serializable_devices;
-
-
-bool use_multi_adapter = false;
-bool use_tetris_4p_hack = false;
-bool log_2p_link = false;
-bool logging_transfers_to_file_allowed = false;
-bool detect_as_gba = false;
-unsigned short max_gbs = 16;
-
-bool infrared_lockstep = false;
-
-retro_log_printf_t log_cb;
-retro_video_refresh_t video_cb;
-retro_audio_sample_batch_t audio_batch_cb;
-retro_environment_t environ_cb;
-//retro_environment_t environ_cb;
-retro_input_poll_t input_poll_cb;
-retro_input_state_t input_state_cb;
-
-bool _screen_vertical = false;
-bool _screen_4p_split = false;
-bool _screen_switched = false;
-unsigned int _show_player_screen = 1;
-int _number_of_local_screens = 1;
-static size_t _serialize_size[16] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
-bool show_all_screens = false;
-
-bool gblink_enable = false;
-bool emulated_gbs_changed_in_options = false;
-size_t emulated_gbs = 1;
-size_t emulated_gbs_before_playerjoined_bypress = 1;
-char cart_name[18];
-
-int audio_2p_mode = 0;
-// used to make certain core options only take effect once on core startup
-bool already_checked_options = false;
-bool libretro_supports_persistent_buffer = false;
-bool libretro_supports_bitmasks = false;
-
-static bool libretro_supports_ff_override       = false;
-static bool libretro_ff_enabled                 = false;
-static bool libretro_ff_enabled_prev            = false;
-static float libretro_ff_prev_ratio            = -1.0f;
-
-bool rgb565_mode = false;
-//struct retro_system_av_info* my_av_info = (retro_system_av_info*)malloc(sizeof(*my_av_info));
+// -----------------------------------------------------------------------------
+// Video, Rendering & Display Geometry Settings
+// -----------------------------------------------------------------------------
 static struct retro_system_av_info my_av_info;
-//static struct retro_system_av_info my_av_info;
+inline bool is_gbc_rom = false;
+inline bool rgb565_mode = false;
+inline bool libretro_supports_persistent_buffer = false;
 
-unsigned libretro_msg_interface_version = 0;
+// Upscaling & Filters
+inline int gbc_rgbSubpixel_upscale_factor = 1;
+inline int gb_dotMarix_upscale_factor = 1;
+inline float light_temperature = 0.0f;
 
-struct retro_input_descriptor input_desc[] = {
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
-        {0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
+// LCD Ghosting & Interlacing Effects
+inline bool gbc_lcd_blur_effect_enabled = false;
+inline bool useGbcLCDforDmG = false;
+inline bool useDmgGhosting = true;
+inline bool gbc_lcd_interlacing_enabled = false;
+inline bool gbc_lcd_interfacing_fast = true;
+inline float gbc_lcd_interlacing_brightness = 1.05f;
 
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Color Correction
+inline bool gbc_color_correction_enabled = true;
+inline enum color_correction_mode gbc_cc_mode = GAMBATTE_ACCURATE;
 
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
-        {2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
+// Multi-Screen Viewport Configuration
+inline bool _screen_vertical = false;
+inline bool _screen_4p_split = false;
+inline bool _screen_switched = false;
+inline bool show_all_screens = false;
+inline uint32_t _show_player_screen = 1;
+inline int _number_of_local_screens = 1;
 
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// -----------------------------------------------------------------------------
+// Audio Configuration
+// -----------------------------------------------------------------------------
+inline bool dcgb_audio_filter_enabled = true;
+inline int audio_2p_mode = 0;
 
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// -----------------------------------------------------------------------------
+// Input, Hotkeys & Hardware Sensors
+// -----------------------------------------------------------------------------
+static struct timespec inputpoll_start_time;
+inline bool extra_inputpolling_enabled = false;
+inline int extra_inputpolling_interval = 5;
+inline bool libretro_supports_bitmasks = false;
 
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Core Hotkey Management
+inline int dcgb_hotkey_pressed = -1;
+inline int dcgb_last_hotkey_pressed = -1;
+inline int dcgb_hotkey_frame_counter = 0;
+inline I_dcgb_hotkey_target* hotkey_target = nullptr;
 
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Peripheral Interfaces (Rumble, LED, Sensors)
+inline struct retro_rumble_interface rumble;
+inline struct retro_led_interface led;
+inline retro_set_rumble_state_t rumble_state_cb;
+inline retro_set_led_state_t led_state_cb;
 
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+inline retro_set_sensor_state_t set_sensor_state;
+inline retro_sensor_get_input_t get_sensor_input;
+inline struct retro_sensor_interface sensor_interface = {
+    nullptr,
+    nullptr
+};
 
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// -----------------------------------------------------------------------------
+// External Hardware & Accessory Emulation
+// -----------------------------------------------------------------------------
 
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Virtual Game Boy Printer
+inline bool gb_printer_png_scale_enabled = true;
+inline ScaleTarget gb_printer_png_scale_mode = ScaleTarget::DIN_A4;
+inline Alignment gb_printer_png_alignment = Alignment::CENTER;
 
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Mobile Adapter GB
+inline Mobile_Adapter_GB* mobile_adapter = nullptr;
+inline bool mobile_adapter_enabled = false;
 
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Sub-Accessories & Dynamic Controllers
+inline uint32_t power_antenna_use_rumble = 0;
+inline bool auto_random_tv_remote = false;
+inline bool cocktail_mode_enabled = true;
+inline bool cocktail_mode_vertical = true;
 
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {12, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Alleyway Paddle / Mouse Emulation
+inline bool alleyway_analog_controller_enabled = true;
+inline int16_t mouse_x = 0;
+inline bool current_mouse_click = false;
+Alleyway_Controls_Mode AlleywayControlsMode = Alleyway_Controls_Mode::ANALOG_STICK;
 
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {13, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// -----------------------------------------------------------------------------
+// Multiplayer & Netplay Management
+// -----------------------------------------------------------------------------
+inline size_t emulated_gbs = 1;
+inline size_t emulated_gbs_before_playerjoined_bypress = 1;
+inline uint16_t max_gbs = 16;
+inline bool emulated_gbs_changed_in_options = false;
+inline bool player_joined_with_joypad_press = false;
 
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {14, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Link Cable & Network Topologies
+inline bool gblink_enable = false;
+inline bool use_multi_adapter = false;
+inline bool infrared_lockstep = false;
+inline bool force_linkcable_over_ip_mode = false;
 
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT, "D-Pad Left"},
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP, "D-Pad Up"},
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN, "D-Pad Down"},
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right"},
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B, "B"},
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A, "A"},
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start"},
-        {15, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select"},
+// Logging & Debugging
+inline bool log_2p_link = false;
+inline bool logging_transfers_to_file_allowed = false;
+inline bool use_tetris_4p_hack = false;
+inline bool detect_as_gba = false;
 
-        {0},
+// Serialization / Save States Tracking
+static size_t _serialize_size[16] = { 0 };
+inline std::vector<I_Savestate*> v_serializable_devices;
 
+// Core Emulated Hardware Instances
+inline std::vector<gb*> v_gb;
+inline std::vector<dmy_renderer*> render;
+inline link_master_device* master_link = nullptr;
+inline I_Linkcable_Target* linked_target_device = nullptr;
+
+// -----------------------------------------------------------------------------
+// Libretro Input Descriptor (Supports up to 16 Players)
+// -----------------------------------------------------------------------------
+#define DEFINE_PLAYER_PAD(port) \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },  \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },    \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },  \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" }, \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },           \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },           \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },      \
+    { port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" }
+
+inline struct retro_input_descriptor input_desc[] = {
+    DEFINE_PLAYER_PAD(0),  DEFINE_PLAYER_PAD(1),  DEFINE_PLAYER_PAD(2),  DEFINE_PLAYER_PAD(3),
+    DEFINE_PLAYER_PAD(4),  DEFINE_PLAYER_PAD(5),  DEFINE_PLAYER_PAD(6),  DEFINE_PLAYER_PAD(7),
+    DEFINE_PLAYER_PAD(8),  DEFINE_PLAYER_PAD(9),  DEFINE_PLAYER_PAD(10), DEFINE_PLAYER_PAD(11),
+    DEFINE_PLAYER_PAD(12), DEFINE_PLAYER_PAD(13), DEFINE_PLAYER_PAD(14), DEFINE_PLAYER_PAD(15),
+    { 0 } // Sentinel terminator required by Libretro API
 };
