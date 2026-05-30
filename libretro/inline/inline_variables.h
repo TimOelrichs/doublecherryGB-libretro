@@ -14,6 +14,8 @@ inline NetplayManager& netplay_manager = NetplayManager::getInstance();
 Mobile_Adapter_GB* mobile_adapter = nullptr;
 bool mobile_adapter_enabled = false;
 
+bool use_system_clock = true;
+
 #define RETRO_MEMORY_GAMEBOY_1_SRAM ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
 #define RETRO_MEMORY_GAMEBOY_1_RTC ((2 << 8) | RETRO_MEMORY_RTC)
 #define RETRO_MEMORY_GAMEBOY_2_SRAM ((3 << 8) | RETRO_MEMORY_SAVE_RAM)

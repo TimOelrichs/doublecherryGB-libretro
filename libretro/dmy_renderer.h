@@ -383,15 +383,8 @@ private:
 
 	word last_frame[160*144];
 	word current_frame[160*144];
-
-	/*
-	word last_frame_2p[160*144*2];
-	word current_frame_2p[160*144*2];
-
-	word last_frame_4p_slit[160 * 144 * 4];
-	word current_frame_4p_split[160 * 144 * 4];
-	*/
-
 	bool last_rumble = false;
 	std::array<word, GRADIENT_STEPS> blended_palette;
+
+	int32_t rtc_offset_seconds = 0;
 };

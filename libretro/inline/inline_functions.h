@@ -1492,6 +1492,14 @@ static void check_variables(void)
         }
     }
 
+    if ((val = get_var("dcgb_rtc_use_system_clock"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (use_system_clock != newValue) {
+            use_system_clock = newValue;
+        }
+    }
+
+
     // GBC Color Correction Mode (Off / Gambatte Simple / Gambatte Accurate)
     if ((val = get_var("dcgb_gbc_lcdcolor_correction"))) {
         int newValue = atoi(val);

@@ -22,7 +22,7 @@
 #include <string.h>
 //#include <math.h>
 #include <cmath>
-#include <time.h>
+//#include <time.h>
 #include <vector>
 #include <algorithm>
 #include <memory>
@@ -33,7 +33,8 @@
 #include "../Filter/Video/VideoFilter.hpp"
 #include "gbc_lut_accurate.h"
 #include "DoubleCherryEngine/libretro.h"
-
+#include "../extern/libretro-common/include/time/rtime.h"
+#include <ctime>
 
 extern std::vector<gb* > v_gb;
 extern int emulated_gbs;
@@ -81,7 +82,7 @@ extern retro_set_sensor_state_t set_sensor_state;
 extern retro_sensor_get_input_t get_sensor_input;
 extern struct retro_sensor_interface sensor_interface;
 
-
+extern bool use_system_clock;
 
 
 void dmy_renderer::generateGradientInit() {
@@ -1355,47 +1356,90 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
 
 byte dmy_renderer::get_time(int type)
 {
-   dword now = fixed_time-cur_time;
+   if (use_system_clock)
+   {
+      time_t rtc_now = time(NULL);
+      rtc_now += rtc_offset_seconds;
+
+      struct tm tm_local;
+      // libretro-common rtime_localtime konvertiert bereits in die lokale Zeitzone des Host-Systems
+      rtime_localtime(&rtc_now, &tm_local);
+
+      switch(type)
+      {
+         case 8:  // Sekunde (0-59)
+            return (byte)tm_local.tm_sec;
+         case 9:  // Minute (0-59)
+            return (byte)tm_local.tm_min;
+         case 10: // Stunde (0-23) -> Jetzt korrekt in Lokalzeit
+            return (byte)tm_local.tm_hour;
+         case 11: // Tag (Low Byte) -> Nutzen von tm_wday (0=So, 1=Mo, ..., 6=Sa)
+            return (byte)(tm_local.tm_wday & 0xff);
+         case 12: // Tag (High Byte)
+            return (byte)((tm_local.tm_wday >> 8) & 1);
+      }
+      return 0;
+   }
+
+   if (fixed_time < (dword)cur_time) {
+       return 0;
+   }
+   dword now = fixed_time - cur_time;
 
    switch(type)
    {
-      case 8: // second
-         return (byte)(now%60);
-      case 9: // minute
-         return (byte)((now/60)%60);
-      case 10: // hour
-         return (byte)((now/(60*60))%24);
-      case 11: // day (L)
-         return (byte)((now/(24*60*60))&0xff);
-      case 12: // day (H)
-         return (byte)((now/(256*24*60*60))&1);
+      case 8:  return (byte)(now % 60);
+      case 9:  return (byte)((now / 60) % 60);
+      case 10: return (byte)((now / (60 * 60)) % 24);
+      case 11: return (byte)((now / (24 * 60 * 60)) & 0xff);
+      case 12: return (byte)((now / (256 * 24 * 60 * 60)) & 1);
    }
    return 0;
 }
 
-void dmy_renderer::set_time(int type,byte dat)
+void dmy_renderer::set_time(int type, byte dat)
 {
+   if (use_system_clock)
+   {
+      time_t rtc_now = time(NULL) + rtc_offset_seconds;
+      struct tm tm_local;
+      rtime_localtime(&rtc_now, &tm_local);
+
+      switch(type)
+      {
+         case 8:  tm_local.tm_sec  = dat % 60; break;
+         case 9:  tm_local.tm_min  = dat % 60; break;
+         case 10: tm_local.tm_hour = dat % 24; break;
+         case 11:
+            // Das Spiel versucht den Wochentag zu setzen.
+            // Wir biegen das auf tm_wday um.
+            tm_local.tm_wday = dat % 7;
+            break;
+         case 12:
+            // High-Byte wird bei Wochentagen (0-6) im GameBoy nicht wirklich benötigt,
+            // aber wir fangen es der Vollständigkeit halber ab.
+            break;
+         default:
+            return;
+      }
+
+      // mktime konvertiert lokale Zeit zurück in UTC-Sekunden
+      time_t target_time = mktime(&tm_local);
+
+      rtc_offset_seconds = (int32_t)(target_time - time(NULL));
+      return;
+   }
+
    dword now = fixed_time;
    dword adj = now - cur_time;
 
    switch(type)
    {
-      case 8: // second
-         adj = (adj/60)*60+(dat%60);
-         break;
-      case 9: // minute
-         adj = (adj/(60*60))*60*60+(dat%60)*60+(adj%60);
-         break;
-      case 10: // hour
-         adj = (adj/(24*60*60))*24*60*60+(dat%24)*60*60+(adj%(60*60));
-         break;
-      case 11: // day (L)
-         adj = (adj/(256*24*60*60))*256*24*60*60+(dat*24*60*60)+(adj%(24*60*60));
-         break;
-      case 12: // day (H)
-         adj = (dat&1)*256*24*60*60+(adj%(256*24*60*60));
-         break;
+      case 8:  adj = (adj / 60) * 60 + (dat % 60); break;
+      case 9:  adj = (adj / (60 * 60)) * 60 * 60 + (dat % 60) * 60 + (adj % 60); break;
+      case 10: adj = (adj / (24 * 60 * 60)) * 24 * 60 * 60 + (dat % 24) * 60 * 60 + (adj % (60 * 60)); break;
+      case 11: adj = (adj / (256 * 24 * 60 * 60)) * 256 * 24 * 60 * 60 + (dat * 24 * 60 * 60) + (adj % (24 * 60 * 60)); break;
+      case 12: adj = (dat & 1) * 256 * 24 * 60 * 60 + (adj % (256 * 24 * 60 * 60)); break;
    }
    cur_time = now - adj;
 }
-

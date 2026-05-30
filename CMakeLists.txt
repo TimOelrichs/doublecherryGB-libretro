@@ -80,6 +80,7 @@ set(SOURCES
 
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/net/net_socket.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/net/net_compat.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/time/rtime.c
 )
 
 # Bibliothek erstellen
