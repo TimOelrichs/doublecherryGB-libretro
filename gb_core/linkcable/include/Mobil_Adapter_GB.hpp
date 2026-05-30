@@ -60,13 +60,40 @@ public:
     ~Mobile_Adapter_GB() override {
         if (log_cb) log_cb(RETRO_LOG_INFO, "[Mobile] Shutting down...\n");
 
+        /*
+        mobile_def_debug_log(&m_adapter, nullptr);
+        mobile_def_config_read(&m_adapter, nullptr);
+        mobile_def_config_write(&m_adapter, nullptr);
+        mobile_def_time_latch(&m_adapter, nullptr);
+        mobile_def_time_check_ms(&m_adapter, nullptr);
+        mobile_def_sock_open(&m_adapter, nullptr);
+        mobile_def_sock_close(&m_adapter, nullptr);
+        mobile_def_sock_connect(&m_adapter, nullptr);
+        mobile_def_sock_listen(&m_adapter, nullptr);
+        mobile_def_sock_accept(&m_adapter, nullptr);
+        mobile_def_sock_send(&m_adapter, nullptr);
+        mobile_def_sock_recv(&m_adapter, nullptr);
+        mobile_def_serial_enable(&m_adapter, nullptr);
+        mobile_def_serial_disable(&m_adapter, nullptr);
+        mobile_def_update_number(&m_adapter, nullptr);
+        */
+
+        // 1. Zuerst libmobile stoppen, damit keine neuen Netzwerk-Aktionen getriggert werden
+        connected_gb = nullptr;
         mobile_stop(&m_adapter);
         saveConfig();
 
-        // Safe cleanup for all active virtual sockets opened by libmobile
-        for (auto const& [id, state] : m_sockets) {
-            if (state.fd >= 0) socket_close(state.fd);
+        // 2. Sockets explizit disconnecten und schließen
+        for (auto& [id, state] : m_sockets) {
+            if (state.fd >= 0) {
+                // SHUT_RDWR (2) signalisiert dem OS: Keine Transfers mehr erlauben.
+                // Das beendet jeden hängenden socket_wait() oder accept() Zustand.
+                shutdown(state.fd, 2);
+                socket_close(state.fd);
+                state.fd = -1;
+            }
         }
+        m_sockets.clear();
     }
 
     byte receive_from_linkcable(byte data) override {
@@ -89,11 +116,16 @@ public:
     void stop()  { mobile_stop(&m_adapter); }
 
     void update() {
+
+        if (!connected_gb) return;
+
         mobile_loop(&m_adapter);
 
         // Process any queued abstract hardware actions requested by libmobile
         enum mobile_action action = mobile_actions_get(&m_adapter);
         while (action != MOBILE_ACTION_NONE) {
+
+            if (!connected_gb) return;
             mobile_actions_process(&m_adapter, action);
             action = mobile_actions_get(&m_adapter);
         }

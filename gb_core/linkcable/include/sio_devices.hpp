@@ -13,4 +13,5 @@
 #include "pokebuddy_gen1.hpp"
 #include "gameboy_printer.hpp"
 #include "game_and_watch_gallery_unlocker.hpp"
+#include "Mobil_Adapter_GB.hpp"
 #include "linkcable_hub.hpp"

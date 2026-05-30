@@ -1,4 +1,4 @@
-﻿#include "linkcable/include/Mobil_Adapter_GB.h"
+﻿#include "linkcable/include/Mobil_Adapter_GB.hpp"
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1 // for fopencookie hack in serialize_size
 #endif
@@ -185,6 +185,7 @@ void retro_deinit(void)
 
 
 
+
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -251,7 +252,10 @@ bool retro_load_game(const struct retro_game_info *info)
         v_serializable_devices.push_back(master_link);
 
 
-    //if (mobile_adapter_enabled) v_gb[0]->set_linked_target(mobile_adapter);
+    if (mobile_adapter_enabled) {
+        mobile_adapter = new Mobile_Adapter_GB(v_gb[0]);
+        v_gb[0]->set_linked_target(mobile_adapter);
+    }
 
    return true;
 }
@@ -360,7 +364,12 @@ void retro_unload_game(void)
     render.clear();
     v_serializable_devices.clear();
 
+    delete mobile_adapter;
+    mobile_adapter = nullptr;
+
     libretro_supports_persistent_buffer = false;
+
+
 }
 
 void retro_reset(void)
@@ -461,7 +470,7 @@ void run_main_loop()
     {
         for (int line = 0; line < 154; line++)
         {
-            if (mobile_adapter) mobile_adapter->update();
+            if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
             if (extra_inputpolling_enabled) performExtraInputPoll();
 
             for (size_t i = 0; i < emulated_gbs; i++)
@@ -477,7 +486,7 @@ void run_main_loop()
         const int steps = 70224 / 4; // ≈ 17556
         for (int cycle = 0; cycle < steps; cycle++)
         {
-            if (mobile_adapter) mobile_adapter->update();
+            if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
 
             if (extra_inputpolling_enabled)
                 performExtraInputPoll();
