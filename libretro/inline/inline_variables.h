@@ -14,6 +14,7 @@ inline NetplayManager& netplay_manager = NetplayManager::getInstance();
 Mobile_Adapter_GB* mobile_adapter = nullptr;
 bool mobile_adapter_enabled = false;
 
+
 bool use_system_clock = true;
 
 #define RETRO_MEMORY_GAMEBOY_1_SRAM ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
@@ -163,7 +164,7 @@ enum mode {
 
 static enum mode mode = MODE_SINGLE_GAME;
 
-static struct timespec inputpoll_start_time;
+static retro_time_t inputpoll_start_time = 0;
 bool extra_inputpolling_enabled = false;
 int extra_inputpolling_interval = 5;
 
@@ -227,6 +228,8 @@ bool emulated_gbs_changed_in_options = false;
 size_t emulated_gbs = 1;
 size_t emulated_gbs_before_playerjoined_bypress = 1;
 char cart_name[18];
+
+bool pkm_buddy_boy_auto_trade_mew = false;
 
 int audio_2p_mode = 0;
 // used to make certain core options only take effect once on core startup

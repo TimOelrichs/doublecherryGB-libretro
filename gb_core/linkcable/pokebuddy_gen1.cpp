@@ -24,7 +24,7 @@
 #include "./include/pokebuddy_gen1.hpp"
 #include "./include/PKBuddy/inline_pkbuddy_dist_events.h"
 
-
+extern bool pkm_buddy_boy_auto_trade_mew;
 
 pokebuddy_gen1::pokebuddy_gen1(std::vector<gb*> gbs) {
   
@@ -159,7 +159,7 @@ byte pokebuddy_gen1::handle_gen1(byte data) {
     {
         if (!events_were_added)
         {
-            if (!has_owned_mew()) {
+            if (pkm_buddy_boy_auto_trade_mew && !has_owned_mew()) {
                 display_message("Get your Welcome Mew!");
                 pokemon mew = generate_pk_from_base_table(150, 5);
                 mew.iv[0] = 0x5A;
@@ -322,7 +322,7 @@ byte pokebuddy_gen1::handle_gen2(byte data) {
         {
             generate_data_block_gen2();
 
-            if (!has_owned_mew_gen2() || !has_owned_celebi())
+            if (pkm_buddy_boy_auto_trade_mew && (!has_owned_mew_gen2() || !has_owned_celebi()))
             {
                 if (!has_owned_celebi())
                 {

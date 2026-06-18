@@ -61,6 +61,7 @@ set(SOURCES
         ${CORE_DIR}/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp
         ${CORE_DIR}/gb_core/linkcable/power_antenna.cpp
         ${CORE_DIR}/gb_core/linkcable/pokebuddy_gen1.cpp
+        ${CORE_DIR}/gb_core/linkcable/Mobile_Adapter_GB.cpp
 
         ${CORE_DIR}/gb_core/infrared/pikachu_2_gs.cpp
         ${CORE_DIR}/gb_core/infrared/ubikey_unlocker.cpp
@@ -80,7 +81,18 @@ set(SOURCES
 
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/net/net_socket.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/net/net_compat.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/net/net_http.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/features/features_cpu.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/time/rtime.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/file/config_file.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/file/file_path.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/lists/dir_list.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/lists/string_list.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/string/stdstring.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/compat/compat_strl.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/compat/compat_strcasestr.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/streams/file_stream.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/vfs/vfs_implementation.c
 )
 
 # Bibliothek erstellen

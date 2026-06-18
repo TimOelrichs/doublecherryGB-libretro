@@ -20,5 +20,5 @@ private:
 	I_Linkcable_Target* m_current_target = nullptr;;
 
 	bool m_first_transfer = true;
-	struct timespec m_first_transfer_time = {};
+	retro_time_t m_first_transfer_time = {};
 };

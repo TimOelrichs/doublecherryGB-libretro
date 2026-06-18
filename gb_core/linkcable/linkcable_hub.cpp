@@ -1,6 +1,7 @@
 #include "./include/linkcable_hub.hpp"
+#include "../../extern/libretro-common/include/features/features_cpu.h"
 
-extern bool get_monotonic_time(struct timespec* ts);
+//extern bool get_monotonic_time(struct timespec* ts);
 
 LinkCableHUB::LinkCableHUB() {
 	m_gb_printer = new gameboy_printer();
@@ -14,6 +15,41 @@ void LinkCableHUB::reset() {
 	m_current_target = nullptr;
 }
 
+byte LinkCableHUB::receive_from_linkcable(byte data) {
+
+
+	retro_time_t current_time = cpu_features_get_time_usec();
+
+	if (!m_first_transfer) {
+
+		retro_time_t elapsed_us = current_time - m_first_transfer_time;
+
+		if (elapsed_us >= 5000000) {
+			reset();
+		}
+	}
+
+	if (m_first_transfer) {
+		switch (data)
+		{
+			case 0x88: //GB_Printer
+				m_current_target = m_gb_printer; break;
+			default:
+				break;
+		}
+
+		m_first_transfer = false;
+		m_first_transfer_time = current_time;
+	}
+
+	if (m_current_target) return m_current_target->receive_from_linkcable(data);
+	if (m_default_target) return m_default_target->receive_from_linkcable(data);
+
+	//no connection
+	return 0xFF;
+}
+
+/*
 byte LinkCableHUB::receive_from_linkcable(byte data) {
 
 	struct timespec current_time;
@@ -49,4 +85,4 @@ byte LinkCableHUB::receive_from_linkcable(byte data) {
 	return 0xFF;
 		
 
-}
+}*/

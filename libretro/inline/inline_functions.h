@@ -2,16 +2,7 @@
 #include "inline_variables.h"
 #include "../DoubleCherryEngine/libretro.h"
 
-#if defined(__PSP__)
-extern "C" uint64_t sceKernelGetSystemTimeWide(void);
-#elif defined(__WIIU__)
-extern "C" uint64_t OSGetTime(void);
-#elif defined(_WIN32)
-#else
-#include <sys/time.h>
-#endif
-
-#include <chrono>
+#include "../../extern/libretro-common/include/features/features_cpu.h"
 #include <thread>
 #include <thread>
 #include <string_view>
@@ -25,10 +16,13 @@ bool is_rom_with_known_trading_or_battling_feature()
 {
     // Check ROM header for known games with trading/battling features
 
+
     // Pokemon games (except Pinball)
     if (!strncmp(cart_name, "POKEMON", 7) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
-        // TODO: Exclude POKEMON PINBALL (both POKEMON_PINBALL and POKEMONPINBALL variants)
+        // Exclude POKEMON PINBALL and Pokemon Puzzle Challenge
+         if (!strncmp(cart_name, "POKEMONPIN", 10) || !strncmp(cart_name, "POKEMONPC", 9))
+            return false;
         return true;
     }
 
@@ -397,9 +391,20 @@ bool is_rom_with_known_trading_or_battling_feature()
 
 void set_cart_name(byte* rombuf)
 {
-    memcpy(cart_name, rombuf + 0x134, 16);
-    cart_name[16] = '\0';
-    cart_name[17] = '\0';
+    int write_index = 0;
+
+    for (int i = 0; i < 16; i++) {
+        byte current_char = rombuf[0x134 + i];
+
+        if (current_char >= 32 && current_char <= 126) {
+            cart_name[write_index] = current_char;
+            write_index++;
+        }
+    }
+
+    cart_name[write_index] = '\0';
+
+    log_cb(RETRO_LOG_INFO, cart_name);
 }
 
 
@@ -565,12 +570,12 @@ void auto_config_1p_link() {
     LinkCableHUB* linkHUB = new LinkCableHUB();
     v_gb[0]->set_linked_target(linkHUB);
 
-    if (!strncmp(cart_name, "POKEMONPINB", 11) ||       //Pokemon Pinball
+    if ((!strncmp(cart_name, "POKEMONPINB", 11) ||       //Pokemon Pinball
         (!strncmp(cart_name, "ZELDA", 5) &&             //Zelda Link's Awakening DX 
         (strncmp(cart_name, "ZELDA N", 7) ||            //but not the Oracle Games
          strncmp(cart_name, "ZELDA D", 7))
         )
-        )
+        ) && is_gbc_rom)
     {
         //v_gb[0]->set_linked_target(new gameboy_printer());
 
@@ -845,11 +850,14 @@ char* read_file_to_buffer(const char* filename, size_t* file_size) {
 }
 
 
+/*
 void add_new_player() {
     // v_gb.push_back(new gb)
-}
+}*/
 
 
+
+/*
 #include <chrono>
 bool get_monotonic_time(struct timespec* ts) {
     auto now = std::chrono::steady_clock::now();
@@ -860,26 +868,23 @@ bool get_monotonic_time(struct timespec* ts) {
     ts->tv_sec = secs.time_since_epoch().count();
     ts->tv_nsec = ns.count();
     return true;
-}
+}*/
 
 
-
-//try to avoid missed frames, see https://bsnes.org/articles/input-latency
+// To avoid missed frames, see https://bsnes.org/articles/input-latency
 void performExtraInputPoll() {
-    struct timespec current_time;
-    get_monotonic_time(&current_time);
-    //clock_gettime(CLOCK_MONOTONIC, &current_time);
+    // 1. Get the highly accurate monotonic time in microseconds
+    retro_time_t current_time = cpu_features_get_time_usec();
 
-    long elapsed_ms = (current_time.tv_sec - inputpoll_start_time.tv_sec) * 1000 +
-        (current_time.tv_nsec - inputpoll_start_time.tv_nsec) / 1000000;
+    // 2. Calculate elapsed time in milliseconds (1 ms = 1000 us)
+    long elapsed_ms = (current_time - inputpoll_start_time) / 1000;
 
+    // 3. Check if the polling interval has passed
     if (elapsed_ms >= extra_inputpolling_interval) {
-        get_monotonic_time(&inputpoll_start_time);
-        //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+        inputpoll_start_time = current_time;
         input_poll_cb();
     }
 }
-
 
 
 static void update_multiplayer_geometry() {
@@ -1492,6 +1497,14 @@ static void check_variables(void)
         }
     }
 
+    // Force Game Boy Color games to be detected as Game Boy Advance
+    if ((val = get_var("dcgb_pkmbuddyboy_auto_mew"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (pkm_buddy_boy_auto_trade_mew != newValue) {
+            pkm_buddy_boy_auto_trade_mew = newValue;
+        }
+    }
+
     if ((val = get_var("dcgb_rtc_use_system_clock"))) {
         bool newValue = static_cast<bool>(atoi(val));
         if (use_system_clock != newValue) {
@@ -1536,7 +1549,7 @@ static void check_variables(void)
     }
 
     // Dot Matrix upscale factor for original Game Boy (DMG) mode
-    if ((val = get_var("dcgb_dotmatrix_upscale"))) {
+    if ((val = get_var("dcgb_gb_dotmatrix_upscale"))) {
         int newValue = atoi(val);
         if (gb_dotMarix_upscale_factor != newValue) {
             gb_dotMarix_upscale_factor = newValue;
@@ -1765,6 +1778,10 @@ static void check_variables(void)
         }
     }
 
+    if (mobile_adapter_enabled && mobile_adapter)
+        mobile_adapter->update_options_from_libretro(environ_cb);
+
+
     // ----------------------------------------------------
     // 7. Screen Placement & Audio Routing (Multiplayer Only)
     // ----------------------------------------------------
@@ -1884,7 +1901,7 @@ static void check_variables(void)
     }
 
     // Only commit geometry layout alterations to the frontend if an actual state mutation happened
-    if (geometry_needs_update && emulated_gbs > 1) {
+    if (geometry_needs_update ) {
         update_multiplayer_geometry();
     }
 }

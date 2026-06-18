@@ -1,4 +1,4 @@
-﻿#include "linkcable/include/Mobil_Adapter_GB.hpp"
+﻿#include "linkcable/include/Mobile_Adapter_GB.hpp"
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1 // for fopencookie hack in serialize_size
 #endif
@@ -22,7 +22,6 @@
 #include "inline/inline_variables.h"
 #include "inline/inline_functions.h"
 
-#include "../gb_core/linkcable/Mobil_Adapter_GB.cpp"
 
 
 
@@ -217,7 +216,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     v_gb.reserve(max_gbs);
     render.reserve(max_gbs);
-    mobile_adapter = new Mobile_Adapter_GB(v_gb[0]);
+   // mobile_adapter = new Mobile_Adapter_GB(v_gb[0]);
 
     log_cb(RETRO_LOG_INFO, "BEFORE INIT GBS\n");
     for (byte i = 0; i < max_gbs; i++) {
@@ -251,11 +250,18 @@ bool retro_load_game(const struct retro_game_info *info)
     if (master_link)
         v_serializable_devices.push_back(master_link);
 
+    const char* system_dir = nullptr;
+    environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir);
+
+    std::string config_path = (system_dir && strlen(system_dir) > 0) ? std::string(system_dir) + "/" : "";
+    config_path += "mobile_adapter_gb_config.bin";
+
+    mobile_adapter = new Mobile_Adapter_GB(v_gb[0], config_path);
 
     if (mobile_adapter_enabled) {
-        mobile_adapter = new Mobile_Adapter_GB(v_gb[0]);
         v_gb[0]->set_linked_target(mobile_adapter);
-    }
+    }else
+        auto_config_1p_link();
 
    return true;
 }
@@ -464,13 +470,13 @@ void checkForJoinedMultiplayer()
 
 void run_main_loop()
 {
-
+    if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
 
     if (!infrared_lockstep)
     {
         for (int line = 0; line < 154; line++)
         {
-            if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
+           // if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
             if (extra_inputpolling_enabled) performExtraInputPoll();
 
             for (size_t i = 0; i < emulated_gbs; i++)
@@ -486,7 +492,7 @@ void run_main_loop()
         const int steps = 70224 / 4; // ≈ 17556
         for (int cycle = 0; cycle < steps; cycle++)
         {
-            if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
+            //if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
 
             if (extra_inputpolling_enabled)
                 performExtraInputPoll();
@@ -523,7 +529,8 @@ void retro_run(void)
 {
 
     checkAndUpdateVariable();
-    get_monotonic_time(&inputpoll_start_time);
+    //get_monotonic_time(&inputpoll_start_time);
+    inputpoll_start_time = cpu_features_get_time_usec();
     input_poll_cb();
     check_special_inputs();
     run_main_loop();
