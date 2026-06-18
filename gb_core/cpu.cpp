@@ -1126,7 +1126,7 @@ void cpu::exec(int clocks)
 
 				byte send_data = ref_gb->get_regs()->SB;
 				byte received_data = ref_gb->send_over_linkcable(send_data);
-				//log_link_traffic(send_data, received_data);
+				log_link_traffic(send_data, received_data);
 				ref_gb->get_regs()->SB = received_data;
 				ref_gb->get_regs()->SC&=3;
 			}

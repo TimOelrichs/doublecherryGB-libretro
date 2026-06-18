@@ -1,33 +1,26 @@
-﻿LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
+﻿# ==============================================================================
+# makefile.common – Synchronisiert mit CMakeLists.txt
+# ==============================================================================
 
-# Include-Pfade - HIER gehören die Header-Verzeichnisse hin!
-INCFLAGS := -I$(CORE_DIR) \
-            -I$(CORE_DIR)/gb_core \
-            -I$(CORE_DIR)/libretro \
-            -I$(CORE_DIR)/libretro/DoubleCherryEngine \
-            -I$(CORE_DIR)/libretro/DoubleCherryEngine/Netplay \
-            -I$(CORE_DIR)/libretro/DoubleCherryEngine/common/interfaces \
-            -I$(CORE_DIR)/extern/libmobile \
-            -I$(CORE_DIR)/extern/libretro-common/include \
-            -I$(CORE_DIR)/extern/stb \
+MAKEFILE_COMM_DIR := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+CORE_DIR := $(MAKEFILE_COMM_DIR)
+LIBRETRO_COMM_DIR := $(CORE_DIR)/extern/libretro-common
 
-
-ifneq (,$(findstring msvc200,$(platform)))
-INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
-endif
-
-
-SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
+# ---------------------------------------------------------------
+# 1. Quell-Dateien (Exakt wie in CMake)
+# ---------------------------------------------------------------
+SOURCES_CXX := \
+    $(CORE_DIR)/gb_core/apu.cpp \
     $(CORE_DIR)/gb_core/cheat.cpp \
     $(CORE_DIR)/gb_core/cpu.cpp \
     $(CORE_DIR)/gb_core/gb.cpp \
     $(CORE_DIR)/gb_core/lcd.cpp \
     $(CORE_DIR)/gb_core/mbc.cpp \
     $(CORE_DIR)/gb_core/rom.cpp \
-    $(CORE_DIR)/gb_core/Infrared_Transceiver.cpp\
+    $(CORE_DIR)/gb_core/Infrared_Transceiver.cpp \
+    $(CORE_DIR)/gb_core/GBPaletteManager.cpp \
     $(CORE_DIR)/libretro/dmy_renderer.cpp \
     $(CORE_DIR)/libretro/libretro.cpp \
-    $(CORE_DIR)/gb_core/GBPaletteManager.cpp \
     $(CORE_DIR)/gb_core/linkcable/alleyway_link_controller.cpp \
     $(CORE_DIR)/gb_core/linkcable/link_master_device.cpp \
     $(CORE_DIR)/gb_core/linkcable/linkcable_hub.cpp \
@@ -43,7 +36,7 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
     $(CORE_DIR)/gb_core/linkcable/game_and_watch_gallery_unlocker.cpp \
     $(CORE_DIR)/gb_core/linkcable/power_antenna.cpp \
     $(CORE_DIR)/gb_core/linkcable/pokebuddy_gen1.cpp \
-     $(CORE_DIR)/gb_core/linkcable/Mobil_Adapter_GB.cpp \
+    $(CORE_DIR)/gb_core/linkcable/Mobile_Adapter_GB.cpp \
     $(CORE_DIR)/gb_core/infrared/pikachu_2_gs.cpp \
     $(CORE_DIR)/gb_core/infrared/ubikey_unlocker.cpp \
     $(CORE_DIR)/gb_core/infrared/tv_remote.cpp \
@@ -54,7 +47,56 @@ SOURCES_CXX := $(CORE_DIR)/gb_core/apu.cpp \
     $(CORE_DIR)/services/printer/printer_registry.cpp \
     $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetplayManager.cpp \
     $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketManager.cpp \
-    $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp\
-    $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp\
+    $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketReceiveHandler.cpp \
+    $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp \
     $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
 
+# C‑Quellen aus extern/libretro-common (inklusive net_http & features_cpu aus CMake!)
+SOURCES_C := \
+    $(LIBRETRO_COMM_DIR)/net/net_socket.c \
+    $(LIBRETRO_COMM_DIR)/net/net_compat.c \
+    $(LIBRETRO_COMM_DIR)/net/net_http.c \
+    $(LIBRETRO_COMM_DIR)/features/features_cpu.c \
+    $(LIBRETRO_COMM_DIR)/time/rtime.c \
+    $(LIBRETRO_COMM_DIR)/file/config_file.c \
+    $(LIBRETRO_COMM_DIR)/file/file_path.c \
+    $(LIBRETRO_COMM_DIR)/lists/dir_list.c \
+    $(LIBRETRO_COMM_DIR)/lists/string_list.c \
+    $(LIBRETRO_COMM_DIR)/string/stdstring.c \
+    $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+    $(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
+    $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+    $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
+
+# NEU: Wir binden die libmobile C-Dateien exakt nach dem Vorbild deiner CMakeLists ein
+SOURCES_C += \
+    $(CORE_DIR)/extern/libmobile/callback.c \
+    $(CORE_DIR)/extern/libmobile/commands.c \
+    $(CORE_DIR)/extern/libmobile/config.c \
+    $(CORE_DIR)/extern/libmobile/debug.c \
+    $(CORE_DIR)/extern/libmobile/dns.c \
+    $(CORE_DIR)/extern/libmobile/inet_pton.c \
+    $(CORE_DIR)/extern/libmobile/mobile.c \
+    $(CORE_DIR)/extern/libmobile/relay.c \
+    $(CORE_DIR)/extern/libmobile/serial.c \
+    $(CORE_DIR)/extern/libmobile/util.c
+
+# ---------------------------------------------------------------
+# 2. Include-Pfade (Wie in CMake)
+# ---------------------------------------------------------------
+INCFLAGS := -I$(CORE_DIR) \
+            -I$(CORE_DIR)/gb_core \
+            -I$(CORE_DIR)/libretro \
+            -I$(CORE_DIR)/extern/libretro-common/include \
+            -I$(CORE_DIR)/extern/libmobile \
+            -I$(CORE_DIR)/extern/stb
+
+ifneq (,$(findstring msvc,$(platform)))
+    INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
+endif
+
+# ---------------------------------------------------------------
+# 3. Defines (Kombiniert Version, Libretro und libmobile-Anforderungen)
+# ---------------------------------------------------------------
+DEFINES := -DBUILD_VERSION=\"$(GIT_VERSION)\" -D__LIBRETRO__ -DNDEBUG -DMOBILE_LIBCONF_USE
+FLAGS += $(DEFINES)

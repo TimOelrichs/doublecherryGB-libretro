@@ -11,6 +11,12 @@
 inline NetpacketManager& netpacket_manager = NetpacketManager::getInstance();
 inline NetplayManager& netplay_manager = NetplayManager::getInstance();
 
+Mobile_Adapter_GB* mobile_adapter = nullptr;
+bool mobile_adapter_enabled = false;
+
+
+bool use_system_clock = true;
+
 #define RETRO_MEMORY_GAMEBOY_1_SRAM ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
 #define RETRO_MEMORY_GAMEBOY_1_RTC ((2 << 8) | RETRO_MEMORY_RTC)
 #define RETRO_MEMORY_GAMEBOY_2_SRAM ((3 << 8) | RETRO_MEMORY_SAVE_RAM)
@@ -31,7 +37,7 @@ retro_set_rumble_state_t rumble_state_cb;
 retro_set_led_state_t led_state_cb;
 
 unsigned int power_antenna_use_rumble = 0;
-bool auto_random_tv_remote; 
+bool auto_random_tv_remote;
 bool alleyway_analog_controller_enabled = true;
 bool cocktail_mode_enabled = true;
 bool cocktail_mode_vertical = true;
@@ -39,7 +45,7 @@ bool cocktail_mode_vertical = true;
 int dcgb_hotkey_pressed = -1;
 int dcgb_last_hotkey_pressed = -1;
 int dcgb_hotkey_frame_counter = 0;
-I_dcgb_hotkey_target* hotkey_target = NULL; 
+I_dcgb_hotkey_target* hotkey_target = NULL;
 
 bool dcgb_audio_filter_enabled = true;
 //GB Printer Vars
@@ -48,7 +54,7 @@ ScaleTarget gb_printer_png_scale_mode = ScaleTarget::DIN_A4;
 Alignment gb_printer_png_alignment = Alignment::CENTER;
 bool player_joined_with_joypad_press = false;
 
-//Alleyway Analog Controller var, TODO: to set in core options 
+//Alleyway Analog Controller var, TODO: to set in core options
 #include "../gb_core/linkcable/include/alleyway_link_controller.hpp"
 
 int16_t mouse_x;
@@ -76,7 +82,7 @@ static const struct retro_variable vars_single[] = {
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
     { "dcgb_tv_remote", "TV Remote Emulation; use Numpad|auto (send random signal)" },
     { "dcgb_power_antenna_use_rumble", "Power Antenna/Bugsensor use rumble; Strong|Weak|Off" },
-   
+
     // { "doublecherrygb_detect_gba", "detect playing on gba (gba enhancements); Off|On" },
     { NULL, NULL },
 };
@@ -94,7 +100,7 @@ static const struct retro_variable vars_dual[] = {
     { NULL, NULL },
 };
 
-static const struct retro_variable vars_tripple[] = {  
+static const struct retro_variable vars_tripple[] = {
       { "dcgb_gbc_color_correction", "GBC Color Correction; Gambatte Simple|Gambatte Accurate|Off"},
       { "dcgb_input_polling_rate", "Input Polling Rate (Hz); 200|120|60" },
     { "dcgb_emulated_gameboys", "Number of emulated Gameboys (reload); 1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16" },
@@ -158,19 +164,19 @@ enum mode {
 
 static enum mode mode = MODE_SINGLE_GAME;
 
-static struct timespec inputpoll_start_time;
+static retro_time_t inputpoll_start_time = 0;
 bool extra_inputpolling_enabled = false;
 int extra_inputpolling_interval = 5;
 
-bool is_gbc_rom = false; 
+bool is_gbc_rom = false;
 int gbc_rgbSubpixel_upscale_factor = 1;
 int gb_dotMarix_upscale_factor = 1;
 bool gbc_lcd_blur_effect_enabled = false;
-bool gbc_color_correction_enabled = true; 
-bool gbc_lcd_interlacing_enabled = false; 
-bool gbc_lcd_interfacing_fast = true; 
+bool gbc_color_correction_enabled = true;
+bool gbc_lcd_interlacing_enabled = false;
+bool gbc_lcd_interfacing_fast = true;
 float gbc_lcd_interlacing_brightness = 1.05f;
-float light_temperature = 0.0f; 
+float light_temperature = 0.0f;
 bool useGbcLCDforDmG = false;
 bool useDmgGhosting = true;
 bool force_linkcable_over_ip_mode = false;
@@ -222,6 +228,8 @@ bool emulated_gbs_changed_in_options = false;
 size_t emulated_gbs = 1;
 size_t emulated_gbs_before_playerjoined_bypress = 1;
 char cart_name[18];
+
+bool pkm_buddy_boy_auto_trade_mew = false;
 
 int audio_2p_mode = 0;
 // used to make certain core options only take effect once on core startup

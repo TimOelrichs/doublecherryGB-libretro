@@ -147,11 +147,22 @@ bool pokebuddy_gen1::has_owned_mew() {
 }
 
 bool pokebuddy_gen1::has_owned_mew_gen2() {
-	byte own = v_gb[0]->get_cpu()->read_direct(0xDBF6);
+
+	bool isPokemonCrytal = (strncmp(cart_name, "PM_CRYSTAL", 10) == 0);
+	byte own = 0;
+	if (isPokemonCrytal)
+		own = v_gb[0]->get_cpu()->read_direct(0xDBF6);
+		else
+			own = v_gb[0]->get_cpu()->read_direct(0xDEAB);
 	return ((own >> 6) & 1);
 }
 
 bool pokebuddy_gen1::has_owned_celebi() {
-	byte own = v_gb[0]->get_cpu()->read_direct(0xDC03);
+	bool isPokemonCrytal = (strncmp(cart_name, "PM_CRYSTAL", 10) == 0);
+	byte own = 0;
+	if (isPokemonCrytal)
+		own = v_gb[0]->get_cpu()->read_direct(0xDED8);
+	else
+		own = v_gb[0]->get_cpu()->read_direct(0xDC03);
 	return ((own >> 2) & 1);
 }

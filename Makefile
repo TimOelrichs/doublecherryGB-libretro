@@ -532,11 +532,11 @@ else
    LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
 endif
 
-CORE_DIR := .
+CORE_DIR := $(CURDIR)
 
 include Makefile.common
 
-OBJECTS := $(SOURCES_CXX:.cpp=.o)
+OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 
 ifeq ($(DEBUG), 1)
 ifneq (,$(findstring msvc,$(platform)))
@@ -632,19 +632,22 @@ $(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
 ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C)
 include $(THEOS_MAKE_PATH)/library.mk
 else
-all: $(TARGET)
-$(TARGET): $(OBJECTS)
+l: extern/libmobile/mobile_config.h $(TARGET)
+
+extern/libmobile/mobile_config.h:
+	cp extern/libmobile/mobile_config.h.in extern/libmobile/mobile_config.h
+$(TARGET): $(OBJECTS) $(LIBMOBILE)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
+	$(LD) $(LINKOUT) $@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
 endif
 
 %.o: %.cpp
-	$(CXX) -c $(OBJOUT)$@ $< $(CXXFLAGS)
+	$(CXX) -c $(OBJOUT) $@ $< $(CXXFLAGS)
 
 %.o: %.c
-	$(CC) -c $(OBJOUT)$@ $< $(CFLAGS)
+	$(CC) -c $(OBJOUT) $@ $< $(CFLAGS)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS)

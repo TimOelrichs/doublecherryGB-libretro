@@ -2401,7 +2401,8 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 
 			int len = 5;
 			int dex_no[] = { 93,41,92,23,93 };
-			int levels[] = { 56,56,55,58,60 };
+			int levels[] = { 0,0,0,0,0 };
+			//int levels[] = { 56,56,55,58,60 };
 
 			event_pokemon_msg_str = "";
 
@@ -2413,7 +2414,7 @@ void pokebuddy_gen1::add_event_pokemon_to_datablock_gen2() {
 				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("AGATHA").data(), 11);
 				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
 			}
-
+			DATA_BLOCK_gen2.pokemons[0].statusAilment = 0x05;
 			display_message("Get your " + event_pokemon_msg_str + "!");
 			return;
 		}

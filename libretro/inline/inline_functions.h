@@ -2,18 +2,10 @@
 #include "inline_variables.h"
 #include "../DoubleCherryEngine/libretro.h"
 
-#if defined(__PSP__)
-extern "C" uint64_t sceKernelGetSystemTimeWide(void);
-#elif defined(__WIIU__)
-extern "C" uint64_t OSGetTime(void);
-#elif defined(_WIN32)
-#else
-#include <sys/time.h>
-#endif
-
-#include <chrono>
+#include "../../extern/libretro-common/include/features/features_cpu.h"
 #include <thread>
 #include <thread>
+#include <string_view>
 
 // Netplay (Netpacket) interface
 void handlePlayerJoined();
@@ -24,10 +16,13 @@ bool is_rom_with_known_trading_or_battling_feature()
 {
     // Check ROM header for known games with trading/battling features
 
+
     // Pokemon games (except Pinball)
     if (!strncmp(cart_name, "POKEMON", 7) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
-        // TODO: Exclude POKEMON PINBALL (both POKEMON_PINBALL and POKEMONPINBALL variants)
+        // Exclude POKEMON PINBALL and Pokemon Puzzle Challenge
+         if (!strncmp(cart_name, "POKEMONPIN", 10) || !strncmp(cart_name, "POKEMONPC", 9))
+            return false;
         return true;
     }
 
@@ -396,9 +391,20 @@ bool is_rom_with_known_trading_or_battling_feature()
 
 void set_cart_name(byte* rombuf)
 {
-    memcpy(cart_name, rombuf + 0x134, 16);
-    cart_name[16] = '\0';
-    cart_name[17] = '\0';
+    int write_index = 0;
+
+    for (int i = 0; i < 16; i++) {
+        byte current_char = rombuf[0x134 + i];
+
+        if (current_char >= 32 && current_char <= 126) {
+            cart_name[write_index] = current_char;
+            write_index++;
+        }
+    }
+
+    cart_name[write_index] = '\0';
+
+    log_cb(RETRO_LOG_INFO, cart_name);
 }
 
 
@@ -564,12 +570,12 @@ void auto_config_1p_link() {
     LinkCableHUB* linkHUB = new LinkCableHUB();
     v_gb[0]->set_linked_target(linkHUB);
 
-    if (!strncmp(cart_name, "POKEMONPINB", 11) ||       //Pokemon Pinball
+    if ((!strncmp(cart_name, "POKEMONPINB", 11) ||       //Pokemon Pinball
         (!strncmp(cart_name, "ZELDA", 5) &&             //Zelda Link's Awakening DX 
         (strncmp(cart_name, "ZELDA N", 7) ||            //but not the Oracle Games
          strncmp(cart_name, "ZELDA D", 7))
         )
-        )
+        ) && is_gbc_rom)
     {
         //v_gb[0]->set_linked_target(new gameboy_printer());
 
@@ -844,11 +850,14 @@ char* read_file_to_buffer(const char* filename, size_t* file_size) {
 }
 
 
+/*
 void add_new_player() {
     // v_gb.push_back(new gb)
-}
+}*/
 
 
+
+/*
 #include <chrono>
 bool get_monotonic_time(struct timespec* ts) {
     auto now = std::chrono::steady_clock::now();
@@ -859,26 +868,23 @@ bool get_monotonic_time(struct timespec* ts) {
     ts->tv_sec = secs.time_since_epoch().count();
     ts->tv_nsec = ns.count();
     return true;
-}
+}*/
 
 
-
-//try to avoid missed frames, see https://bsnes.org/articles/input-latency
+// To avoid missed frames, see https://bsnes.org/articles/input-latency
 void performExtraInputPoll() {
-    struct timespec current_time;
-    get_monotonic_time(&current_time);
-    //clock_gettime(CLOCK_MONOTONIC, &current_time);
+    // 1. Get the highly accurate monotonic time in microseconds
+    retro_time_t current_time = cpu_features_get_time_usec();
 
-    long elapsed_ms = (current_time.tv_sec - inputpoll_start_time.tv_sec) * 1000 +
-        (current_time.tv_nsec - inputpoll_start_time.tv_nsec) / 1000000;
+    // 2. Calculate elapsed time in milliseconds (1 ms = 1000 us)
+    long elapsed_ms = (current_time - inputpoll_start_time) / 1000;
 
+    // 3. Check if the polling interval has passed
     if (elapsed_ms >= extra_inputpolling_interval) {
-        get_monotonic_time(&inputpoll_start_time);
-        //clock_gettime(CLOCK_MONOTONIC, &inputpoll_start_time);
+        inputpoll_start_time = current_time;
         input_poll_cb();
     }
 }
-
 
 
 static void update_multiplayer_geometry() {
@@ -938,6 +944,7 @@ static void update_multiplayer_geometry() {
 
 }
 
+/*
 static void check_variables(void)
 {
     libretro_msg_interface_version = 0;
@@ -1162,7 +1169,7 @@ static void check_variables(void)
     }
     */
 
-
+/*
     var.key = "dcgb_gb_default_palette";
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1289,6 +1296,22 @@ static void check_variables(void)
         }
         else
             _screen_vertical = false;
+    }
+
+    var.key = "dcgb_mobile_adatper_enabled";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        bool lastvalue = mobile_adapter_enabled;
+        int value = atoi(var.value);
+        mobile_adapter_enabled = (bool)value && emulated_gbs == 1;
+        if (mobile_adapter_enabled && !lastvalue) {
+            display_message("Mobile Adapter GB plugged in");
+            v_gb[0]->set_linked_target(mobile_adapter);
+        }
+        else if (emulated_gbs == 1) auto_config_1p_link();
+        else auto_link_multiplayer();
+
     }
 
     // check whether screen placement is horz (side-by-side) or vert
@@ -1426,7 +1449,8 @@ static void check_variables(void)
                 detect_gba = true; 
         }
         */
-     
+
+/*
         int screenw = 160, screenh = 144;
 
         my_av_info.geometry.base_width = screenw;
@@ -1437,6 +1461,451 @@ static void check_variables(void)
         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
     }
 }
+*/
+
+#include <string_view>
+
+static void check_variables(void)
+{
+    // Initialize and query the Libretro message interface version
+    libretro_msg_interface_version = 0;
+    environ_cb(RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION, &libretro_msg_interface_version);
+
+    // Lambda helper to eliminate repetitive Libretro environment variable lookups
+    auto get_var = [](const char* key) -> const char* {
+        struct retro_variable var;
+        var.key = key;
+        var.value = nullptr;
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+            return var.value;
+        }
+        return nullptr;
+    };
+
+    const char* val = nullptr;
+    bool geometry_needs_update = false;
+
+    // ----------------------------------------------------
+    // 1. Boolean & Basic Integer Core Options
+    // ----------------------------------------------------
+
+    // Force Game Boy Color games to be detected as Game Boy Advance
+    if ((val = get_var("dcgb_gbc_detect_as_GBA"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (detect_as_gba != newValue) {
+            detect_as_gba = newValue;
+        }
+    }
+
+    // Force Game Boy Color games to be detected as Game Boy Advance
+    if ((val = get_var("dcgb_pkmbuddyboy_auto_mew"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (pkm_buddy_boy_auto_trade_mew != newValue) {
+            pkm_buddy_boy_auto_trade_mew = newValue;
+        }
+    }
+
+    if ((val = get_var("dcgb_rtc_use_system_clock"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (use_system_clock != newValue) {
+            use_system_clock = newValue;
+        }
+    }
+
+
+    // GBC Color Correction Mode (Off / Gambatte Simple / Gambatte Accurate)
+    if ((val = get_var("dcgb_gbc_lcdcolor_correction"))) {
+        int newValue = atoi(val);
+        if (gbc_cc_mode != static_cast<color_correction_mode>(newValue)) {
+            gbc_color_correction_enabled = static_cast<bool>(newValue);
+            gbc_cc_mode = static_cast<color_correction_mode>(newValue);
+        }
+    }
+
+    // GBC LCD Interlacing simulation (Off / Fast / Linear)
+    if ((val = get_var("dcgb_gbc_lcd_interlacing"))) {
+        std::string_view sv(val);
+        bool newEnabled = (sv != "Off");
+        bool newFast = (sv == "Fast");
+        if (gbc_lcd_interlacing_enabled != newEnabled || gbc_lcd_interfacing_fast != newFast) {
+            gbc_lcd_interlacing_enabled = newEnabled;
+            gbc_lcd_interfacing_fast = newFast;
+        }
+    }
+
+    // ----------------------------------------------------
+    // 2. Scaling & Geometry Settings
+    // ----------------------------------------------------
+
+    // RGB Subpixel Simulation upscale factor (requires geometry recalculation)
+    if ((val = get_var("dcgb_gbc_RGB_SubPixel_Simulation"))) {
+        int newValue = atoi(val);
+        if (gbc_rgbSubpixel_upscale_factor != newValue) {
+            gbc_rgbSubpixel_upscale_factor = newValue;
+            my_av_info.geometry.base_width = 160 * newValue;
+            my_av_info.geometry.base_height = 144 * newValue;
+            geometry_needs_update = true;
+        }
+    }
+
+    // Dot Matrix upscale factor for original Game Boy (DMG) mode
+    if ((val = get_var("dcgb_gb_dotmatrix_upscale"))) {
+        int newValue = atoi(val);
+        if (gb_dotMarix_upscale_factor != newValue) {
+            gb_dotMarix_upscale_factor = newValue;
+            my_av_info.geometry.base_width = 160 * newValue;
+            my_av_info.geometry.base_height = 144 * newValue;
+            geometry_needs_update = true;
+        }
+    }
+
+    // ----------------------------------------------------
+    // 3. Video Effects & System Modes
+    // ----------------------------------------------------
+
+    // Toggle GBC LCD motion blur emulation
+    if ((val = get_var("dcgb_gbc_LCD_blur"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (gbc_lcd_blur_effect_enabled != newValue) {
+            gbc_lcd_blur_effect_enabled = newValue;
+        }
+    }
+
+    // Force original Game Boy (DMG) games to use the GBC LCD color profile
+    if ((val = get_var("dcgb_gb_use_gbc_lcd"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (useGbcLCDforDmG != newValue) {
+            useGbcLCDforDmG = newValue;
+        }
+    }
+
+    // Cocktail Table Mode (splits/rotates screen for specific arcade setups)
+    if ((val = get_var("dcgb_cocktailtable_mode"))) {
+        int newValue = atoi(val);
+        bool newEnabled = static_cast<bool>(newValue);
+        bool newVertical = (newValue == 1);
+        if (cocktail_mode_enabled != newEnabled || cocktail_mode_vertical != newVertical) {
+            cocktail_mode_enabled = newEnabled;
+            cocktail_mode_vertical = newVertical;
+            geometry_needs_update = true;
+        }
+    }
+
+    // DMG LCD Ghosting simulation (Palette Blend / RGB565 Blend)
+    if ((val = get_var("dcgb_gb_lcd_ghosting"))) {
+        int newValue = atoi(val);
+        if (useDmgGhosting != static_cast<bool>(newValue)) {
+            useDmgGhosting = static_cast<bool>(newValue);
+            GhostingMode mode = (newValue == 2) ? GhostingMode::RGB565_BLEND : GhostingMode::PALETTE_BLEND;
+
+            if (newValue == 1 || newValue == 2) {
+                for (auto &i : v_gb) {
+                    i->get_renderer()->ghosting_mode = mode;
+                }
+            }
+        }
+    }
+
+    // Adjust screen light color temperature
+    if ((val = get_var("dcgb_light_temperature"))) {
+        double newValue = atof(val);
+        if (light_temperature != newValue) {
+            light_temperature = newValue;
+            // NOTE: If color palette refresh is required, trigger v_gb[i]->refresh_pal() here
+        }
+    }
+
+    // Adjust raw brightness level for the interlacing effect
+    if ((val = get_var("dcgb_gbc_lcd_interlacing_brightnesss"))) {
+        float newValue = (100.0f + static_cast<float>(atoi(val))) / 100.0f;
+        if (gbc_lcd_interlacing_brightness != newValue) {
+            gbc_lcd_interlacing_brightness = newValue;
+        }
+    }
+
+    // Extra input polling rate configuration (>60Hz optimization)
+    if ((val = get_var("dcgb_input_polling_rate"))) {
+        int value = atoi(val);
+        bool newEnabled = (value > 60);
+        int newInterval = (value == 200) ? 5 : 8;
+        if (extra_inputpolling_enabled != newEnabled || (newEnabled && extra_inputpolling_interval != newInterval)) {
+            extra_inputpolling_enabled = newEnabled;
+            if (extra_inputpolling_enabled) extra_inputpolling_interval = newInterval;
+        }
+    }
+
+    // ----------------------------------------------------
+    // 4. Virtual Game Boy Printer Settings (Enums)
+    // ----------------------------------------------------
+
+    // Target print size simulation when saving Game Boy Printer data to PNG
+    if ((val = get_var("dcgb_gb_printer_png_upscale"))) {
+        std::string_view sv(val);
+        ScaleTarget newTarget = ScaleTarget::NONE;
+        if (sv == "DIN A4")       newTarget = ScaleTarget::DIN_A4;
+        else if (sv == "DIN A5")  newTarget = ScaleTarget::DIN_A5;
+        else if (sv == "DIN A6")  newTarget = ScaleTarget::DIN_A6;
+        else if (sv == "Thermalpaper") newTarget = ScaleTarget::THERMAL_PAPER;
+
+        if (gb_printer_png_scale_mode != newTarget) {
+            gb_printer_png_scale_mode = newTarget;
+        }
+    }
+
+    // Page alignment for virtual print outputs
+    if ((val = get_var("dcgb_gb_printer_png_alignment"))) {
+        Alignment newAlign = (std::string_view(val) == "Center") ? Alignment::CENTER : Alignment::TOP;
+        if (gb_printer_png_alignment != newAlign) {
+            gb_printer_png_alignment = newAlign;
+        }
+    }
+
+    // Set default color palette for original DMG cores
+    if ((val = get_var("dcgb_gb_default_palette"))) {
+        for (auto& gb : v_gb) {
+            gb->get_paletteManager()->SetPalette(val);
+        }
+    }
+
+    // ----------------------------------------------------
+    // 5. Peripherals, Audio & Network Emulation
+    // ----------------------------------------------------
+
+    // Rumble emulation intensity for supported cartridges (e.g., Pokémon Pinball)
+    if ((val = get_var("dcgb_power_antenna_use_rumble"))) {
+        std::string_view sv(val);
+        int newRumble = (sv == "Off") ? 0 : (sv == "Weak" ? 1 : 2);
+        if (power_antenna_use_rumble != newRumble) {
+            power_antenna_use_rumble = newRumble;
+        }
+    }
+
+    // Simulate random TV remote signals via the built-in GBC Infrared port
+    if ((val = get_var("dcgb_infrared_tv_remote_auto_signal"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (auto_random_tv_remote != newValue) {
+            auto_random_tv_remote = newValue;
+        }
+    }
+
+    // Enable/disable custom low-pass audio filters
+    if ((val = get_var("dcgb_audio_filter"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (dcgb_audio_filter_enabled != newValue) {
+            dcgb_audio_filter_enabled = newValue;
+        }
+    }
+
+    // Force Link Cable emulation to run directly over IP networks
+    if ((val = get_var("dcgb_netplay_mode"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (force_linkcable_over_ip_mode != newValue) {
+            force_linkcable_over_ip_mode = newValue;
+        }
+    }
+
+    // ----------------------------------------------------
+    // 6. Multiplayer / Multi-Core Global Configuration
+    // ----------------------------------------------------
+
+    // Number of active emulated Game Boy instances (1 to 4 players)
+    if ((val = get_var("dcgb_emulated_gameboys"))) {
+        size_t value = atoi(val);
+        if (value != emulated_gbs) {
+            emulated_gbs = value;
+            mode = (value == 1) ? MODE_SINGLE_GAME : mode;
+            emulated_gbs_changed_in_options = true;
+
+            // Automatically switch layout parameters based on instance count
+            _screen_vertical = false;
+            _screen_4p_split = (value > 2);
+            geometry_needs_update = true;
+        }
+    }
+
+    // Total physical local monitors/screens available for splitting the viewport
+    if ((val = get_var("dcgb_number_of_local_screens"))) {
+        std::string_view sv(val);
+        int newValue = (sv == "1") ? 1 : ((sv == "2") ? 2 : _number_of_local_screens);
+        if (_number_of_local_screens != newValue) {
+            _number_of_local_screens = newValue;
+        }
+    }
+
+    // Developer logging option to trace link cable packet transfers to an external file
+    if ((val = get_var("dcgb_dev_log_linkcable_to_file"))) {
+        bool newValue = static_cast<bool>(atoi(val));
+        if (logging_transfers_to_file_allowed != newValue) {
+            logging_transfers_to_file_allowed = newValue;
+            if (logging_transfers_to_file_allowed) {
+                display_message("Logging to file is enabled");
+            }
+        }
+    }
+
+    // 4-Player Multi-Adapter Link Emulation (Faceball 2000 setup, etc.)
+    if (emulated_gbs > 2) {
+        if ((val = get_var("dcgbt_gblink_device"))) {
+            bool newUseMulti = (std::string_view(val) == "4-player adapter");
+            if (use_multi_adapter != newUseMulti) {
+                use_multi_adapter = newUseMulti;
+                if (!use_multi_adapter && master_link) {
+                    master_link = nullptr;
+                }
+            }
+        } else {
+            if (_screen_vertical) {
+                _screen_vertical = false;
+            }
+        }
+    }
+
+    // Mobile Adapter GB emulation (Japanese cellular network accessory)
+    if ((val = get_var("dcgb_mobile_adatper_enabled"))) {
+        bool lastvalue = mobile_adapter_enabled;
+        bool newValue = static_cast<bool>(atoi(val)) && (emulated_gbs == 1);
+
+        if (mobile_adapter_enabled != newValue) {
+            mobile_adapter_enabled = newValue;
+            if (mobile_adapter_enabled && !lastvalue) {
+                display_message("Mobile Adapter GB plugged in");
+                v_gb[0]->set_linked_target(mobile_adapter);
+            } else if (emulated_gbs == 1) {
+                auto_config_1p_link();
+            } else {
+                auto_link_multiplayer();
+            }
+        }
+    }
+
+    if (mobile_adapter_enabled && mobile_adapter)
+        mobile_adapter->update_options_from_libretro(environ_cb);
+
+
+    // ----------------------------------------------------
+    // 7. Screen Placement & Audio Routing (Multiplayer Only)
+    // ----------------------------------------------------
+    if (emulated_gbs > 1) {
+        // Toggle global Link Cable synchronization
+        if ((val = get_var("dcgb_gblink_enable"))) {
+            if (!already_checked_options) { // Only apply this core option on initialization
+                bool newGblink = (std::string_view(val) == "enabled");
+                if (gblink_enable != newGblink) gblink_enable = newGblink;
+            }
+        } else {
+            if (gblink_enable) gblink_enable = false;
+        }
+
+        // Toggle hardware lockstep mode for standard Infrared synchronization
+        if ((val = get_var("dcgb_infrared_lockstep"))) {
+            bool newValue = static_cast<bool>(atoi(val));
+            if (infrared_lockstep != newValue) {
+                infrared_lockstep = newValue;
+            }
+        }
+
+        // Multiplex screen display layout orientations (Side-by-Side / Top-Down / 2x2 Grid)
+        if ((val = get_var("dcgb_screen_placement"))) {
+            std::string_view sv(val);
+            bool newVert = false, new4p = false;
+            if (sv == "top-down")  newVert = true;
+            else if (sv == "grid") new4p = true;
+
+            if (_screen_vertical != newVert || _screen_4p_split != new4p) {
+                _screen_vertical = newVert;
+                _screen_4p_split = new4p;
+                geometry_needs_update = true;
+            }
+        } else {
+            if (_screen_vertical) {
+                _screen_vertical = false;
+                geometry_needs_update = true;
+            }
+        }
+
+        // Swap viewport mapping for Player 1 and Player 2
+        if ((val = get_var("dcgb_switch_screens"))) {
+            bool newSwitched = (std::string_view(val) == "switched");
+            if (_screen_switched != newSwitched) _screen_switched = newSwitched;
+        } else {
+            if (_screen_switched) _screen_switched = false;
+        }
+
+        // Select whether to display all player screens or isolate a single system's video output
+        if ((val = get_var("dcgb_single_screen_mp"))) {
+            std::string_view sv(val);
+            bool newShowAll = (sv == "all players");
+            int newShowPlayer = emulated_gbs;
+
+            if (!newShowAll) {
+                int player;
+                if (sscanf(val, "player %d only", &player) == 1 && player >= 1 && player <= 16) {
+                    newShowPlayer = player - 1;
+                }
+            }
+
+            if (show_all_screens != newShowAll || _show_player_screen != newShowPlayer) {
+                show_all_screens = newShowAll;
+                _show_player_screen = newShowPlayer;
+                geometry_needs_update = true;
+            }
+
+            // Sync audio channel mapping to the isolated player screen selection
+            if (_show_player_screen != emulated_gbs && audio_2p_mode != _show_player_screen) {
+                audio_2p_mode = _show_player_screen;
+                struct retro_variable set_var;
+                set_var.key = "dcgb_audio_output";
+                char buf[32];
+                snprintf(buf, sizeof(buf), "Game Boy #%d", audio_2p_mode + 1);
+                set_var.value = buf;
+                environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &set_var);
+            }
+        } else {
+            if (_show_player_screen != emulated_gbs) {
+                _show_player_screen = emulated_gbs;
+                geometry_needs_update = true;
+            }
+        }
+
+        // Configure which Game Boy audio track is routed to frontend speakers
+        if ((val = get_var("dcgb_audio_output"))) {
+            if (_show_player_screen != emulated_gbs) {
+                if (audio_2p_mode != _show_player_screen) {
+                    audio_2p_mode = _show_player_screen;
+                    struct retro_variable set_var;
+                    set_var.key = "dcgb_audio_output";
+                    char buf[32];
+                    snprintf(buf, sizeof(buf), "Game Boy #%d", audio_2p_mode + 1);
+                    set_var.value = buf;
+                    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &set_var);
+                }
+            } else {
+                int audio_player;
+                if (sscanf(val, "Game Boy #%d", &audio_player) == 1 && audio_player >= 1 && audio_player <= 16) {
+                    if (audio_2p_mode != audio_player - 1) {
+                        audio_2p_mode = audio_player - 1;
+                    }
+                }
+            }
+        }
+    } else {
+        // Single-Player Geometry Fallback (Executed exactly once upon initialization)
+        if (!already_checked_options) {
+            my_av_info.geometry.base_width = 160;
+            my_av_info.geometry.base_height = 144;
+            my_av_info.geometry.aspect_ratio = 160.0f / 144.0f;
+
+            already_checked_options = true;
+            environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &my_av_info);
+        }
+    }
+
+    // Only commit geometry layout alterations to the frontend if an actual state mutation happened
+    if (geometry_needs_update ) {
+        update_multiplayer_geometry();
+    }
+}
+
 
 void check_special_hotkey() {
 

@@ -1,4 +1,5 @@
-﻿#ifndef _GNU_SOURCE
+﻿#include "linkcable/include/Mobile_Adapter_GB.hpp"
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1 // for fopencookie hack in serialize_size
 #endif
 
@@ -183,6 +184,7 @@ void retro_deinit(void)
 
 
 
+
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -214,6 +216,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     v_gb.reserve(max_gbs);
     render.reserve(max_gbs);
+   // mobile_adapter = new Mobile_Adapter_GB(v_gb[0]);
 
     log_cb(RETRO_LOG_INFO, "BEFORE INIT GBS\n");
     for (byte i = 0; i < max_gbs; i++) {
@@ -241,13 +244,24 @@ bool retro_load_game(const struct retro_game_info *info)
     init_printer_registry();
     log_cb(RETRO_LOG_INFO, "Init Printer Registry done\n");
 
-    auto_link_multiplayer();
+    //auto_link_multiplayer();
     check_variables();
     set_memory_maps();
     if (master_link)
         v_serializable_devices.push_back(master_link);
 
+    const char* system_dir = nullptr;
+    environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir);
 
+    std::string config_path = (system_dir && strlen(system_dir) > 0) ? std::string(system_dir) + "/" : "";
+    config_path += "mobile_adapter_gb_config.bin";
+
+    mobile_adapter = new Mobile_Adapter_GB(v_gb[0], config_path);
+
+    if (mobile_adapter_enabled) {
+        v_gb[0]->set_linked_target(mobile_adapter);
+    }else
+        auto_config_1p_link();
 
    return true;
 }
@@ -356,7 +370,12 @@ void retro_unload_game(void)
     render.clear();
     v_serializable_devices.clear();
 
+    delete mobile_adapter;
+    mobile_adapter = nullptr;
+
     libretro_supports_persistent_buffer = false;
+
+
 }
 
 void retro_reset(void)
@@ -451,11 +470,13 @@ void checkForJoinedMultiplayer()
 
 void run_main_loop()
 {
+    if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
 
     if (!infrared_lockstep)
     {
         for (int line = 0; line < 154; line++)
         {
+           // if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
             if (extra_inputpolling_enabled) performExtraInputPoll();
 
             for (size_t i = 0; i < emulated_gbs; i++)
@@ -471,6 +492,8 @@ void run_main_loop()
         const int steps = 70224 / 4; // ≈ 17556
         for (int cycle = 0; cycle < steps; cycle++)
         {
+            //if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
+
             if (extra_inputpolling_enabled)
                 performExtraInputPoll();
 
@@ -506,7 +529,8 @@ void retro_run(void)
 {
 
     checkAndUpdateVariable();
-    get_monotonic_time(&inputpoll_start_time);
+    //get_monotonic_time(&inputpoll_start_time);
+    inputpoll_start_time = cpu_features_get_time_usec();
     input_poll_cb();
     check_special_inputs();
     run_main_loop();
@@ -517,48 +541,53 @@ void *retro_get_memory_data(unsigned id)
 {
     switch (mode)
     {
-    case MODE_SINGLE_GAME:
-    case MODE_SINGLE_GAME_DUAL: /* todo: hook this properly */
-    {
-        switch (id)
+        case MODE_SINGLE_GAME:
+        case MODE_SINGLE_GAME_DUAL:
         {
-        case RETRO_MEMORY_SAVE_RAM:
-            return v_gb[id]->get_rom()->get_sram();
-        case RETRO_MEMORY_RTC:
-            if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
-                return &v_gb[id]->get_mbc()->huc3_baseTime;
-            else
-                return &(render[id]->fixed_time);
-        case RETRO_MEMORY_VIDEO_RAM:
-            return v_gb[id]->get_cpu()->get_vram();
-        case RETRO_MEMORY_SYSTEM_RAM:
-            return v_gb[id]->get_cpu()->get_ram();
-        default:
-            return NULL;
-        }
+            switch (id)
+            {
+                case RETRO_MEMORY_SAVE_RAM:
+                    return v_gb[id]->get_rom()->get_sram();
+                case RETRO_MEMORY_RTC:
+                    if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
+                        return &v_gb[id]->get_mbc()->huc3_baseTime; // Direkt der Zeiger auf die 8-Byte Variable
+                    else
+                        return &(render[id]->fixed_time);
+                case RETRO_MEMORY_VIDEO_RAM:
+                    return v_gb[id]->get_cpu()->get_vram();
+                case RETRO_MEMORY_SYSTEM_RAM:
+                    return v_gb[id]->get_cpu()->get_ram();
+                default:
+                    return NULL;
+            }
             break;
-    }
-    case MODE_DUAL_GAME:
-    {
-        switch (id)
+        }
+        case MODE_DUAL_GAME:
         {
-        case RETRO_MEMORY_GAMEBOY_1_SRAM:
-            return v_gb[id]->get_rom()->get_sram();
-        case RETRO_MEMORY_GAMEBOY_1_RTC:
-            return &(render[id]->fixed_time);
-        case RETRO_MEMORY_GAMEBOY_2_SRAM:
-            return v_gb[id]->get_rom()->get_sram();
-        case RETRO_MEMORY_GAMEBOY_2_RTC:
-            return &(render[id]->fixed_time);
-        default:
-            return NULL;
-        }
+            switch (id)
+            {
+                case RETRO_MEMORY_GAMEBOY_1_SRAM:
+                    return v_gb[id]->get_rom()->get_sram();
+                case RETRO_MEMORY_GAMEBOY_1_RTC:
+                    if (v_gb[0]->get_rom()->get_info()->cart_type == 0xFE)
+                        return &v_gb[0]->get_mbc()->huc3_baseTime;
+                    else
+                        return &(render[id]->fixed_time);
+                case RETRO_MEMORY_GAMEBOY_2_SRAM:
+                    return v_gb[id]->get_rom()->get_sram();
+                case RETRO_MEMORY_GAMEBOY_2_RTC:
+                    if (v_gb[1]->get_rom()->get_info()->cart_type == 0xFE)
+                        return &v_gb[1]->get_mbc()->huc3_baseTime;
+                    else
+                        return &(render[id]->fixed_time);
+                default:
+                    return NULL;
+            }
             break;
-    }
+        }
     }
     return NULL;
 }
-
 size_t retro_get_memory_size(unsigned id)
 {
     switch (mode)
@@ -571,7 +600,10 @@ size_t retro_get_memory_size(unsigned id)
         case RETRO_MEMORY_SAVE_RAM:
             return v_gb[id]->get_rom()->get_sram_size();
         case RETRO_MEMORY_RTC:
-            return sizeof(render[id]->fixed_time);
+                if (v_gb[id]->get_rom()->get_info()->cart_type == 0xFE)
+                    return sizeof(v_gb[id]->get_mbc()->huc3_baseTime); // Gibt exakt 8 (Byte) zurück
+                else
+                    return sizeof(render[id]->fixed_time);
         case RETRO_MEMORY_VIDEO_RAM:
             if (v_gb[id]->get_rom()->get_info()->gb_type >= 3)
                 return 0x2000 * 2; // sizeof(cpu::vram);
@@ -593,9 +625,15 @@ size_t retro_get_memory_size(unsigned id)
         case RETRO_MEMORY_GAMEBOY_1_SRAM:
             return v_gb[id]->get_rom()->get_sram_size();
         case RETRO_MEMORY_GAMEBOY_1_RTC:
-            return sizeof(render[id]->fixed_time);
+                if (v_gb[0]->get_rom()->get_info()->cart_type == 0xFE)
+                    return sizeof(v_gb[0]->get_mbc()->huc3_baseTime);
+                else
+                    return sizeof(render[id]->fixed_time);
         case RETRO_MEMORY_GAMEBOY_2_SRAM:
-            return v_gb[id]->get_rom()->get_sram_size();
+                if (v_gb[1]->get_rom()->get_info()->cart_type == 0xFE)
+                    return sizeof(v_gb[1]->get_mbc()->huc3_baseTime);
+                else
+                    return sizeof(render[id]->fixed_time);
         case RETRO_MEMORY_GAMEBOY_2_RTC:
             return sizeof(render[id]->fixed_time);
         default:
