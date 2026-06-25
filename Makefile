@@ -1,5 +1,16 @@
 DEBUG = 0
 
+# ==============================================================================
+# AUTOMATIC SUBMODULE FETCH FOR LIBRETRO BUILDBOT
+# ==============================================================================
+# The Libretro buildbot sometimes skips submodule initialization.
+# We check if the submodule file exists; if not, we force a manual fetch.
+ifeq ($(wildcard extern/libmobile/mobile_config.h.in),)
+$(info [INFO] libmobile source missing. Attempting to initialize git submodules...)
+$(shell git submodule update --init --recursive)
+endif
+# ==============================================================================
+
 ifeq ($(platform),)
 platform = unix
 ifeq ($(shell uname -a),)
@@ -632,10 +643,16 @@ $(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
 ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C)
 include $(THEOS_MAKE_PATH)/library.mk
 else
-l: extern/libmobile/mobile_config.h $(TARGET)
+all: extern/libmobile/mobile_config.h $(TARGET)
 
 extern/libmobile/mobile_config.h:
-	cp extern/libmobile/mobile_config.h.in extern/libmobile/mobile_config.h
+# Sicherheitscheck: cp nur ausführen, wenn die Datei JETZT existiert
+	@if [ -f extern/libmobile/mobile_config.h.in ]; then \
+		cp extern/libmobile/mobile_config.h.in extern/libmobile/mobile_config.h; \
+	else \
+		echo "ERROR: Submodule could not be fetched. Creating dummy config."; \
+		touch extern/libmobile/mobile_config.h; \
+	fi
 $(TARGET): $(OBJECTS) $(LIBMOBILE)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
@@ -652,5 +669,5 @@ endif
 clean:
 	rm -f $(TARGET) $(OBJECTS)
 
-.PHONY: clean
+.PHONY: clean all
 endif
