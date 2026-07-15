@@ -764,7 +764,7 @@ static struct retro_core_option_v2_definition core_options_us[] = {
     "dcgb_mobile_adatper_relay_port",
     "P2P Relay Server port",
     NULL,
-    "Specify the target port connection for the custom P2P relay serber.\n\ņFor custom configuration edit the mobile_adapter_gb_custom_server_config.ini in your retroarch systems folder.",
+    "Specify the target port connection for the custom P2P relay serber.\n\nFor custom configuration edit the mobile_adapter_gb_custom_server_config.ini in your retroarch systems folder.",
     NULL,
     "Gameboy Mobile Adapter",
     {

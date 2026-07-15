@@ -1,8 +1,10 @@
 # DESCRIPTION: GitLab CI/CD for libRetro (NOT FOR GitLab-proper)
 
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 before_script:
   - mkdir -p retroarch-precompiled
-  - git submodule update --init --recursive
 ##############################################################################
 ################################# BOILERPLATE ################################
 ##############################################################################
@@ -12,6 +14,7 @@ before_script:
   variables:
     JNI_PATH: .
     CORENAME: DoubleCherryGB
+    GIT_SUBMODULE_STRATEGY: recursive
 
 # Inclusion templates, required for the build to work
 include:
