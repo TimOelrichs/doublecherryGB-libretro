@@ -1,14 +1,6 @@
 DEBUG = 0
 
-# ==============================================================================
-# AUTOMATIC SUBMODULE FETCH FOR LIBRETRO BUILDBOT
-# ==============================================================================
-# The Libretro buildbot sometimes skips submodule initialization.
-# We check if the submodule file exists; if not, we force a manual fetch.
-ifeq ($(wildcard extern/libmobile/mobile_config.h.in),)
-$(info [INFO] libmobile source missing. Attempting to initialize git submodules...)
-$(shell git submodule update --init --recursive)
-endif
+
 # ==============================================================================
 
 ifeq ($(platform),)
@@ -642,17 +634,25 @@ $(LIBRARY_NAME)_CFLAGS += $(CFLAGS) $(COMMON_FLAGS)
 $(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
 ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C)
 include $(THEOS_MAKE_PATH)/library.mk
+
 else
+# 'all' hängt jetzt von der config-Headerdatei ab
 all: extern/libmobile/mobile_config.h $(TARGET)
 
-extern/libmobile/mobile_config.h:
-# Sicherheitscheck: cp nur ausführen, wenn die Datei JETZT existiert
+# Falls die .in-Datei fehlt, holen wir erst die Submodule
+extern/libmobile/mobile_config.h.in:
+	@echo "[INFO] libmobile source missing. Initializing git submodules..."
+	git submodule update --init --recursive
+
+# Sobald die .in-Datei existiert (oder geholt wurde), kopieren wir sie
+extern/libmobile/mobile_config.h: extern/libmobile/mobile_config.h.in
 	@if [ -f extern/libmobile/mobile_config.h.in ]; then \
-		cp extern/libmobile/mobile_config.h.in extern/libmobile/mobile_config.h; \
+	   cp extern/libmobile/mobile_config.h.in extern/libmobile/mobile_config.h; \
 	else \
-		echo "ERROR: Submodule could not be fetched. Creating dummy config."; \
-		touch extern/libmobile/mobile_config.h; \
+	   echo "ERROR: Submodule could not be fetched. Creating dummy config."; \
+	   touch extern/libmobile/mobile_config.h; \
 	fi
+
 $(TARGET): $(OBJECTS) $(LIBMOBILE)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
