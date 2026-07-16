@@ -615,12 +615,12 @@ void auto_config_1p_link() {
 
   
     //TV REMOTE Emulation
-    if (!strncmp(cart_name, "SUN",  3)      ||      //ROBONPON SUN
+    if (is_gbc_rom && (!strncmp(cart_name, "SUN",  3)      ||      //ROBONPON SUN
         !strncmp(cart_name, "STAR", 4)      ||      //ROBOPON STAR (BETA)
         !strncmp(cart_name, "B-MAX", 5)     ||      //Bomberman Max Blue/Red/AIN
         !strncmp(cart_name, "F.MEGA", 6)    ||      //Bomberman Daman Bakugaiden V - Final Mega Tune
         !strncmp(cart_name, "DORAEMONMEM", 11)      //Doraemon Memories - Nobita no Omoide Daibouken
-        )
+        ))
     {
 
         display_message("Game can unlock content with a TV REMOTE");

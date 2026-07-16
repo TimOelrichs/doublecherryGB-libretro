@@ -532,12 +532,20 @@ else
    CC ?= gcc
    CXX ?= g++
    SHARED := -shared -Wl,--version-script=libretro/link.T
-   LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
+   LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm -lws2_32
 endif
 
 CORE_DIR := $(CURDIR)
 
 include Makefile.common
+
+# Append missing libretro-common files needed for Windows builds
+ifneq (,$(findstring win,$(platform)))
+   SOURCES_C += extern/libretro-common/encodings/utf.c \
+                extern/libretro-common/compat/compat_fopen.c \
+                extern/libretro-common/compat/compat_dir.c \
+                extern/libretro-common/file/file_path_io.c
+endif
 
 OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 

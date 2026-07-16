@@ -1,14 +1,8 @@
-﻿# ==============================================================================
-# makefile.common – Synchronisiert mit CMakeLists.txt
-# ==============================================================================
-
+﻿
 MAKEFILE_COMM_DIR := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
 CORE_DIR := $(MAKEFILE_COMM_DIR)
 LIBRETRO_COMM_DIR := $(CORE_DIR)/extern/libretro-common
 
-# ---------------------------------------------------------------
-# 1. Quell-Dateien (Exakt wie in CMake)
-# ---------------------------------------------------------------
 SOURCES_CXX := \
     $(CORE_DIR)/gb_core/apu.cpp \
     $(CORE_DIR)/gb_core/cheat.cpp \
@@ -51,7 +45,7 @@ SOURCES_CXX := \
     $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetPacketSendHandler.cpp \
     $(CORE_DIR)/libretro/DoubleCherryEngine/Netplay/NetpacketHandler/PokemonTcgNetpacketHandler.cpp
 
-# C‑Quellen aus extern/libretro-common (inklusive net_http & features_cpu aus CMake!)
+
 SOURCES_C := \
     $(LIBRETRO_COMM_DIR)/net/net_socket.c \
     $(LIBRETRO_COMM_DIR)/net/net_compat.c \
@@ -68,7 +62,7 @@ SOURCES_C := \
     $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
     $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-# NEU: Wir binden die libmobile C-Dateien exakt nach dem Vorbild deiner CMakeLists ein
+
 SOURCES_C += \
     $(CORE_DIR)/extern/libmobile/callback.c \
     $(CORE_DIR)/extern/libmobile/commands.c \
@@ -81,9 +75,6 @@ SOURCES_C += \
     $(CORE_DIR)/extern/libmobile/serial.c \
     $(CORE_DIR)/extern/libmobile/util.c
 
-# ---------------------------------------------------------------
-# 2. Include-Pfade (Wie in CMake)
-# ---------------------------------------------------------------
 INCFLAGS := -I$(CORE_DIR) \
             -I$(CORE_DIR)/gb_core \
             -I$(CORE_DIR)/libretro \
@@ -95,8 +86,5 @@ ifneq (,$(findstring msvc,$(platform)))
     INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
 endif
 
-# ---------------------------------------------------------------
-# 3. Defines (Kombiniert Version, Libretro und libmobile-Anforderungen)
-# ---------------------------------------------------------------
 DEFINES := -DBUILD_VERSION=\"$(GIT_VERSION)\" -D__LIBRETRO__ -DNDEBUG -DMOBILE_LIBCONF_USE
 FLAGS += $(DEFINES)

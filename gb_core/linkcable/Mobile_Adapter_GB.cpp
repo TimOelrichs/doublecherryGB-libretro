@@ -610,7 +610,7 @@ void Mobile_Adapter_GB::setupCallbacks()
 }
 */
 
-
+/*
 void Mobile_Adapter_GB::setupCallbacks()
 {
     // --- 1. DEBUG LOGGING ---
@@ -857,6 +857,293 @@ void Mobile_Adapter_GB::setupCallbacks()
     // Unused serial hardware callbacks (handled within the emulator core layer)
     mobile_def_serial_enable(&m_adapter, [](void* u, bool m) {});
     mobile_def_serial_disable(&m_adapter, [](void* u) {});
+
+    // --- 5. ASYNC NOTIFICATIONS & TELEPHONE NUMBERS ---
+    mobile_def_update_number(&m_adapter, [](void* user, enum mobile_number t, const char *number) {
+          auto* self = user ? static_cast<Mobile_Adapter_GB*>(user) : nullptr;
+
+          if (number && log_cb) {
+              log_cb(RETRO_LOG_INFO, "[Mobile] %s-number updated: %s\n",
+                     t == MOBILE_NUMBER_USER ? "User" : "Peer", number);
+
+                 std::string raw_number = number;
+
+                 if (raw_number.length() > 4)
+                     raw_number.insert(4, " ");
+
+              if (self && self->m_use_relay) {
+                  std::string phonenumber = "Your relay Phonenumber:   " + raw_number;
+                  display_message(phonenumber, 9, false);
+              }
+          }
+
+          if (self && t == MOBILE_NUMBER_USER && number) {
+              self->m_local_number = number;
+          }
+      });
+}
+*/
+// Stelle sicher, dass dieses Makro ganz oben in deiner Mobile_Adapter_GB.cpp steht:
+#if defined(_WIN32)
+#define socket_errno() WSAGetLastError()
+#else
+#include <errno.h>
+#define socket_errno() errno
+#endif
+
+void Mobile_Adapter_GB::setupCallbacks()
+{
+    // --- 1. DEBUG LOGGING ---
+    mobile_def_debug_log(&m_adapter, [](void* u, const char* line) {
+        if (log_cb) log_cb(RETRO_LOG_DEBUG, "[libmobile] %s\n", line);
+    });
+
+    // --- 2. CONFIGURATION READ/WRITE ---
+    mobile_def_config_read(&m_adapter, [](void* u, void* d, uintptr_t o, size_t s) {
+        auto* self = static_cast<Mobile_Adapter_GB*>(u);
+        if (!self) return false;
+        if (o + s > MOBILE_CONFIG_SIZE) return false;
+        std::memcpy(d, self->m_config.data() + o, s);
+        return true;
+    });
+
+    mobile_def_config_write(&m_adapter, [](void* u, const void* src, uintptr_t o, size_t s) {
+        auto* self = static_cast<Mobile_Adapter_GB*>(u);
+        if (!self) return false;
+        if (o + s > MOBILE_CONFIG_SIZE) return false;
+        std::memcpy(self->m_config.data() + o, src, s);
+        return true;
+    });
+
+    // --- 3. TIMING & TIMEOUTS ---
+    mobile_def_time_latch(&m_adapter, [](void* u, unsigned t) {
+        auto* self = static_cast<Mobile_Adapter_GB*>(u);
+        if (self && self->connected_gb) {
+            self->m_time_micros_latches[t] = self->connected_gb->get_cpu()->get_clock();
+        }
+    });
+
+    mobile_def_time_check_ms(&m_adapter, [](void* u, unsigned t, unsigned ms) {
+        auto* self = static_cast<Mobile_Adapter_GB*>(u);
+        if (!self || !self->connected_gb) return true;
+
+        uint64_t current_cycles = self->connected_gb->get_cpu()->get_clock();
+        uint64_t latched_cycles = self->m_time_micros_latches[t];
+
+        if (current_cycles < latched_cycles) return true;
+
+        uint64_t elapsed_cycles = current_cycles - latched_cycles;
+        uint64_t ticks_per_ms = self->m_is_double_speed ? GBC_TICKS_PER_MS_DOUBLE : GBC_TICKS_PER_MS_NORMAL;
+        return elapsed_cycles > ((uint64_t)ms * ticks_per_ms);
+    });
+
+    // --- 4. SOCKET MANAGEMENT ---
+    mobile_def_sock_open(&m_adapter, [](void* u, unsigned c, enum mobile_socktype t,
+                                       enum mobile_addrtype at, unsigned p) {
+        auto* self = u ? static_cast<Mobile_Adapter_GB*>(u) : nullptr;
+        if (!self) return false;
+
+        enum socket_type sock_type = (t == MOBILE_SOCKTYPE_TCP) ? SOCKET_TYPE_STREAM : SOCKET_TYPE_DATAGRAM;
+        enum socket_protocol protocol = (t == MOBILE_SOCKTYPE_TCP) ? SOCKET_PROTOCOL_TCP : SOCKET_PROTOCOL_UDP;
+
+        int fd = socket_create("mobile", SOCKET_DOMAIN_INET, sock_type, protocol);
+        if (fd < 0) return false;
+
+        socket_set_block(fd, false);
+
+        int opt_on = 1;
+        // Cast auf (const char*) stellt plattformübergreifende Kompatibilität (inkl. Windows) sicher
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt_on, sizeof(int));
+        if (t == MOBILE_SOCKTYPE_TCP) {
+            setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt_on, sizeof(int));
+        }
+
+        struct sockaddr_in addr = {};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(p);
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+        // Wir nutzen direkt das native bind(), da socket_bind() in libretro ein void* erwartet
+        if (bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+            socket_close(fd);
+            return false;
+        }
+
+        self->m_sockets[c] = {fd};
+        return true;
+    });
+
+    mobile_def_sock_close(&m_adapter, [](void* u, unsigned c) {
+        auto* self = u ? static_cast<Mobile_Adapter_GB*>(u) : nullptr;
+        if (!self) return;
+        auto it = self->m_sockets.find(c);
+        if (it != self->m_sockets.end() && it->second.fd >= 0) {
+            socket_close(it->second.fd);
+            it->second.fd = -1;
+        }
+    });
+
+    mobile_def_sock_connect(&m_adapter, [](void* u, unsigned c, const struct mobile_addr *addr) {
+        auto* self = u ? static_cast<Mobile_Adapter_GB*>(u) : nullptr;
+        if (!self) return -1;
+
+        auto it = self->m_sockets.find(c);
+        if (it == self->m_sockets.end() || it->second.fd < 0) return -1;
+
+        struct sockaddr_in sa = {};
+        if (addr && addr->type == MOBILE_ADDRTYPE_IPV4) {
+            const struct mobile_addr4 *a4 = (const struct mobile_addr4 *)addr;
+            sa.sin_family = AF_INET;
+            sa.sin_port = htons(a4->port);
+            std::memcpy(&sa.sin_addr, a4->host, 4);
+        } else {
+            return -1;
+        }
+
+        socket_set_block(it->second.fd, false);
+        // Wir nutzen direkt das native connect()
+        int rc = connect(it->second.fd, (struct sockaddr *)&sa, sizeof(sa));
+
+        if (rc == 0) return 1;
+
+        int err = socket_errno();
+        if (err == EINPROGRESS || err == EWOULDBLOCK || err == EALREADY) {
+            fd_set wr_fds;
+            FD_ZERO(&wr_fds);
+            FD_SET(it->second.fd, &wr_fds);
+
+            struct timeval tv;
+            tv.tv_sec = 0;
+            tv.tv_usec = 500;
+
+            int select_rc = select(it->second.fd + 1, NULL, &wr_fds, NULL, &tv);
+            if (select_rc > 0) {
+                int so_error = 0;
+                socklen_t len = sizeof(so_error);
+                // Cast auf (char*) verhindert Compiler-Warnungen/Fehler unter Windows
+                getsockopt(it->second.fd, SOL_SOCKET, SO_ERROR, (char*)&so_error, &len);
+                if (so_error == 0) return 1;
+                return -1;
+            }
+            return 0;
+        }
+
+        if (err == EISCONN) return 1;
+        return -1;
+    });
+
+    mobile_def_sock_listen(&m_adapter, [](void* u, unsigned c) {
+        auto* self = u ? static_cast<Mobile_Adapter_GB*>(u) : nullptr;
+        if (!self) return false;
+        auto it = self->m_sockets.find(c);
+        if (it == self->m_sockets.end() || it->second.fd < 0) return false;
+        return listen(it->second.fd, 1) == 0;
+    });
+
+    mobile_def_sock_accept(&m_adapter, [](void* u, unsigned c) {
+        auto* self = u ? static_cast<Mobile_Adapter_GB*>(u) : nullptr;
+        if (!self) return false;
+        auto it = self->m_sockets.find(c);
+        if (it == self->m_sockets.end() || it->second.fd < 0) return false;
+
+        bool rd = false, wr = false;
+        if (!socket_wait(it->second.fd, &rd, &wr, 0) || !rd) return false;
+
+        int newsock = accept(it->second.fd, NULL, NULL);
+        if (newsock < 0) return false;
+
+        socket_set_block(newsock, false);
+        socket_close(it->second.fd);
+        it->second.fd = newsock;
+        return true;
+    });
+
+    mobile_def_sock_send(&m_adapter, [](void* u, unsigned c, const void *d, unsigned s,
+                               const struct mobile_addr *a) {
+        auto* self = u ? static_cast<Mobile_Adapter_GB*>(u) : nullptr;
+        if (!self) return -1;
+        auto it = self->m_sockets.find(c);
+        if (it == self->m_sockets.end() || it->second.fd < 0) return -1;
+
+        struct sockaddr_in sa = {};
+        struct sockaddr* to_addr = NULL;
+        socklen_t to_len = 0;
+
+        if (a && a->type == MOBILE_ADDRTYPE_IPV4) {
+            const struct mobile_addr4 *a4 = (const struct mobile_addr4 *)a;
+            sa.sin_family = AF_INET;
+            sa.sin_port = htons(a4->port);
+            std::memcpy(&sa.sin_addr, a4->host, 4);
+            to_addr = (struct sockaddr*)&sa;
+            to_len = sizeof(sa);
+        }
+
+        ssize_t len = sendto(it->second.fd, (const char*)d, s, 0, to_addr, to_len);
+        if (len < 0) {
+            int err = socket_errno();
+            return (err == EWOULDBLOCK || err == EAGAIN) ? 0 : -1;
+        }
+        return static_cast<int>(len);
+    });
+
+    mobile_def_sock_recv(&m_adapter, [](void* u, unsigned c, void *d, unsigned s,
+                                       struct mobile_addr *a) {
+        auto* self = u ? static_cast<Mobile_Adapter_GB*>(u) : nullptr;
+        if (!self) return -1;
+
+        auto it = self->m_sockets.find(c);
+        if (it == self->m_sockets.end() || it->second.fd < 0) return 0;
+
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(it->second.fd, &read_fds);
+
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = 0;
+
+        int select_rc = select(it->second.fd + 1, &read_fds, NULL, NULL, &tv);
+        if (select_rc <= 0) return 0;
+
+        struct sockaddr_in sa = {};
+        socklen_t from_len = sizeof(sa);
+
+        ssize_t len = recvfrom(it->second.fd, (char*)d, s, 0, (struct sockaddr*)&sa, &from_len);
+
+        if (len < 0) {
+            int err = socket_errno();
+            return (err == EWOULDBLOCK || err == EAGAIN) ? 0 : -1;
+        }
+        if (len == 0) return -2;
+
+        if (a && from_len >= sizeof(sa) && sa.sin_family == AF_INET) {
+            a->type = MOBILE_ADDRTYPE_IPV4;
+            struct mobile_addr4 *a4 = (struct mobile_addr4 *)a;
+
+            uint16_t incoming_port = ntohs(sa.sin_port);
+            uint8_t* real_ip = (uint8_t*)&sa.sin_addr.s_addr;
+
+            if (log_cb && incoming_port == self->m_dns_port) {
+                log_cb(RETRO_LOG_INFO, "[Mobile DNS] Packet received (%d Bytes) from %d.%d.%d.%d:%d\n",
+                       (int)len, real_ip[0], real_ip[1], real_ip[2], real_ip[3], incoming_port);
+            }
+
+            a4->port = incoming_port;
+            std::memcpy(a4->host, &sa.sin_addr.s_addr, 4);
+
+            if (c != 0 && a4->port == self->m_relay_port) {
+                a4->port = self->m_relay_port;
+                if (mobile_inet_pton(MOBILE_INET_PTON_ANY, self->m_relay_ip.c_str(), a4->host) != 1) {
+                    a4->host[0] = 127; a4->host[1] = 0; a4->host[2] = 0; a4->host[3] = 1;
+                }
+            }
+        }
+        return static_cast<int>(len);
+    });
+
+    // Unused serial hardware callbacks (handled within the emulator core layer)
+    mobile_def_serial_enable(&m_adapter, [](void* u, bool m) {});
+    mobile_def_serial_disable(&m_adapter, [](void* u) {}); // FIX: Name korrigiert
 
     // --- 5. ASYNC NOTIFICATIONS & TELEPHONE NUMBERS ---
     mobile_def_update_number(&m_adapter, [](void* user, enum mobile_number t, const char *number) {
