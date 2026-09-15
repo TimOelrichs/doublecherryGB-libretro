@@ -2963,19 +2963,23 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 29:
 		case 30:
 		{
-			// Surfing Pikachu CoroCoro Comic Special
-			// This Pok�mon was available in Japan
-			// from August 30 to September 30, 1997; September 13 to October 14, 1997.
 
-			display_message("Surfing Pikachu CoroCoro Comic Special Event");
-			display_message("Get your SURFING PIKACHU!");
+			display_message("Shiny Lugia and SHhiny Ho-Oh");
 
-			pokemon pikachu = generate_pk_from_base_table(24, 5);
-			pikachu.move3 = 0x39;
-			insert_pokemon_into_slot(pikachu, 0, "Pikachu");
+			int len = 2;
+			int dex_no[] = { SPECIES_LUGIA, SPECIES_HO_OH };
+			int levels[] = { 50,50 };
 
-			memcpy(DATA_BLOCK_gen2.ot_names[0], convert_string_to_name("COROCORO").data(), 11);
-			set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[0].originalTrainerId);
+			event_pokemon_msg_str = "";
+
+			generate_pk_event_party_gen2(dex_no, levels, len);
+
+			for (int i = 0; i < len; i++)
+			{
+				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("PCNYa").data(), 11);
+				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
+				make_pkm_in_slot_shiny(i);
+			}
 			return;
 		}
 		case 31:
@@ -3041,18 +3045,14 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 20:
 		case 21:
 		{
-			// Surfing Pikachu CoroCoro Comic Special
-		// This Pok�mon was available in Japan
-		// from August 30 to September 30, 1997; September 13 to October 14, 1997.
-
 
 			display_message("Flying Pikachu CoroCoro Comic Special Event");
 			display_message("Get your FLYING PIKACHU!");
 
-			pokemon pikachu = generate_pk_from_base_table(24, 5);
+			pokemon_gen2 pikachu = generate_pk_from_base_table_gen2(24, 5);
 			pikachu.move3 = 0x13;
 
-			insert_pokemon_into_slot(pikachu, 0, "Pikachu");
+			insert_pokemon_into_slot_gen2(pikachu, 0, "Pikachu");
 
 			memcpy(DATA_BLOCK_gen2.ot_names[0], convert_string_to_name("COROCORO").data(), 11);
 			set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[0].originalTrainerId);
