@@ -2900,7 +2900,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 
 			event_pokemon_msg_str = "";
 
-			generate_pk_event_party(dex_no, levels, len);
+			generate_pk_event_party_gen2(dex_no, levels, len);
 
 			//modify default stats
 			for (int i = 0; i < len; i++)
