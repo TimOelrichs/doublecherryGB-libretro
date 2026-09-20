@@ -2115,6 +2115,7 @@ void handlePlayerJoined()
 
     }
     else _screen_4p_split = true;
+    if (_show_player_screen > 0)
     update_multiplayer_geometry();
 }
 

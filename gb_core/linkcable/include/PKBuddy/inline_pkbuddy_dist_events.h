@@ -4,6 +4,7 @@
 #include "pokemon_moves.h"
 #include "pokemon_species.h"
 
+
 void PK_Buddy_Boy::add_event_pokemon_to_datablock() {
 
 	time_t now = time(0);
@@ -1614,7 +1615,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 
 	switch (ltm->tm_mon)
 	{
-		//january
+	//january
 	case 0:
 	{
 		switch (ltm->tm_mday)
@@ -1627,7 +1628,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 6:
 		case 7:
 		{
-			display_message("Grass Type Week");
+			display_message("PCNY Grass Type Week");
 
 			int len = 5;
 			int dex_no[] = { 190,113,45,186,42 };
@@ -1665,7 +1666,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 13:
 		case 14:
 		{
-			display_message("Normal Pokemon Week");
+			display_message("PCNY Normal Pokemon Week");
 
 			int len = 6;
 			int dex_no[] = { 160,233,240,189,108,142 };
@@ -1703,7 +1704,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 20:
 		case 21:
 		{
-			display_message("The Initial Three Set ");
+			display_message("PCNY The Initial Three Set ");
 
 			int len = 6;
 			int dex_no[] = { 0,3,6,151,154,157 };
@@ -1744,7 +1745,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 27:
 		case 28:
 		{
-			display_message("Mt. Mortar Week");
+			display_message("PCNY Mt. Mortar Week");
 
 			int len = 5;
 			int dex_no[] = { 65,182,117,129,235 };
@@ -1804,6 +1805,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		}
 
 	}
+	//february
 	case 1:
 	{
 		switch (ltm->tm_mday)
@@ -1816,7 +1818,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 6:
 		case 7:
 		{
-			display_message("Dark Cave Week");
+			display_message("PCNY Dark Cave Week");
 
 			int len = 5;
 			int dex_no[] = { 74,206,202,231,216 };
@@ -1849,9 +1851,39 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 11:
 		case 12:
 		case 13:
+		{
+			display_message("PCNY Valentin's Week");
+
+			int len = 6;
+			int dex_no[] = { SPECIES_NIDORAN_M,SPECIES_NIDORAN_F, SPECIES_NIDORAN_M,SPECIES_NIDORAN_F, SPECIES_BELLSPROUT, SPECIES_BELLSPROUT };
+			int levels[] = { 5,5,5,5,5,5};
+
+			event_pokemon_msg_str = "";
+
+			generate_pk_event_party_gen2(dex_no, levels, len);
+
+			//modify default stats
+			for (int i = 0; i < len; i++)
+			{
+				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("PCNYa").data(), 11);
+				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
+			}
+
+			DATA_BLOCK_gen2.pokemons[0].move3= MOVE_SWEET_KISS;
+			DATA_BLOCK_gen2.pokemons[1].move3 = MOVE_SWEET_KISS;
+			DATA_BLOCK_gen2.pokemons[2].move2 = MOVE_LOVELY_KISS;
+			DATA_BLOCK_gen2.pokemons[3].move2 = MOVE_LOVELY_KISS;
+			DATA_BLOCK_gen2.pokemons[4].move2 = MOVE_SWEET_KISS;
+			DATA_BLOCK_gen2.pokemons[5].move2 = MOVE_LOVELY_KISS;
+
+
+			display_message("Get your " + event_pokemon_msg_str + "!");
+			return;
+
+		}
 		case 14:
 		{
-			display_message("Valentin's Day Special WEEK");
+			display_message("PCNY Valentin's Day Special Week");
 
 			int len = 6;
 			int dex_no[] = { 69,69,60,60,143,143 };
@@ -1888,11 +1920,38 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 20:
 		case 21:
 		{
-			display_message("The Kanto Initial Three Pokémon");
+			display_message("PCNY Legendary Birds Week");
 
-			int len = 4;
-			int dex_no[] = { 3,6,9,150 };
-			int levels[] = { 40,40,40,70 };
+			int len = 3;
+			int dex_no[] = { SPECIES_ARTICUNO, SPECIES_ZAPDOS, SPECIES_MOLTRES};
+			int levels[] = { 50,50,50 };
+
+			event_pokemon_msg_str = "";
+
+			generate_pk_event_party_gen2(dex_no, levels, len);
+
+			//modify default stats
+			for (int i = 0; i < len; i++)
+			{
+				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("PCNYa").data(), 11);
+				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
+				make_pkm_in_slot_shiny(i);
+			}
+
+			display_message("Get your " + event_pokemon_msg_str + "!");
+			return;
+		}
+		case 22:
+		case 23:
+		case 24:
+		case 25:
+		case 26:
+		{
+			display_message("PCNY Swarm Week");
+
+			int len = 6;
+			int dex_no[] = { SPECIES_MARILL,SPECIES_YANMA, SPECIES_DUNSPARCE, SPECIES_SNUBBULL, SPECIES_QWILFISH, SPECIES_REMORAID};
+			int levels[] = { 5,5,5,5,5,5 };
 
 			event_pokemon_msg_str = "";
 
@@ -1904,36 +1963,17 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("PCNYa").data(), 11);
 				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
 			}
-			make_pkm_in_slot_shiny(0);
-			make_pkm_in_slot_shiny(1);
-			make_pkm_in_slot_shiny(2);
-			make_pkm_in_slot_shiny(3);
 
-			DATA_BLOCK_gen2.pokemons[0].move1 = MOVE_POISONPOWDER;
-			DATA_BLOCK_gen2.pokemons[0].move2 = MOVE_SLEEP_POWDER;
-			DATA_BLOCK_gen2.pokemons[0].move3 = MOVE_RAZOR_LEAF;
-			DATA_BLOCK_gen2.pokemons[0].move4 = MOVE_SWEET_SCENT;
-			DATA_BLOCK_gen2.pokemons[1].move1 = MOVE_RAGE;
-			DATA_BLOCK_gen2.pokemons[1].move2 = MOVE_SCARY_FACE;
-			DATA_BLOCK_gen2.pokemons[1].move3 = MOVE_FLAMETHROWER;
-			DATA_BLOCK_gen2.pokemons[1].move4 = MOVE_WING_ATTACK;
-			DATA_BLOCK_gen2.pokemons[2].move1 = MOVE_WATER_GUN;
-			DATA_BLOCK_gen2.pokemons[2].move2 = MOVE_BITE;
-			DATA_BLOCK_gen2.pokemons[2].move3 = MOVE_RAPID_SPIN;
-			DATA_BLOCK_gen2.pokemons[2].move4 = MOVE_PROTECT;
-			DATA_BLOCK_gen2.pokemons[3].move1 = MOVE_PSYCH_UP;
-			DATA_BLOCK_gen2.pokemons[3].move2 = MOVE_FUTURE_SIGHT;
-			DATA_BLOCK_gen2.pokemons[3].move3 = MOVE_MIST;
-			DATA_BLOCK_gen2.pokemons[3].move4 = MOVE_PSYCHIC;
+			DATA_BLOCK_gen2.pokemons[0].move3 = MOVE_HYDRO_PUMP;
+			DATA_BLOCK_gen2.pokemons[1].move3 = MOVE_STEEL_WING;
+			DATA_BLOCK_gen2.pokemons[2].move2 = MOVE_HORN_DRILL;
+			DATA_BLOCK_gen2.pokemons[3].move4 = MOVE_LOVELY_KISS;
+			DATA_BLOCK_gen2.pokemons[4].move3 = MOVE_DOUBLE_EDGE;
+			DATA_BLOCK_gen2.pokemons[5].move2 = MOVE_AMNESIA;
 
 			display_message("Get your " + event_pokemon_msg_str + "!");
 			return;
 		}
-		case 22:
-		case 23:
-		case 24:
-		case 25:
-		case 26:
 		case 27:
 		case 28:
 		case 29:
@@ -1971,7 +2011,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 			return;
 		}
 	}
-
+	//March
 	case 2:
 	{
 		switch (ltm->tm_mday)
@@ -1984,11 +2024,11 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 6:
 		case 7:
 		{
-			display_message("Bug Type Week");
+			display_message("PCNY Bug Type Week");
 
-			int len = 2;
-			int dex_no[] = { 122, 126 };
-			int levels[] = { 5, 5 };
+			int len = 6;
+			int dex_no[] = { SPECIES_SCYTHER, SPECIES_HERACROSS, SPECIES_PINSIR, SPECIES_LEDYBA, SPECIES_SPINARAK, SPECIES_PINECO };
+			int levels[] = { 5, 5,5,5,5,5 };
 
 			event_pokemon_msg_str = "";
 
@@ -2001,8 +2041,12 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
 			}
 
-			DATA_BLOCK_gen2.pokemons[0].move3 = 0x31;
-			DATA_BLOCK_gen2.pokemons[1].move2 = 0x58;
+			DATA_BLOCK_gen2.pokemons[0].move3 = MOVE_SONICBOOM;
+			DATA_BLOCK_gen2.pokemons[1].move3 = MOVE_SEISMIC_TOSS;
+			DATA_BLOCK_gen2.pokemons[2].move2 = MOVE_ROCK_THROW;
+			DATA_BLOCK_gen2.pokemons[3].move2 = MOVE_BARRIER;
+			DATA_BLOCK_gen2.pokemons[4].move3 = MOVE_GROWTH;
+			DATA_BLOCK_gen2.pokemons[5].move3 = MOVE_SUBSTITUTE;
 
 
 
@@ -2045,11 +2089,11 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 20:
 		case 21:
 		{
-			display_message("BLUE Exclusives Week");
+			display_message("PCNY Shiny RBY Starters");
 
-			int len = 5;
-			int dex_no[] = { 26,36,51,68,125 };
-			int levels[] = { 5, 5, 5,5,30 };
+			int len = 3;
+			int dex_no[] = { SPECIES_VENUSAUR,SPECIES_CHARIZARD, SPECIES_BLASTOISE };
+			int levels[] = { 50,50,50};
 
 			event_pokemon_msg_str = "";
 
@@ -2060,6 +2104,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 			{
 				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("BLUE").data(), 11);
 				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
+				make_pkm_in_slot_shiny(i);
 			}
 
 			display_message("Get your " + event_pokemon_msg_str + "!");
@@ -2073,11 +2118,11 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 27:
 		case 28:
 		{
-			display_message("Safari Week");
+			display_message("PCNY Babies Week 1");
 
-			int len = 5;
-			int dex_no[] = { 114,127,112,29,32 };
-			int levels[] = { 30, 5, 23,31,31 };
+			int len = 6;
+			int dex_no[] = { SPECIES_PICHU,SPECIES_CLEFFA, SPECIES_IGGLYBUFF, SPECIES_SMOOCHUM, SPECIES_ELEKID, SPECIES_MAGBY};
+			int levels[] = { 5,5,5,5,5,5 };
 
 			event_pokemon_msg_str = "";
 
@@ -2090,12 +2135,12 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
 			}
 
-			memcpy(DATA_BLOCK_gen2.ot_names[0], convert_string_to_name("PKBuddy").data(), 11);
-			set_unint16_to_bytes2(777, DATA_BLOCK_gen2.pokemons[0].originalTrainerId);
-
-			DATA_BLOCK_gen2.pokemons[0].move3 = 0x3F;
-			DATA_BLOCK_gen2.pokemons[1].move3 = 0x62;
-
+			DATA_BLOCK_gen2.pokemons[0].move3 = MOVE_SING;
+			DATA_BLOCK_gen2.pokemons[1].move4 = MOVE_SWIFT;
+			DATA_BLOCK_gen2.pokemons[2].move4 = MOVE_MIMIC;
+			DATA_BLOCK_gen2.pokemons[3].move3 = MOVE_METRONOME;
+			DATA_BLOCK_gen2.pokemons[4].move3 = MOVE_PURSUIT;
+			DATA_BLOCK_gen2.pokemons[5].move2= MOVE_FEINT_ATTACK;
 
 			display_message("Get your " + event_pokemon_msg_str + "!");
 			return;
@@ -2124,7 +2169,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 			return;
 		}
 	}
-
+	//April
 	case 3:
 	{
 		switch (ltm->tm_mday)
@@ -2137,11 +2182,11 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 6:
 		case 7:
 		{
-			display_message("Team Brock Week");
+			display_message("PCNY Spring into Spring");
 
-			int len = 2;
-			int dex_no[] = { 73, 93 };
-			int levels[] = { 12, 14 };
+			int len = 6;
+			int dex_no[] = { SPECIES_PSYDUCK, SPECIES_CHIKORITA, SPECIES_PICHU, SPECIES_CLEFFA, SPECIES_IGGLYBUFF, SPECIES_SMOOCHUM };
+			int levels[] = { 5,5,5,5,5,5 };
 
 			event_pokemon_msg_str = "";
 
@@ -2150,9 +2195,16 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 			//modify default stats
 			for (int i = 0; i < len; i++)
 			{
-				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("BROCK").data(), 11);
+				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("PCNYa").data(), 11);
 				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
 			}
+
+			DATA_BLOCK_gen2.pokemons[0].move3 = MOVE_PETAL_DANCE;
+			DATA_BLOCK_gen2.pokemons[1].move3 = MOVE_PETAL_DANCE;
+			DATA_BLOCK_gen2.pokemons[2].move3 = MOVE_PETAL_DANCE;
+			DATA_BLOCK_gen2.pokemons[3].move4 = MOVE_PETAL_DANCE;
+			DATA_BLOCK_gen2.pokemons[4].move4 = MOVE_PETAL_DANCE;
+			DATA_BLOCK_gen2.pokemons[5].move3 = MOVE_PETAL_DANCE;
 
 			display_message("Get your " + event_pokemon_msg_str + "!");
 			return;
@@ -2266,6 +2318,7 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 			return;
 		}
 	}
+	//May
 	case 4:
 	{
 		switch (ltm->tm_mday)
@@ -2278,11 +2331,11 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 		case 6:
 		case 7:
 		{
-			display_message("Team Koga Week");
+			display_message("PCNY Babies Week 2");
 
-			int len = 4;
-			int dex_no[] = { 108,108,88,109 };
-			int levels[] = { 37,37,39,43 };
+			int len = 3;
+			int dex_no[] = { SPECIES_CHIKORITA, SPECIES_WOOPER, SPECIES_SMOOCHUM };
+			int levels[] = { 5,5,5 };
 
 			event_pokemon_msg_str = "";
 
@@ -2291,9 +2344,14 @@ void PK_Buddy_Boy::add_event_pokemon_to_datablock_gen2() {
 			//modify default stats
 			for (int i = 0; i < len; i++)
 			{
-				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("KOGA").data(), 11);
+				memcpy(DATA_BLOCK_gen2.ot_names[i], convert_string_to_name("PCNYa").data(), 11);
 				set_unint16_to_bytes2(std::rand(), DATA_BLOCK_gen2.pokemons[i].originalTrainerId);
 			}
+
+			DATA_BLOCK_gen2.pokemons[0].move3 = MOVE_PETAL_DANCE;
+			DATA_BLOCK_gen2.pokemons[1].move3 = MOVE_BELLY_DRUM;
+			DATA_BLOCK_gen2.pokemons[2].move3 = MOVE_METRONOME;
+
 
 			display_message("Get your " + event_pokemon_msg_str + "!");
 			return;

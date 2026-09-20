@@ -2,7 +2,7 @@
 #include "../libretro/DoubleCherryEngine/libretro.h"
 
 extern retro_environment_t environ_cb;
-// DEFINITION der statischen Callback-Struktur (nur HIER!)
+
 const struct retro_netpacket_callback NetpacketManager::s_iface = {
     NetpacketManager::start_wrapper,     // start
     NetpacketManager::receive_wrapper,   // receive
@@ -13,7 +13,7 @@ const struct retro_netpacket_callback NetpacketManager::s_iface = {
     "DoubleCherryGB netpack V1.0"        // core version char*
 };
 
-// Hier kommen dann weitere Methoden-Definitionen, falls nötig
+
 void NetpacketManager::activate_netpacket_api()
 {
     if (active_netpacket_api) return;
