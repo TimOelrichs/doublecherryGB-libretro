@@ -487,7 +487,7 @@ void auto_config_1p_link() {
         log_cb(RETRO_LOG_INFO, "Set SendHandler\n");
         NetpacketManager::getInstance().setReceiveHandler(shared_handler);
         log_cb(RETRO_LOG_INFO, "Set ReceiverHandler\n");
-
+        NetpacketManager::getInstance().activate_netpacket_api();
         return;
     }
 
@@ -571,10 +571,9 @@ void auto_config_1p_link() {
     v_gb[0]->set_linked_target(linkHUB);
 
     if ((!strncmp(cart_name, "POKEMONPINB", 11) ||       //Pokemon Pinball
-        (!strncmp(cart_name, "ZELDA", 5) &&             //Zelda Link's Awakening DX 
-        (strncmp(cart_name, "ZELDA N", 7) ||            //but not the Oracle Games
-         strncmp(cart_name, "ZELDA D", 7))
-        )
+        (!strncmp(cart_name, "ZELDA", 5) &&
+         strncmp(cart_name, "ZELDA N", 7) != 0 &&
+         strncmp(cart_name, "ZELDA D", 7) != 0)
         ) && is_gbc_rom)
     {
         //v_gb[0]->set_linked_target(new gameboy_printer());
@@ -588,26 +587,29 @@ void auto_config_1p_link() {
     //Pokemon Stuff
     if (!strncmp(cart_name, "POKEMON", 7 ) || !strncmp(cart_name, "PM_CRYSTAL", 10))
     {
-        
-        PK_Buddy_Boy* pkbuddy = new PK_Buddy_Boy(v_gb);
-        hotkey_target = pkbuddy;
-        v_serializable_devices.push_back(pkbuddy);
+        if (!NetpacketManager::getInstance().netpacket_is_active()) {
+            PK_Buddy_Boy* pkbuddy = new PK_Buddy_Boy(v_gb);
+            hotkey_target = pkbuddy;
+            v_serializable_devices.push_back(pkbuddy);
 
-        //v_gb[0]->set_linked_target(pkbuddy);
-        linkHUB->set_default_link_target(pkbuddy);
+            //v_gb[0]->set_linked_target(pkbuddy);
+            linkHUB->set_default_link_target(pkbuddy);
 
-        display_message("PKMBUDDY BOY plugged in");
-        display_message("Check out the CABLE CLUB for weekly Distributions!");
-        
-        //Mytery Gift Maschine WIP - Not working yet
-        
-        //TODO IR ONLY  for GEN2
-        /*
-        pikachu_2_gs* pika2gs = new pikachu_2_gs(v_gb);
-        v_gb[0]->set_ir_target(pika2gs);
-        v_gb[0]->set_ir_master_device(pika2gs);
-        */
-        
+            display_message("PKMBUDDY BOY plugged in");
+            display_message("Check out the CABLE CLUB for weekly Distributions!");
+
+            //Mytery Gift Maschine WIP - Not working yet
+
+            //TODO IR ONLY  for GEN2
+            /*
+            pikachu_2_gs* pika2gs = new pikachu_2_gs(v_gb);
+            v_gb[0]->set_ir_target(pika2gs);
+            v_gb[0]->set_ir_master_device(pika2gs);
+            */
+        }else {
+            hotkey_target = nullptr;
+
+        }
         return; 
     }
 
@@ -704,9 +706,9 @@ void auto_link_multiplayer() {
         // set interface for netpaket api (easy pokemon trading)
 
         if(force_linkcable_over_ip_mode)
-            netpacket_manager.activate_netpacket_api();
+            NetpacketManager::getInstance().activate_netpacket_api();
         else if (is_rom_with_known_trading_or_battling_feature())
-            netpacket_manager.activate_netpacket_api();
+            NetpacketManager::getInstance().activate_netpacket_api();
 
         master_link  = nullptr;
         auto_config_1p_link();
@@ -1770,11 +1772,9 @@ static void check_variables(void)
             if (mobile_adapter_enabled && !lastvalue) {
                 display_message("Mobile Adapter GB plugged in");
                 v_gb[0]->set_linked_target(mobile_adapter);
-            } else if (emulated_gbs == 1) {
-                auto_config_1p_link();
-            } else {
+            } else
                 auto_link_multiplayer();
-            }
+
         }
     }
 

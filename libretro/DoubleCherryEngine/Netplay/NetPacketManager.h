@@ -26,13 +26,15 @@ public:
 
     void setReceiveHandler(std::shared_ptr<NetPacketReceiveHandler> handler) {
         m_receive_handler = std::move(handler);
-        activate_netpacket_api();
+
     }
 
     void setSendHandler(std::shared_ptr<NetPacketSendHandler> handler) {
         m_send_handler = std::move(handler);
-        m_send_handler->set_retro_netpacket_send_t(m_send_fn_ptr);
-        activate_netpacket_api();
+        if (m_send_handler) {
+            m_send_handler->set_retro_netpacket_send_t(m_send_fn_ptr);
+        }
+
     }
 
     void poll_receive() {
@@ -76,8 +78,9 @@ private:
 
     NetpacketManager()
     {
-        m_receive_handler = std::unique_ptr<NetPacketReceiveHandler>(new DefaultNetPacketReceiveHandler());
-        setSendHandler(std::unique_ptr<NetPacketSendHandler>(new DefaultNetPacketSendHandler()));
+        m_receive_handler = std::make_shared<DefaultNetPacketReceiveHandler>();
+        auto default_send = std::make_shared<DefaultNetPacketSendHandler>();
+        setSendHandler(default_send);
     }
 
     ~NetpacketManager() = default;

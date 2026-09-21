@@ -16,11 +16,12 @@ const struct retro_netpacket_callback NetpacketManager::s_iface = {
 
 void NetpacketManager::activate_netpacket_api()
 {
+    log_cb(RETRO_LOG_INFO, "Activating Netpacket API\n");
     if (active_netpacket_api) return;
     if (environ_cb)
     {
         environ_cb(RETRO_ENVIRONMENT_SET_NETPACKET_INTERFACE, (void*)&s_iface);
         active_netpacket_api = true;
     }
-
+    log_cb(RETRO_LOG_INFO, "Netpacket API is active\n");
 }

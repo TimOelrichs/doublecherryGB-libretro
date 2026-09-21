@@ -265,7 +265,7 @@ bool retro_load_game(const struct retro_game_info *info)
     if (mobile_adapter_enabled) {
         v_gb[0]->set_linked_target(mobile_adapter);
     } else {
-        auto_config_1p_link();
+        auto_link_multiplayer();
     }
 #else
     // Auf Plattformen ohne Netzwerksupport (wie PS2) direkt auf Fallback/1P-Link gehen:
