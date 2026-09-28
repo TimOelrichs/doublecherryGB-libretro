@@ -1,7 +1,10 @@
 #pragma once
 #include "inline_pkbuddy_util.h"
 
-#include "stdlib.h" 
+#include "stdlib.h"
+
+
+
 
 void PK_Buddy_Boy::generate_pk_event_party(int* dex_no, int* levels, int len) {
 
@@ -89,7 +92,7 @@ pokemon PK_Buddy_Boy::generate_pk_from_base_table(int index_id, unsigned char le
 	return generated_pkmn;
 }
 
-int PK_Buddy_Boy::pokemon_calculate_exp(pokemon_base_stats pkm_base, int level) {
+inline int PK_Buddy_Boy::pokemon_calculate_exp(pokemon_base_stats pkm_base, int level) {
 
 	int exp = 0;
 
@@ -121,7 +124,7 @@ int PK_Buddy_Boy::pokemon_calculate_exp(pokemon_base_stats pkm_base, int level) 
 }
 
 
-void PK_Buddy_Boy::insert_pokemon_into_slot(pokemon pkm, unsigned char slot, std::string nickname) {
+inline void PK_Buddy_Boy::insert_pokemon_into_slot(pokemon pkm, unsigned char slot, std::string nickname) {
 
 	if (slot > 5) return;
 
@@ -135,7 +138,7 @@ void PK_Buddy_Boy::insert_pokemon_into_slot(pokemon pkm, unsigned char slot, std
 	
 }
 
-void PK_Buddy_Boy::insert_pokemon_into_next_slot(pokemon pkm, std::string nickname) {
+inline void PK_Buddy_Boy::insert_pokemon_into_next_slot(pokemon pkm, std::string nickname) {
 
 	unsigned char slot = (unsigned char)(DATA_BLOCK.species_list_size);
 
@@ -146,8 +149,7 @@ void PK_Buddy_Boy::insert_pokemon_into_next_slot(pokemon pkm, std::string nickna
 }
 
 
-
-void PK_Buddy_Boy::generate_data_block_gen2() {
+inline void PK_Buddy_Boy::generate_data_block_gen2() {
 
 	for (int i = 0; i < 441; i++)
 	{
@@ -165,7 +167,7 @@ void PK_Buddy_Boy::generate_data_block_gen2() {
 
 }
 
-void PK_Buddy_Boy::generate_pk_event_party_gen2(int* dex_no, int* levels, int len) {
+inline void PK_Buddy_Boy::generate_pk_event_party_gen2(int* dex_no, int* levels, int len) {
 
 	DATA_BLOCK_gen2.species_list_size = 0x00;
 
@@ -187,7 +189,7 @@ void PK_Buddy_Boy::generate_pk_event_party_gen2(int* dex_no, int* levels, int le
 
 }
 
-pokemon_gen2 PK_Buddy_Boy::generate_pk_from_base_table_gen2(int index_id, unsigned char level)
+inline pokemon_gen2 PK_Buddy_Boy::generate_pk_from_base_table_gen2(int index_id, unsigned char level)
 {
 	pokemon_base_stats pkmn_base = pokemon_table[index_id-1];
 
@@ -249,6 +251,33 @@ pokemon_gen2 PK_Buddy_Boy::generate_pk_from_base_table_gen2(int index_id, unsign
 	set_unint16_to_bytes2(special_defense, generated_pkmn.specialDefense);
 
 	return generated_pkmn;
+}
+
+
+inline void PK_Buddy_Boy::recalculate_stats_for_pkm_gen2(pokemon_gen2 &pkm){
+
+	pokemon_base_stats pkmn_base = pokemon_table[pkm.species - 1];
+
+	unsigned char level = pkm.level;
+	int hp = std::floor((((2 * (pkmn_base.base_hp + 0xF)) + std::floor(std::sqrt(bytes2_to_uint16(pkm.hpEv)) / 4)) * level) / 100) + level + 10;
+	set_unint16_to_bytes2(hp, pkm.maxHp);
+	set_unint16_to_bytes2(hp, pkm.currentHp);
+
+	int attack = std::floor((((2 * (pkmn_base.base_atk + 0xF)) + std::floor(std::sqrt(bytes2_to_uint16(pkm.attackEv)) / 4)) * level) / 100) + 5;
+	set_unint16_to_bytes2(attack, pkm.attack);
+
+	int defense = std::floor((((2 * (pkmn_base.base_def + 0xF)) + std::floor(std::sqrt(bytes2_to_uint16(pkm.defenseEv)) / 4)) * level) / 100) + 5;
+	set_unint16_to_bytes2(defense, pkm.defense);
+
+	int speed = std::floor((((2 * (pkmn_base.base_spd + 0xF)) + std::floor(std::sqrt(bytes2_to_uint16(pkm.speedEv)) / 4)) * level) / 100) + 5;
+	set_unint16_to_bytes2(speed, pkm.speed);
+
+	int special_attack = std::floor((((2 * (pkmn_base.base_spc_atk + 0xF)) + std::floor(std::sqrt(bytes2_to_uint16(pkm.specialEv)) / 4)) * level) / 100) + 5;
+	set_unint16_to_bytes2(special_attack, pkm.specialAttack);
+
+	int special_defense = std::floor((((2 * (pkmn_base.base_spc_def + 0xF)) + std::floor(std::sqrt(bytes2_to_uint16(pkm.specialEv)) / 4)) * level) / 100) + 5;
+	set_unint16_to_bytes2(special_defense, pkm.specialDefense);
+
 }
 
 

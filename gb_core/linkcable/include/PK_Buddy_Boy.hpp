@@ -84,7 +84,8 @@ private:
 
 	void insert_pokemon_into_slot(pokemon pkm, unsigned char slot, std::string nickname);
 	void insert_pokemon_into_next_slot(pokemon pkm, std::string nickname);
-	int pokemon_calculate_exp(pokemon_base_stats pokemon, int level);
+
+	static int pokemon_calculate_exp(pokemon_base_stats pokemon, int level);
 	void generate_pk_event_party(int *dex_no, int* levels, int size);
 	pokemon generate_pk_from_base_table(int index_id, unsigned char level); 
 
@@ -93,9 +94,10 @@ private:
 	void insert_pokemon_into_next_slot_gen2(pokemon_gen2 pkm, std::string nickname);
 	void generate_pk_event_party_gen2(int* dex_no, int* levels, int size);
 	pokemon_gen2 generate_pk_from_base_table_gen2(int index_id, unsigned char level);
+
+	void recalculate_stats_for_pkm_gen2(pokemon_gen2 &pkm);
+
 	void make_pkm_in_slot_shiny(int slot);
-
-
 
 	//utils
 	unsigned char convert_ASCII2TABLE(unsigned char c, bool toUpper);
