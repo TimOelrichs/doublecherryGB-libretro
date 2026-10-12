@@ -51,6 +51,10 @@ void mbc::reset()
 
 	mbc1_16_8=true;
 	mbc1_dat=0;
+
+	mbc3_latch=0;
+	mbc3_sec=mbc3_min=mbc3_hour=mbc3_dayl=mbc3_dayh=0;
+	mbc3_timer=0;
 	ext_is_ram=true;
 
 	mbc7_adr=0;
@@ -568,9 +572,18 @@ void mbc::mbc3_write(word adr,byte dat)
 			mbc3_timer=0;
 		}
 		break;
-	case 1:
-		rom_page=ref_gb->get_rom()->get_rom()+0x4000*((dat==0?1:dat)&0x7F&(rom_size_tbl[ref_gb->get_rom()->get_info()->rom_size]-1))-0x4000;
+	case 1: {
+		// MBC30 has no separate cartridge type. Extended ROM or RAM sizes
+		// distinguish it from MBC3, including 4 MiB hacks with 32 KiB SRAM.
+		const rom_info* info=ref_gb->get_rom()->get_info();
+		const bool mbc30=info->rom_size>=7 || info->ram_size==5;
+		int bank=dat&(mbc30?0xFF:0x7F);
+		if (bank==0)
+			bank=1;
+		bank&=rom_size_tbl[info->rom_size]-1;
+		rom_page=ref_gb->get_rom()->get_rom()+0x4000*bank-0x4000;
 		break;
+	}
 	case 2:
 		if (dat<8){
 			sram_page=ref_gb->get_rom()->get_sram()+0x2000*(dat&7&(ram_size_tbl[ref_gb->get_rom()->get_info()->ram_size]-1));

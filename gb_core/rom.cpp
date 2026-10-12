@@ -72,6 +72,12 @@ int rom::get_sram_size()
 
 bool rom::load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent)
 {
+	// Validate geometry before reading the header or replacing loaded data.
+	// Every advertised ROM bank must be backed by the supplied buffer.
+	if (!buf || size<0x150 || buf[0x148]>8 || buf[0x149]>5 ||
+		size<(0x8000<<buf[0x148]))
+		return false;
+
 	byte momocol_title[16]={0x4D,0x4F,0x4D,0x4F,0x43,0x4F,0x4C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 
 	if (b_loaded){
@@ -97,9 +103,6 @@ bool rom::load_rom(byte *buf,int size,byte *ram,int ram_size, bool persistent)
 	byte tmp2=buf[0x143];
 
 	info.gb_type=(tmp2&0x80)?3:1;
-
-	if (info.rom_size>8)
-		return false;
 
    if (persistent)
       dat = (byte*)buf;

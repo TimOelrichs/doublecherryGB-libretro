@@ -975,7 +975,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     }
                     else if (which_gb < 4) {
                         for (int row = 0; row < height; ++row)
-                            memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                            memcpy(joined_buf + pitch * (2 * row + switched_gb % 2), buf + pitch * row, pitch);
                     }
                     if (which_gb == 2) {
                         memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));
@@ -1051,7 +1051,7 @@ void dmy_renderer::render_screen(byte* buf, int width, int height, int depth)
                     }
                     else if (which_gb < 4) {
                         for (int row = 0; row < height; ++row)
-                            memcpy(joined_buf + pitch * (2 * row + switched_gb), buf + pitch * row, pitch);
+                            memcpy(joined_buf + pitch * (2 * row + switched_gb % 2), buf + pitch * row, pitch);
                     }
                     if (which_gb == 3) {
                         memcpy(joined_buf4 + sizeof(joined_buf), joined_buf, sizeof(joined_buf));

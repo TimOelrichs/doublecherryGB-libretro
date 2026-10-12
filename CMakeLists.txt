@@ -86,6 +86,9 @@ set(SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/time/rtime.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/file/config_file.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/file/file_path.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/file/file_path_io.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/file/retro_dirent.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/encodings/encoding_utf.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/lists/dir_list.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/lists/string_list.c
         ${CMAKE_CURRENT_SOURCE_DIR}/extern/libretro-common/string/stdstring.c
