@@ -1710,7 +1710,7 @@ static void check_variables(void)
     // 6. Multiplayer / Multi-Core Global Configuration
     // ----------------------------------------------------
 
-    // Number of active emulated Game Boy instances (1 to 4 players)
+    // Number of active emulated Game Boy instances (1 to 16 players)
     if ((val = get_var("dcgb_emulated_gameboys"))) {
         size_t value = atoi(val);
         if (value != emulated_gbs) {

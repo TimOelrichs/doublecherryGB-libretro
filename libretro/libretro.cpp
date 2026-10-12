@@ -278,20 +278,17 @@ bool retro_load_game(const struct retro_game_info *info)
 bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num_info)
 {
 
-    libretro_msg_interface_version = 0;
-    environ_cb(RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION,
-        &libretro_msg_interface_version);
 
-   // if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P) return false; // all other types are unhandled for now
+   if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P) return false; // all other types are unhandled for now
 
 
     // implement for 3 - 4 Player
 
 
-    if (type != RETRO_GAME_TYPE_GAMEBOY_LINK_2P) {
+    if (type == RETRO_GAME_TYPE_GAMEBOY_LINK_2P) {
 
-        emulated_gbs = 2;
 
+        log_cb(RETRO_LOG_INFO, "Started Local 2 Player Subsystem\n");
         //environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars_dual);
         unsigned i;
 
@@ -324,40 +321,48 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
         if (!info)
             return false;
 
-        for (i = 0; i < 2; i++)
-        {
-            v_gb[i] = NULL;
-            render[i] = NULL;
-        }
-
-        //check_variables();
-        update_multiplayer_geometry();
-
         environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, input_desc);
 
-        render[0] = new dmy_renderer(0);
-        v_gb[0] = new gb(render[0], true, true);
-        if (!v_gb[0]->load_rom((byte*)info[0].data, info[0].size, NULL, 0, false))
-            return false;
 
-        for (i = 0; i < 2; i++)
+        v_gb.clear();
+        render.clear();
+
+        log_cb(RETRO_LOG_INFO, "Initializing Game Boys\n");
+        for (byte i = 0; i < 2; i++) {
+            auto r = new dmy_renderer(i);
+            auto g = new gb(r, true, true);
+
             _serialize_size[i] = 0;
-
-        if (gblink_enable)
-        {
-            render[1] = new dmy_renderer(1);
-            v_gb[1] = new gb(render[1], true, true);
-
-            if (!v_gb[1]->load_rom((byte*)info[1].data, info[1].size, NULL, 0,
-                false))
+            if (!g->load_rom((byte*)info[i].data, info[i].size, nullptr, 0, false))
                 return false;
 
-            // for link cables and IR:
-            v_gb[0]->set_target(v_gb[1]);
-            v_gb[1]->set_target(v_gb[0]);
+            render.push_back(std::move(r));
+            v_gb.push_back(std::move(g));
         }
 
+        is_gbc_rom = v_gb[0]->get_rom()->get_info()->gb_type == 3 || v_gb[0]->get_rom()->get_info()->gb_type == 4;
+
+
+
         mode = MODE_DUAL_GAME;
+
+        emulated_gbs = 2;
+
+
+        _show_player_screen = emulated_gbs;
+
+        player_joined_with_joypad_press = true;
+
+        struct retro_variable var;
+        var.key = "dcgb_emulated_gameboys";
+        std::string gbs_str = std::to_string(emulated_gbs);
+        var.value =  gbs_str.c_str();
+        environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+        handlePlayerJoined();
+
+        check_variables();
+
+        log_cb(RETRO_LOG_INFO, "Subsystem initialized\n");
         return true;
     }
 
@@ -582,19 +587,19 @@ void *retro_get_memory_data(unsigned id)
             switch (id)
             {
                 case RETRO_MEMORY_GAMEBOY_1_SRAM:
-                    return v_gb[id]->get_rom()->get_sram();
+                    return v_gb[0]->get_rom()->get_sram();
                 case RETRO_MEMORY_GAMEBOY_1_RTC:
                     if (v_gb[0]->get_rom()->get_info()->cart_type == 0xFE)
                         return &v_gb[0]->get_mbc()->huc3_baseTime;
                     else
-                        return &(render[id]->fixed_time);
+                        return &(render[0]->fixed_time);
                 case RETRO_MEMORY_GAMEBOY_2_SRAM:
-                    return v_gb[id]->get_rom()->get_sram();
+                    return v_gb[1]->get_rom()->get_sram();
                 case RETRO_MEMORY_GAMEBOY_2_RTC:
                     if (v_gb[1]->get_rom()->get_info()->cart_type == 0xFE)
                         return &v_gb[1]->get_mbc()->huc3_baseTime;
                     else
-                        return &(render[id]->fixed_time);
+                        return &(render[1]->fixed_time);
                 default:
                     return NULL;
             }
@@ -638,19 +643,19 @@ size_t retro_get_memory_size(unsigned id)
         switch (id)
         {
         case RETRO_MEMORY_GAMEBOY_1_SRAM:
-            return v_gb[id]->get_rom()->get_sram_size();
+            return v_gb[0]->get_rom()->get_sram_size();
         case RETRO_MEMORY_GAMEBOY_1_RTC:
                 if (v_gb[0]->get_rom()->get_info()->cart_type == 0xFE)
                     return sizeof(v_gb[0]->get_mbc()->huc3_baseTime);
                 else
-                    return sizeof(render[id]->fixed_time);
+                    return sizeof(render[0]->fixed_time);
         case RETRO_MEMORY_GAMEBOY_2_SRAM:
                 if (v_gb[1]->get_rom()->get_info()->cart_type == 0xFE)
                     return sizeof(v_gb[1]->get_mbc()->huc3_baseTime);
                 else
-                    return sizeof(render[id]->fixed_time);
+                    return sizeof(render[1]->fixed_time);
         case RETRO_MEMORY_GAMEBOY_2_RTC:
-            return sizeof(render[id]->fixed_time);
+            return sizeof(render[1]->fixed_time);
         default:
             break;
         }
@@ -912,7 +917,7 @@ void retro_set_environment(retro_environment_t cb)
         {NULL, false, false}};
 
     environ_cb = cb;
-
+    cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void*)subsystems);
     /* Set core options
  * An annoyance: retro_set_environment() can be called
  * multiple times, and depending upon the current frontend

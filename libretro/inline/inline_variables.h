@@ -127,6 +127,7 @@ static const struct retro_variable vars_quad[] = {
    // { "dcgb_log_link", "Log Link Cable Communication; Off|On" },
     { NULL, NULL },
 };
+*/
 
 static const struct retro_subsystem_memory_info gb1_memory[] = {
     { "srm", RETRO_MEMORY_GAMEBOY_1_SRAM },
@@ -139,21 +140,18 @@ static const struct retro_subsystem_memory_info gb2_memory[] = {
 };
 
 static const struct retro_subsystem_rom_info gb_roms[] = {
-
-    { "GameBoy #1", "gb|gbc", false, false, false, gb1_memory, 1 },
-    { "GameBoy #2", "gb|gbc", false, false, false, gb2_memory, 1 },
-
+ /* num_memory must cover both entries of the arrays above, or the
+    frontend never asks for the RTC and it is lost on exit */
+ { "GameBoy #1", "gb|gbc", false, false, false, gb1_memory, 2 },
+ { "GameBoy #2", "gb|gbc", false, false, false, gb2_memory, 2 },
 };
 
  //subsystem not working, for now disable
 static const struct retro_subsystem_info subsystems[] = {
-  { "2 Player Game Boy Link", "gb_link_2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-  { "3 Player Game Boy with 4-Player Adapter", "gb_3p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-  { "4 Player Game Boy with 4-Player Adapter", "gb_4p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
-   //{ "4 Player Game Boy 2x 2-Player Link", "gb_2x2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
+  { "Local 2 Player linked GameBoys with 2 different roms", "gb_link_2p", gb_roms, 2, RETRO_GAME_TYPE_GAMEBOY_LINK_2P },
    { NULL },
 };
-*/
+
 
 
 enum mode {
