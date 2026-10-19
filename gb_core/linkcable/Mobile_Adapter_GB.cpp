@@ -118,8 +118,17 @@ void Mobile_Adapter_GB::ensureCustomIniExists(const std::string& systemDir)
 
 byte Mobile_Adapter_GB::receive_from_linkcable(byte data)
 {
+    // A completed serial byte is the adapter's scheduling event. Progress any
+    // pending command before shifting the next byte, without waiting for video.
+    mobile_loop(&m_adapter);
+
     uint8_t byte_to_return = m_slave_SB;
     m_slave_SB = mobile_transfer(&m_adapter, data);
+
+    // This byte may have completed the request/ACK handshake. Let libmobile
+    // recognize and process it now. Preserve the one-byte output pipeline:
+    // processing a command must not replace the byte already being shifted out.
+    mobile_loop(&m_adapter);
     return byte_to_return;
 }
 
@@ -138,6 +147,8 @@ void Mobile_Adapter_GB::update()
 {
     if (!connected_gb) return;
 
+    // Frame maintenance must also run without serial traffic for timeouts and
+    // relay work. Command progress is additionally driven by completed bytes.
     mobile_loop(&m_adapter);
 
     if (m_use_relay) {
@@ -475,7 +486,9 @@ void Mobile_Adapter_GB::setupCallbacks()
 
             struct timeval tv;
             tv.tv_sec = 0;
-            tv.tv_usec = 500;
+            // This callback can now run at serial-byte frequency. Report a
+            // pending connection immediately instead of sleeping on each poll.
+            tv.tv_usec = 0;
 
             int select_rc = select(it->second.fd + 1, NULL, &wr_fds, NULL, &tv);
             if (select_rc > 0) {

@@ -496,7 +496,6 @@ void run_main_loop()
     {
         for (int line = 0; line < 154; line++)
         {
-           // if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
             if (extra_inputpolling_enabled) performExtraInputPoll();
 
             for (size_t i = 0; i < emulated_gbs; i++)
@@ -512,7 +511,6 @@ void run_main_loop()
         const int steps = 70224 / 4; // ≈ 17556
         for (int cycle = 0; cycle < steps; cycle++)
         {
-            //if (mobile_adapter_enabled && mobile_adapter) mobile_adapter->update();
 
             if (extra_inputpolling_enabled)
                 performExtraInputPoll();
